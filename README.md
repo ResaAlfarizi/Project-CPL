@@ -50,4 +50,4 @@ Contoh:
     4. docs: memperbarui dokumentasi readme
 3. Keamanan Kredensial: Dilarang melakukan commit atau push file lingkungan (seperti .env) yang berisi kata sandi database, API keys, atau kredensial sensitif lainnya.
 
-Dikembangkan oleh Tim A - Sistem Informasi UINSA
+Dikembangkan oleh Kelompok 3 dan 4 - Sistem Informasi UINSA
