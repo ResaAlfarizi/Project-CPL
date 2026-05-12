@@ -1,0 +1,25 @@
+# Dependencies (DILARANG UPLOAD: File terlalu besar dan akan membuat repo berat)
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js & Expo build output (DILARANG UPLOAD: File hasil compile lokal)
+.next/
+out/
+build/
+dist/
+.expo/
+
+# Environment variables (SANGAT PENTING: Mencegah password DB dan API Key bocor ke publik)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS Files (File sampah bawaan sistem operasi)
+.DS_Store
+Thumbs.db

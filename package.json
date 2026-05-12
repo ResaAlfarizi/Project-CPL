@@ -1,0 +1,7 @@
+{
+  "name": "cpl-system-uinsa",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ]
+}
