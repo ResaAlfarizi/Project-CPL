@@ -1,20 +1,12 @@
 const express = require('express');
-require('dotenv').config();
-
-// Perhatikan: sekarang jalurnya masuk ke folder 'module1'
-const prodiRoutes = require('./module1/src/routes/prodiRoutes');
-
 const app = express();
+const module1Routes = require('./module1/src/routes/index');
+
 app.use(express.json());
 
-// Menggunakan API Prodi
-app.use('/api/prodi', prodiRoutes);
+// Jalur API Modul 1
+app.use('/api/v1/m1', module1Routes);
 
-app.get('/', (req, res) => {
-  res.send('Backend Aktif - Struktur Sudah Sesuai Request Kelompok!');
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server nyala di http://localhost:${PORT}`);
+app.listen(3000, () => {
+    console.log('Backend Modul 1 Aktif di Port 3000');
 });

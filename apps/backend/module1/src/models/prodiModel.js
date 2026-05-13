@@ -1,13 +1,19 @@
-const db = require('../config/db');
+const pool = require('../config/db'); // Sesuaikan path ke file db.js kamu
 
 const Prodi = {
+  // Ambil semua data prodi
   getAll: async () => {
-    const result = await db.query('SELECT * FROM program_studi ORDER BY created_at DESC');
+    const result = await pool.query('SELECT * FROM program_studi ORDER BY nama_prodi ASC');
     return result.rows;
   },
-  create: async (kode_prodi, nama_prodi, jenjang) => {
-    const queryText = 'INSERT INTO program_studi(kode_prodi, nama_prodi, jenjang) VALUES($1, $2, $3) RETURNING *';
-    const result = await db.query(queryText, [kode_prodi, nama_prodi, jenjang]);
+
+  // Tambah prodi baru menggunakan destructuring object
+  create: async ({ kode_prodi, nama_prodi, jenjang }) => {
+    const query = `
+      INSERT INTO program_studi (kode_prodi, nama_prodi, jenjang) 
+      VALUES ($1, $2, $3) 
+      RETURNING *`;
+    const result = await pool.query(query, [kode_prodi, nama_prodi, jenjang]);
     return result.rows[0];
   }
 };

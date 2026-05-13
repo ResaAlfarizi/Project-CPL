@@ -1,0 +1,7 @@
+const express = require('express');
+const router = express.Router();
+const thresholdController = require('../controllers/thresholdController');
+
+router.post('/', thresholdController.saveThreshold);
+
+module.exports = router;
