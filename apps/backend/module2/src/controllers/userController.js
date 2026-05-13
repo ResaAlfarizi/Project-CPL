@@ -1,11 +1,9 @@
 const { successResponse, errorResponse } = require("../utils/response");
+const { getAllUsers } = require("../models/userModel");
 
-const getUsers = (req, res) => {
+const getUsers = async (req, res) => {
   try {
-    const data = [
-      { id: 1, name: "Admin" },
-      { id: 2, name: "User" },
-    ];
+    const data = await getAllUsers();
 
     return successResponse(res, data, "Data users berhasil diambil");
   } catch (error) {
