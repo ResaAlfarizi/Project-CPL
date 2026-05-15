@@ -12,6 +12,10 @@ const {
   generateAccessToken,
 } = require("../utils/jwt");
 
+const {
+  createAuthAuditLog,
+} = require("../models/authAuditLogModel");
+
 
 // LOGIN
 const login = async (req, res) => {
@@ -21,6 +25,17 @@ const login = async (req, res) => {
     const user = await findUserByEmail(email);
 
     if (!user) {
+      // Log failed login - user not found
+      if (user) {
+        await createAuthAuditLog(
+          user.id,
+          'login_failed',
+          req.ip,
+          req.get('user-agent'),
+          { reason: 'user_not_found', email }
+        );
+      }
+
       return res.status(404).json({
         message: "User tidak ditemukan",
       });
@@ -32,10 +47,28 @@ const login = async (req, res) => {
     );
 
     if (!isMatch) {
+      // Log failed login - wrong password
+      await createAuthAuditLog(
+        user.id,
+        'login_failed',
+        req.ip,
+        req.get('user-agent'),
+        { reason: 'wrong_password', email }
+      );
+
       return res.status(401).json({
         message: "Password salah",
       });
     }
+
+    // Log successful login
+    await createAuthAuditLog(
+      user.id,
+      'login_success',
+      req.ip,
+      req.get('user-agent'),
+      { email }
+    );
 
     const token = generateAccessToken({
       id: user.id,
