@@ -1,0 +1,842 @@
+{
+  "info": {
+    "name": "Module 2 - CPL System API",
+    "description": "Postman Collection untuk testing Module 2 API sesuai matrik akses",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. AUTHENTICATION",
+      "item": [
+        {
+          "name": "Login - Superadmin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@if.ac.id\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login sebagai Superadmin\nSimpan token ke environment variable: token_superadmin"
+          }
+        },
+        {
+          "name": "Login - Admin Prodi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin_prodi@if.ac.id\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login sebagai Admin Prodi\nSimpan token ke environment variable: token_admin_prodi"
+          }
+        },
+        {
+          "name": "Login - Dosen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"dosen1@if.ac.id\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login sebagai Dosen\nSimpan token ke environment variable: token_dosen"
+          }
+        },
+        {
+          "name": "Login - Mahasiswa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"mhs1@if.ac.id\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login sebagai Mahasiswa\nSimpan token ke environment variable: token_mahasiswa"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. PROGRAM STUDI & CPL",
+      "item": [
+        {
+          "name": "GET - Superadmin (R/W/D)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/program-studi",
+              "host": ["{{base_url}}"],
+              "path": ["program-studi"]
+            },
+            "description": "Superadmin: R/W/D - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Admin Prodi (R/W)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/program-studi",
+              "host": ["{{base_url}}"],
+              "path": ["program-studi"]
+            },
+            "description": "Admin Prodi: R/W - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Dosen (R)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/program-studi",
+              "host": ["{{base_url}}"],
+              "path": ["program-studi"]
+            },
+            "description": "Dosen: R - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Mahasiswa (R)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_mahasiswa}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/program-studi",
+              "host": ["{{base_url}}"],
+              "path": ["program-studi"]
+            },
+            "description": "Mahasiswa: R - Bisa read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. MATA KULIAH & PEMETAAN",
+      "item": [
+        {
+          "name": "GET - Superadmin (R/W/D)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/kelas",
+              "host": ["{{base_url}}"],
+              "path": ["kelas"]
+            },
+            "description": "Superadmin: R/W/D - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Admin Prodi (R/W)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/kelas",
+              "host": ["{{base_url}}"],
+              "path": ["kelas"]
+            },
+            "description": "Admin Prodi: R/W - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Dosen (R)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/kelas",
+              "host": ["{{base_url}}"],
+              "path": ["kelas"]
+            },
+            "description": "Dosen: R - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Mahasiswa (R)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_mahasiswa}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/kelas",
+              "host": ["{{base_url}}"],
+              "path": ["kelas"]
+            },
+            "description": "Mahasiswa: R - Bisa read"
+          }
+        },
+        {
+          "name": "POST - Superadmin (R/W/D)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mk_id\": \"ccccccc1-cccc-cccc-cccc-ccccccccccc1\",\n  \"dosen_id\": \"aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1\",\n  \"tahun_akademik\": \"2024/2025\",\n  \"semester_aktif\": 1,\n  \"nama_kelas\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/kelas",
+              "host": ["{{base_url}}"],
+              "path": ["kelas"]
+            },
+            "description": "Superadmin: R/W/D - Bisa create"
+          }
+        },
+        {
+          "name": "POST - Admin Prodi (R/W)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mk_id\": \"ccccccc1-cccc-cccc-cccc-ccccccccccc1\",\n  \"dosen_id\": \"aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1\",\n  \"tahun_akademik\": \"2024/2025\",\n  \"semester_aktif\": 1,\n  \"nama_kelas\": \"B\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/kelas",
+              "host": ["{{base_url}}"],
+              "path": ["kelas"]
+            },
+            "description": "Admin Prodi: R/W - Bisa create"
+          }
+        },
+        {
+          "name": "POST - Dosen (R) - SHOULD FAIL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mk_id\": \"ccccccc1-cccc-cccc-cccc-ccccccccccc1\",\n  \"dosen_id\": \"aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1\",\n  \"tahun_akademik\": \"2024/2025\",\n  \"semester_aktif\": 1,\n  \"nama_kelas\": \"C\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/kelas",
+              "host": ["{{base_url}}"],
+              "path": ["kelas"]
+            },
+            "description": "Dosen: R - TIDAK bisa create (403 Forbidden)"
+          }
+        },
+        {
+          "name": "POST - Mahasiswa (R) - SHOULD FAIL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_mahasiswa}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mk_id\": \"ccccccc1-cccc-cccc-cccc-ccccccccccc1\",\n  \"dosen_id\": \"aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1\",\n  \"tahun_akademik\": \"2024/2025\",\n  \"semester_aktif\": 1,\n  \"nama_kelas\": \"D\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/kelas",
+              "host": ["{{base_url}}"],
+              "path": ["kelas"]
+            },
+            "description": "Mahasiswa: R - TIDAK bisa create (403 Forbidden)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. SUB-CPMK",
+      "item": [
+        {
+          "name": "GET - Superadmin (R/W/D)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-cpmk",
+              "host": ["{{base_url}}"],
+              "path": ["sub-cpmk"]
+            },
+            "description": "Superadmin: R/W/D - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Admin Prodi (R/W)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-cpmk",
+              "host": ["{{base_url}}"],
+              "path": ["sub-cpmk"]
+            },
+            "description": "Admin Prodi: R/W - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Dosen (R/W)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-cpmk",
+              "host": ["{{base_url}}"],
+              "path": ["sub-cpmk"]
+            },
+            "description": "Dosen: R/W - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Mahasiswa (R)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_mahasiswa}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-cpmk",
+              "host": ["{{base_url}}"],
+              "path": ["sub-cpmk"]
+            },
+            "description": "Mahasiswa: R - Bisa read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. INPUT NILAI SUB-CPMK",
+      "item": [
+        {
+          "name": "GET - Superadmin (R/W/D)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/nilai",
+              "host": ["{{base_url}}"],
+              "path": ["nilai"]
+            },
+            "description": "Superadmin: R/W/D - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Admin Prodi (R)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/nilai",
+              "host": ["{{base_url}}"],
+              "path": ["nilai"]
+            },
+            "description": "Admin Prodi: R - Bisa read"
+          }
+        },
+        {
+          "name": "GET - Dosen (R/W - kelas sendiri)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/nilai/kelas/{{kelas_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["nilai", "kelas", "{{kelas_id}}"]
+            },
+            "description": "Dosen: R/W (kelas sendiri) - Bisa read nilai kelas sendiri"
+          }
+        },
+        {
+          "name": "POST - Superadmin (R/W/D)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enrollment_id\": \"99999991-9999-9999-9999-999999999991\",\n  \"sub_cpmk_id\": \"eeeeeee1-eeee-eeee-eeee-eeeeeeeeeee1\",\n  \"nilai\": 85\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/nilai",
+              "host": ["{{base_url}}"],
+              "path": ["nilai"]
+            },
+            "description": "Superadmin: R/W/D - Bisa create nilai"
+          }
+        },
+        {
+          "name": "POST - Admin Prodi (R) - SHOULD FAIL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enrollment_id\": \"99999991-9999-9999-9999-999999999991\",\n  \"sub_cpmk_id\": \"eeeeeee1-eeee-eeee-eeee-eeeeeeeeeee1\",\n  \"nilai\": 85\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/nilai",
+              "host": ["{{base_url}}"],
+              "path": ["nilai"]
+            },
+            "description": "Admin Prodi: R - TIDAK bisa create (403 Forbidden)"
+          }
+        },
+        {
+          "name": "POST - Dosen (R/W - kelas sendiri)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enrollment_id\": \"99999991-9999-9999-9999-999999999991\",\n  \"sub_cpmk_id\": \"eeeeeee1-eeee-eeee-eeee-eeeeeeeeeee1\",\n  \"nilai\": 85\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/nilai",
+              "host": ["{{base_url}}"],
+              "path": ["nilai"]
+            },
+            "description": "Dosen: R/W (kelas sendiri) - Bisa create nilai untuk kelas sendiri"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. CAPAIAN CPL MAHASISWA",
+      "item": [
+        {
+          "name": "GET - Superadmin (R/W/D)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/capaian/mahasiswa/{{mahasiswa_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["capaian", "mahasiswa", "{{mahasiswa_id}}"]
+            },
+            "description": "Superadmin: R/W/D - Bisa read capaian mahasiswa manapun"
+          }
+        },
+        {
+          "name": "GET - Admin Prodi (R/W)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/capaian/mahasiswa/{{mahasiswa_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["capaian", "mahasiswa", "{{mahasiswa_id}}"]
+            },
+            "description": "Admin Prodi: R/W - Bisa read capaian mahasiswa di prodi sendiri"
+          }
+        },
+        {
+          "name": "GET - Dosen (R - kelas sendiri)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/capaian/mahasiswa/{{mahasiswa_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["capaian", "mahasiswa", "{{mahasiswa_id}}"]
+            },
+            "description": "Dosen: R (kelas sendiri) - Bisa read capaian mahasiswa di kelas sendiri"
+          }
+        },
+        {
+          "name": "GET - Mahasiswa (R - diri sendiri)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_mahasiswa}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/capaian/mahasiswa/my-capaian",
+              "host": ["{{base_url}}"],
+              "path": ["capaian", "mahasiswa", "my-capaian"]
+            },
+            "description": "Mahasiswa: R (diri sendiri) - Bisa read capaian diri sendiri"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. MANAJEMEN USER",
+      "item": [
+        {
+          "name": "GET - Superadmin (R/W/D)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Superadmin: R/W/D - Bisa read semua user"
+          }
+        },
+        {
+          "name": "GET - Admin Prodi (R/W - prodi sendiri)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Admin Prodi: R/W (prodi sendiri) - Bisa read user di prodi sendiri"
+          }
+        },
+        {
+          "name": "GET - Dosen - SHOULD FAIL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Dosen: — - TIDAK ada akses (403 Forbidden)"
+          }
+        },
+        {
+          "name": "GET - Mahasiswa - SHOULD FAIL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_mahasiswa}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Mahasiswa: — - TIDAK ada akses (403 Forbidden)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. AUDIT LOG",
+      "item": [
+        {
+          "name": "GET - Superadmin (R)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_superadmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/audit-log",
+              "host": ["{{base_url}}"],
+              "path": ["audit-log"]
+            },
+            "description": "Superadmin: R - Bisa read semua audit log"
+          }
+        },
+        {
+          "name": "GET - Admin Prodi (R - prodi sendiri)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin_prodi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/audit-log",
+              "host": ["{{base_url}}"],
+              "path": ["audit-log"]
+            },
+            "description": "Admin Prodi: R (prodi sendiri) - Bisa read audit log prodi sendiri"
+          }
+        },
+        {
+          "name": "GET - Dosen - SHOULD FAIL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_dosen}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/audit-log",
+              "host": ["{{base_url}}"],
+              "path": ["audit-log"]
+            },
+            "description": "Dosen: — - TIDAK ada akses (403 Forbidden)"
+          }
+        },
+        {
+          "name": "GET - Mahasiswa - SHOULD FAIL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_mahasiswa}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/audit-log",
+              "host": ["{{base_url}}"],
+              "path": ["audit-log"]
+            },
+            "description": "Mahasiswa: — - TIDAK ada akses (403 Forbidden)"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1/m2",
+      "type": "string"
+    },
+    {
+      "key": "token_superadmin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_admin_prodi",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_dosen",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_mahasiswa",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mahasiswa_id",
+      "value": "bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1",
+      "type": "string"
+    },
+    {
+      "key": "kelas_id",
+      "value": "fffffff1-ffff-ffff-ffff-fffffffffff1",
+      "type": "string"
+    }
+  ]
+}
