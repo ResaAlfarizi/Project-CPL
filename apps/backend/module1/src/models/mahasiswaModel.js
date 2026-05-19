@@ -25,6 +25,22 @@ const Mahasiswa = {
       RETURNING *`;
     const result = await pool.query(query, [prodi_id, nim, nama, angkatan]);
     return result.rows[0];
+  },
+
+  update: async (id, data) => {
+    const { prodi_id, nim, nama, angkatan, is_active } = data;
+    const query = `
+      UPDATE mahasiswa 
+      SET prodi_id = $1, nim = $2, nama = $3, angkatan = $4, is_active = $5 
+      WHERE id = $6 
+      RETURNING *`;
+    const result = await pool.query(query, [prodi_id, nim, nama, angkatan, is_active, id]);
+    return result.rows[0];
+  },
+
+  delete: async (id) => {
+    const result = await pool.query('DELETE FROM mahasiswa WHERE id = $1 RETURNING *', [id]);
+    return result.rows[0];
   }
 };
 

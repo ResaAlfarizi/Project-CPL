@@ -2,13 +2,24 @@ const express = require('express');
 const router = express.Router();
 const kurikulumController = require('../controllers/kurikulumController');
 
-// Jalur untuk Mata Kuliah
+// Mata Kuliah
+router.get('/mk', kurikulumController.getAllMK);
 router.post('/mk', kurikulumController.createMK);
+router.put('/mk/:id', kurikulumController.updateMK);
+router.delete('/mk/:id', kurikulumController.deleteMK);
 
-// Jalur untuk CPL
+// CPL
+router.get('/cpl', kurikulumController.getAllCPL);
 router.post('/cpl', kurikulumController.createCPL);
+router.put('/cpl/:id', kurikulumController.updateCPL);
+router.delete('/cpl/:id', kurikulumController.deleteCPL);
 
-// Jalur untuk Mapping MK ke CPL (Validasi bobot 1.0)
+// Mapping MK-CPL
+router.get('/mapping', kurikulumController.getAllMapping);
 router.post('/mapping', kurikulumController.saveMappingMKCPL);
+
+// Sub-CPMK
+router.get('/sub-cpmk', kurikulumController.getAllSubCpmk);
+router.post('/sub-cpmk', kurikulumController.saveSubCpmks);
 
 module.exports = router;

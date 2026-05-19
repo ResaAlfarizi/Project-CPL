@@ -9,6 +9,5 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-module.exports = {
-  query: (text, params) => pool.query(text, params),
-};
+// Export pool secara langsung agar bisa menggunakan pool.query() maupun pool.connect() untuk transaksi
+module.exports = pool;
