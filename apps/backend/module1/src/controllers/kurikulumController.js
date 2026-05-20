@@ -177,12 +177,6 @@ exports.saveSubCpmks = async (req, res) => {
     }));
 
     const totalBobot = sanitizedSubCpmks.reduce((sum, item) => sum + item.bobot, 0);
-    if (Math.abs(totalBobot - 1.0) > 0.0001) {
-      return res.status(400).json({ 
-        status: "Error", 
-        message: `Total akumulasi bobot komponen Sub-CPMK harus bernilai tepat 1.0 (100%). Input saat ini: ${totalBobot}` 
-      });
-    }
 
     await Kurikulum.saveSubCpmks(mk_cpl_id, sanitizedSubCpmks);
     return res.status(201).json({ status: "Success", message: "Data komponen Sub-CPMK berhasil dikonfigurasi" });
