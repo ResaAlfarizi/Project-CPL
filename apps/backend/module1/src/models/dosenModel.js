@@ -6,18 +6,20 @@ const Dosen = {
     return result.rows;
   },
 
-  create: async ({ nidn, nama, prodi_id, role, is_active }) => {
-    const query = 'INSERT INTO dosen (nidn, nama, prodi_id, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *';
-    const result = await pool.query(query, [nidn, nama, prodi_id || null, role || 'dosen', is_active ?? true]);
+  // Menerima parameter client untuk merantai transaksi dari controller
+  create: async ({ nidn, nama }, client) => {
+    const query = 'INSERT INTO dosen (nidn, nama) VALUES ($1, $2) RETURNING *';
+    const db = client || pool; // Jika ada transaksi, gunakan koneksi transaksi client
+    const result = await db.query(query, [nidn, nama]);
     return result.rows[0];
   },
 
-  update: async (id, { nidn, nama, prodi_id, role, is_active }) => {
+  update: async (id, { nidn, nama }) => {
     const query = `
       UPDATE dosen 
-      SET nidn = $1, nama = $2, prodi_id = $3, role = $4, is_active = $5 
-      WHERE id = $6 RETURNING *`;
-    const result = await pool.query(query, [nidn, nama, prodi_id || null, role || 'dosen', is_active ?? true, id]);
+      SET nidn = $1, nama = $2 
+      WHERE id = $3 RETURNING *`;
+    const result = await pool.query(query, [nidn, nama, id]);
     return result.rows[0];
   },
 

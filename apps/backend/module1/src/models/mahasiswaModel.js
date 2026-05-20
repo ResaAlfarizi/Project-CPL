@@ -1,7 +1,6 @@
 const pool = require('../config/db');
 
 const Mahasiswa = {
-  // JOIN dengan prodi agar kita dapat nama prodinya, bukan cuma ID-nya
   getAll: async () => {
     const query = `
       SELECT m.*, p.nama_prodi 
@@ -17,24 +16,24 @@ const Mahasiswa = {
     return result.rows[0];
   },
 
-  create: async (data) => {
-    const { prodi_id, nim, nama, angkatan } = data;
+  // Menerima parameter client untuk merantai transaksi dari controller
+  create: async ({ prodi_id, nim, nama, angkatan }, client) => {
     const query = `
       INSERT INTO mahasiswa (prodi_id, nim, nama, angkatan) 
       VALUES ($1, $2, $3, $4) 
       RETURNING *`;
-    const result = await pool.query(query, [prodi_id, nim, nama, angkatan]);
+    const db = client || pool; // Memastikan isolasi atomik query
+    const result = await db.query(query, [prodi_id, nim, nama, angkatan]);
     return result.rows[0];
   },
 
-  update: async (id, data) => {
-    const { prodi_id, nim, nama, angkatan, is_active } = data;
+  update: async (id, { prodi_id, nim, nama, angkatan, is_active }) => {
     const query = `
       UPDATE mahasiswa 
       SET prodi_id = $1, nim = $2, nama = $3, angkatan = $4, is_active = $5 
       WHERE id = $6 
       RETURNING *`;
-    const result = await pool.query(query, [prodi_id, nim, nama, angkatan, is_active, id]);
+    const result = await pool.query(query, [prodi_id, nim, nama, angkatan, is_active ?? true, id]);
     return result.rows[0];
   },
 

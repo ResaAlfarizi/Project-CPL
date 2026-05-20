@@ -17,25 +17,24 @@ exports.saveThreshold = async (req, res) => {
   }
   
   try {
-    // Whitelisting properti skema item array
     const sanitizedThresholds = thresholds.map(item => ({
       nama_status: item.nama_status,
       nilai_min: parseFloat(item.nilai_min || 0),
       nilai_max: parseFloat(item.nilai_max || 0)
     }));
 
-    // Validasi aturan logika batas nilai
+    // Validasi Logika Batas Atas & Batas Bawah Nilai
     for (const item of sanitizedThresholds) {
       if (item.nilai_min > item.nilai_max) {
         return res.status(400).json({ 
           status: "Error", 
-          message: `Aturan tidak valid! Nilai minimum (${item.nilai_min}) tidak boleh lebih besar dari maksimum (${item.nilai_max}) pada status: "${item.nama_status}".` 
+          message: `Aturan batas nilai tidak valid! Batas Minimum (${item.nilai_min}) tidak boleh melampaui Batas Maksimum (${item.nilai_max}) pada label status: "${item.nama_status}".` 
         });
       }
     }
 
     await Threshold.saveThresholds(prodi_id, sanitizedThresholds);
-    return res.status(201).json({ status: "Success", message: "Threshold status berhasil disimpan" });
+    return res.status(201).json({ status: "Success", message: "Batas kelulusan performa nilai program studi berhasil diperbarui" });
   } catch (error) {
     return res.status(500).json({ status: "Error", message: error.message });
   }

@@ -1,6 +1,6 @@
 const Prodi = require('../models/prodiModel');
 
-const getAllProdi = async (req, res) => {
+exports.getAllProdi = async (req, res) => {
   try {
     const data = await Prodi.getAll();
     return res.status(200).json({ status: "Success", data });
@@ -9,8 +9,7 @@ const getAllProdi = async (req, res) => {
   }
 };
 
-const createProdi = async (req, res) => {
-  // Whitelisting parameter input
+exports.createProdi = async (req, res) => {
   const { kode_prodi, nama_prodi, jenjang } = req.body;
   
   if (!kode_prodi || !nama_prodi || !jenjang) {
@@ -21,11 +20,14 @@ const createProdi = async (req, res) => {
     const newProdi = await Prodi.create({ kode_prodi, nama_prodi, jenjang });
     return res.status(201).json({ status: "Success", data: newProdi });
   } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ status: "Error", message: "Kode prodi tersebut sudah terdaftar di database!" });
+    }
     return res.status(500).json({ status: "Error", message: err.message });
   }
 };
 
-const updateProdi = async (req, res) => {
+exports.updateProdi = async (req, res) => {
   const { id } = req.params;
   const { kode_prodi, nama_prodi, jenjang } = req.body;
 
@@ -40,11 +42,14 @@ const updateProdi = async (req, res) => {
     }
     return res.status(200).json({ status: "Success", data: updated });
   } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ status: "Error", message: "Kode prodi baru berbenturan dengan prodi lain!" });
+    }
     return res.status(500).json({ status: "Error", message: err.message });
   }
 };
 
-const deleteProdi = async (req, res) => {
+exports.deleteProdi = async (req, res) => {
   const { id } = req.params;
   try {
     const deleted = await Prodi.delete(id);
@@ -55,11 +60,4 @@ const deleteProdi = async (req, res) => {
   } catch (err) {
     return res.status(500).json({ status: "Error", message: err.message });
   }
-};
-
-module.exports = {
-  getAllProdi,
-  createProdi,
-  updateProdi,
-  deleteProdi
 };

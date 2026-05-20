@@ -7,8 +7,7 @@ const Kurikulum = {
     return res.rows;
   },
 
-  createMK: async (data) => {
-    const { prodi_id, kode_mk, nama_mk, sks, semester } = data;
+  createMK: async ({ prodi_id, kode_mk, nama_mk, sks, semester }) => {
     const res = await pool.query(
       'INSERT INTO mata_kuliah (prodi_id, kode_mk, nama_mk, sks, semester) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [prodi_id, kode_mk, nama_mk, sks, semester]
@@ -16,8 +15,7 @@ const Kurikulum = {
     return res.rows[0];
   },
 
-  updateMK: async (id, data) => {
-    const { prodi_id, kode_mk, nama_mk, sks, semester } = data;
+  updateMK: async (id, { prodi_id, kode_mk, nama_mk, sks, semester }) => {
     const res = await pool.query(
       'UPDATE mata_kuliah SET prodi_id = $1, kode_mk = $2, nama_mk = $3, sks = $4, semester = $5 WHERE id = $6 RETURNING *',
       [prodi_id, kode_mk, nama_mk, sks, semester, id]
@@ -36,8 +34,7 @@ const Kurikulum = {
     return res.rows;
   },
 
-  createCPL: async (data) => {
-    const { prodi_id, kode_cpl, deskripsi } = data;
+  createCPL: async ({ prodi_id, kode_cpl, deskripsi }) => {
     const res = await pool.query(
       'INSERT INTO cpl (prodi_id, kode_cpl, deskripsi) VALUES ($1, $2, $3) RETURNING *',
       [prodi_id, kode_cpl, deskripsi]
@@ -45,11 +42,10 @@ const Kurikulum = {
     return res.rows[0];
   },
 
-  updateCPL: async (id, data) => {
-    const { prodi_id, kode_cpl, deskripsi, is_active } = data;
+  updateCPL: async (id, { prodi_id, kode_cpl, deskripsi, is_active }) => {
     const res = await pool.query(
       'UPDATE cpl SET prodi_id = $1, kode_cpl = $2, deskripsi = $3, is_active = $4 WHERE id = $5 RETURNING *',
-      [prodi_id, kode_cpl, deskripsi, is_active, id]
+      [prodi_id, kode_cpl, deskripsi, is_active ?? true, id]
     );
     return res.rows[0];
   },
@@ -65,12 +61,10 @@ const Kurikulum = {
     return res.rows;
   },
 
-  // Transaksi untuk simpan mapping MK ke CPL
   saveMapping: async (mk_id, mappings) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      // Hapus mapping lama untuk MK ini (timpa data lama)
       await client.query('DELETE FROM mk_cpl WHERE mk_id = $1', [mk_id]);
       
       for (let item of mappings) {
