@@ -13,11 +13,6 @@ function DashboardShell({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) router.replace('/login');
-  }, [user, loading, router]);
-
-  // Sync sidebar state from CSS variable changes
-  useEffect(() => {
     const sidebar = document.querySelector('.sidebar');
     if (!sidebar) return;
     const observer = new MutationObserver(() => {

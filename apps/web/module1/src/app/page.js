@@ -5,9 +5,7 @@ import { useRouter } from 'next/navigation';
 export default function Home() {
   const router = useRouter();
   useEffect(() => {
-    const user = typeof window !== 'undefined' ? localStorage.getItem('cpl_user') : null;
-    if (user) router.replace('/dashboard');
-    else router.replace('/login');
+    router.replace('/dashboard');
   }, [router]);
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh' }}>
