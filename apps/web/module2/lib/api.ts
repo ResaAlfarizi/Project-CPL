@@ -127,3 +127,26 @@ export const capaianApi = {
 export const enrollmentApi = {
   getByKelas: (kelasId: string) => apiFetch(`/enrollment/kelas/${kelasId}`),
 };
+
+// MAHASISWA API
+export const mahasiswaApi = {
+  // Capaian CPL diri sendiri
+  getMyCapaian: () => apiFetch('/capaian/mahasiswa/my-capaian'),
+  getMyCapaianDetail: () => apiFetch('/capaian/mahasiswa/my-capaian/detail'),
+
+  // Program Studi (Read only)
+  getAllProdi: () => apiFetch('/prodi'),
+  getProdiById: (id: number) => apiFetch(`/prodi/${id}`),
+
+  // CPL (Read only)
+  getAllCPL: () => apiFetch('/cpl'),
+  getCPLByProdi: (prodiId: number) => apiFetch(`/cpl/prodi/${prodiId}`),
+
+  // Mata Kuliah / Kelas (Read only)
+  getAllKelas: () => apiFetch('/kelas'),
+  getKelasById: (id: number) => apiFetch(`/kelas/${id}`),
+
+  // Sub-CPMK (Read only)
+  getAllSubCpmk: () => apiFetch('/sub-cpmk'),
+  getSubCpmkByMK: (mkId: number) => apiFetch(`/sub-cpmk/mk/${mkId}`),
+};

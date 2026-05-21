@@ -106,13 +106,13 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
         className={`fixed inset-y-0 left-0 z-30 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{ background: '#33323' }}
+        style={{ background: '#1a1a1a' }}
       >
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-700">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#FFF063' }}>
-              <svg className="w-5 h-5" style={{ color: '#33323' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" style={{ color: '#1a1a1a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
               </svg>
@@ -171,7 +171,7 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
         {/* User info & Logout */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
           <div className="flex items-center gap-3 px-3 py-2 mb-2">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ background: '#FFF063', color: '#33323' }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ background: '#FFF063', color: '#1a1a1a' }}>
               M
             </div>
             <div className="flex-1 min-w-0">
