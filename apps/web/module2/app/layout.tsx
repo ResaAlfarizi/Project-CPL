@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Urbanist } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const urbanist = Urbanist({
+  variable: "--font-urbanist",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Sistem CPL - Modul 2",
-  description: "Sistem Capaian Pembelajaran Lulusan",
+  title: "Sistem CPL - Dashboard Dosen",
+  description: "Sistem Manajemen Capaian Pembelajaran Lulusan - UIN Sunan Ampel Surabaya",
 };
 
 export default function RootLayout({
@@ -24,11 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="id"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="id" className={`${urbanist.variable} h-full`}>
+      <body className="min-h-full flex flex-col" style={{ fontFamily: "'Urbanist', sans-serif" }}>
         <AuthProvider>
           {children}
         </AuthProvider>

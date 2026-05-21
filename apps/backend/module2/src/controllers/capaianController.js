@@ -2,6 +2,7 @@ const {
   getCapaianByMahasiswaId,
   getCapaianByProdiId,
   getCapaianByKelasId,
+  getCapaianDetailByKelasId,
   getCapaianDetailByMahasiswaId,
   getMahasiswaBelumCapaiCPL,
 } = require("../models/capaianModel");
@@ -16,8 +17,13 @@ const { successResponse, errorResponse } = require("../utils/response");
 // GET capaian CPL mahasiswa (untuk mahasiswa melihat capaiannya)
 const getCapaianMahasiswaHandler = async (req, res) => {
   try {
-    // Ambil mahasiswa_id dari token JWT (req.user.id)
-    const mahasiswaId = req.user.id;
+    // Ambil mahasiswa_id dari token JWT (req.user.entity_id)
+    const mahasiswaId = req.user.entity_id;
+    
+    if (!mahasiswaId) {
+      return errorResponse(res, "Entity ID mahasiswa tidak ditemukan", 400);
+    }
+    
     const capaian = await getCapaianByMahasiswaId(mahasiswaId);
 
     return successResponse(res, capaian, "Berhasil mengambil data capaian");
@@ -50,11 +56,11 @@ const getCapaianProdiHandler = async (req, res) => {
   }
 };
 
-// GET capaian CPL untuk kelas tertentu (untuk dosen)
+// GET capaian CPL untuk kelas tertentu (untuk dosen) - Detail per mahasiswa
 const getCapaianKelasHandler = async (req, res) => {
   try {
     const { kelas_id } = req.params;
-    const capaian = await getCapaianByKelasId(kelas_id);
+    const capaian = await getCapaianDetailByKelasId(kelas_id);
 
     return successResponse(res, capaian, "Berhasil mengambil data capaian kelas");
   } catch (error) {
@@ -65,8 +71,13 @@ const getCapaianKelasHandler = async (req, res) => {
 // GET detail capaian mahasiswa per mata kuliah
 const getCapaianDetailMahasiswaHandler = async (req, res) => {
   try {
-    // Ambil mahasiswa_id dari token JWT (req.user.id)
-    const mahasiswaId = req.user.id;
+    // Ambil mahasiswa_id dari token JWT (req.user.entity_id)
+    const mahasiswaId = req.user.entity_id;
+    
+    if (!mahasiswaId) {
+      return errorResponse(res, "Entity ID mahasiswa tidak ditemukan", 400);
+    }
+    
     const detail = await getCapaianDetailByMahasiswaId(mahasiswaId);
 
     return successResponse(res, detail, "Berhasil mengambil detail capaian");

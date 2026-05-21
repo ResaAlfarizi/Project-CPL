@@ -58,8 +58,13 @@ const getNilaiByEnrollmentHandler = async (req, res) => {
 // GET nilai berdasarkan mahasiswa (untuk mahasiswa melihat semua nilainya)
 const getNilaiByMahasiswaHandler = async (req, res) => {
   try {
-    // Ambil mahasiswa_id dari token JWT (req.user.id)
-    const mahasiswaId = req.user.id;
+    // Ambil mahasiswa_id dari token JWT (req.user.entity_id)
+    const mahasiswaId = req.user.entity_id;
+    
+    if (!mahasiswaId) {
+      return errorResponse(res, "Entity ID mahasiswa tidak ditemukan", 400);
+    }
+    
     const nilai = await getNilaiByMahasiswaId(mahasiswaId);
 
     return successResponse(res, nilai, "Berhasil mengambil data nilai");

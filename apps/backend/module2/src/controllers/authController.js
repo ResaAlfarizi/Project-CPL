@@ -73,11 +73,24 @@ const login = async (req, res) => {
     const token = generateAccessToken({
       id: user.id,
       role: user.nama_role,
+      entity_id: user.entity_id,
+      entity_type: user.entity_type,
+      prodi_id: user.prodi_id,
+      nama: user.nama_entity,
     });
 
     res.json({
       message: "Login berhasil",
       token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.nama_role,
+        entity_type: user.entity_type,
+        entity_id: user.entity_id,
+        prodi_id: user.prodi_id,
+        nama: user.nama_entity,
+      },
     });
   } catch (error) {
     res.status(500).json({

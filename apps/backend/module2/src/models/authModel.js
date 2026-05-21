@@ -4,9 +4,16 @@ const findUserByEmail = async (email) => {
   const query = `
     SELECT 
       users.*,
-      roles.nama_role
+      roles.nama_role,
+      CASE 
+        WHEN users.entity_type = 'dosen' THEN d.nama
+        WHEN users.entity_type = 'mahasiswa' THEN m.nama
+        ELSE NULL
+      END as nama_entity
     FROM users
     JOIN roles ON users.role_id = roles.id
+    LEFT JOIN dosen d ON users.entity_id = d.id AND users.entity_type = 'dosen'
+    LEFT JOIN mahasiswa m ON users.entity_id = m.id AND users.entity_type = 'mahasiswa'
     WHERE email = $1
   `;
 

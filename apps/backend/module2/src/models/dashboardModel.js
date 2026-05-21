@@ -88,8 +88,16 @@ const getDashboardDosen = async (dosenId) => {
   // Total mahasiswa yang diajar
   const totalMahasiswaQuery = `
     SELECT COUNT(DISTINCT e.mahasiswa_id) as total
-    FROM enrollment e
-    JOIN kelas k ON e.kelas_id = k.id
+    FROM kelas k
+    LEFT JOIN enrollment e ON k.id = e.kelas_id
+    WHERE k.dosen_id = $1
+  `;
+
+  // Total mata kuliah yang diampu
+  const totalMkQuery = `
+    SELECT COUNT(DISTINCT mk.id) as total
+    FROM kelas k
+    JOIN mata_kuliah mk ON k.mk_id = mk.id
     WHERE k.dosen_id = $1
   `;
 
@@ -130,9 +138,10 @@ const getDashboardDosen = async (dosenId) => {
     ORDER BY k.id, c.kode_cpl
   `;
 
-  const [totalKelas, totalMahasiswa, kelas, capaianPerKelas] = await Promise.all([
+  const [totalKelas, totalMahasiswa, totalMk, kelas, capaianPerKelas] = await Promise.all([
     pool.query(totalKelasQuery, [dosenId]),
     pool.query(totalMahasiswaQuery, [dosenId]),
+    pool.query(totalMkQuery, [dosenId]),
     pool.query(kelasQuery, [dosenId]),
     pool.query(capaianPerKelasQuery, [dosenId]),
   ]);
@@ -141,6 +150,7 @@ const getDashboardDosen = async (dosenId) => {
     statistik: {
       total_kelas: parseInt(totalKelas.rows[0].total),
       total_mahasiswa: parseInt(totalMahasiswa.rows[0].total),
+      total_mk: parseInt(totalMk.rows[0].total),
     },
     kelas: kelas.rows,
     capaian_per_kelas: capaianPerKelas.rows,

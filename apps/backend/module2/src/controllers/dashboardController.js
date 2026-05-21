@@ -31,8 +31,13 @@ const getDashboardAdminHandler = async (req, res) => {
 // GET dashboard untuk Dosen
 const getDashboardDosenHandler = async (req, res) => {
   try {
-    // Ambil dosen_id dari token JWT (req.user.id)
-    const dosenId = req.user.id;
+    // Ambil dosen_id dari token JWT (req.user.entity_id)
+    const dosenId = req.user.entity_id;
+    
+    if (!dosenId) {
+      return errorResponse(res, "Entity ID dosen tidak ditemukan", 400);
+    }
+    
     const dashboard = await getDashboardDosen(dosenId);
 
     return successResponse(res, dashboard, "Berhasil mengambil data dashboard dosen");
@@ -44,8 +49,13 @@ const getDashboardDosenHandler = async (req, res) => {
 // GET dashboard untuk Mahasiswa
 const getDashboardMahasiswaHandler = async (req, res) => {
   try {
-    // Ambil mahasiswa_id dari token JWT (req.user.id)
-    const mahasiswaId = req.user.id;
+    // Ambil mahasiswa_id dari token JWT (req.user.entity_id)
+    const mahasiswaId = req.user.entity_id;
+    
+    if (!mahasiswaId) {
+      return errorResponse(res, "Entity ID mahasiswa tidak ditemukan", 400);
+    }
+    
     const dashboard = await getDashboardMahasiswa(mahasiswaId);
 
     return successResponse(res, dashboard, "Berhasil mengambil data dashboard mahasiswa");

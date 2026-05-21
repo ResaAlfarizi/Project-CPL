@@ -12,6 +12,7 @@ const prodiRoutes = require("./prodiRoutes");
 const cplRoutes = require("./cplRoutes");
 const subCpmkRoutes = require("./subCpmkRoutes");
 const authAuditLogRoutes = require("./authAuditLogRoutes");
+const dosenProfileRoutes = require("./dosenProfileRoutes");
 
 // grouping routes
 router.use("/auth", authRoutes);
@@ -25,5 +26,6 @@ router.use("/prodi", prodiRoutes);
 router.use("/cpl", cplRoutes);
 router.use("/sub-cpmk", subCpmkRoutes);
 router.use("/auth-audit-log", authAuditLogRoutes);
+router.use("/profile", dosenProfileRoutes);
 
 module.exports = router;

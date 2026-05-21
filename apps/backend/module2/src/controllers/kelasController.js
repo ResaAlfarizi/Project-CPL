@@ -43,8 +43,13 @@ const getKelasByIdHandler = async (req, res) => {
 // GET kelas berdasarkan dosen (untuk dosen melihat kelas yang diampu)
 const getKelasByDosenHandler = async (req, res) => {
   try {
-    // Ambil dosen_id dari token JWT (req.user.id)
-    const dosenId = req.user.id;
+    // Ambil dosen_id dari token JWT (req.user.entity_id)
+    const dosenId = req.user.entity_id;
+    
+    if (!dosenId) {
+      return errorResponse(res, "Entity ID dosen tidak ditemukan", 400);
+    }
+    
     const kelas = await getKelasByDosenId(dosenId);
 
     return successResponse(res, kelas, "Berhasil mengambil data kelas");

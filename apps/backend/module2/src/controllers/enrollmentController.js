@@ -44,8 +44,13 @@ const getEnrollmentByIdHandler = async (req, res) => {
 // GET enrollment berdasarkan mahasiswa (untuk mahasiswa melihat KRS-nya)
 const getEnrollmentByMahasiswaHandler = async (req, res) => {
   try {
-    // Ambil mahasiswa_id dari token JWT (req.user.id)
-    const mahasiswaId = req.user.id;
+    // Ambil mahasiswa_id dari token JWT (req.user.entity_id)
+    const mahasiswaId = req.user.entity_id;
+    
+    if (!mahasiswaId) {
+      return errorResponse(res, "Entity ID mahasiswa tidak ditemukan", 400);
+    }
+    
     const enrollment = await getEnrollmentByMahasiswaId(mahasiswaId);
 
     return successResponse(res, enrollment, "Berhasil mengambil data enrollment");

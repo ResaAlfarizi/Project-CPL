@@ -6,21 +6,47 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated) {
-        router.push('/dashboard');
+      if (isAuthenticated && user) {
+        // Redirect based on role
+        const role = user.role?.toLowerCase();
+        if (role === 'dosen') {
+          router.push('/dosen');
+        } else if (role === 'admin' || role === 'admin_prodi') {
+          router.push('/admin');
+        } else if (role === 'mahasiswa') {
+          router.push('/mahasiswa');
+        } else {
+          router.push('/dosen'); // Default fallback
+        }
       } else {
         router.push('/login');
       }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--ghost-white)',
+    }}>
+      <div style={{
+        width: '40px',
+        height: '40px',
+        border: '3px solid var(--alice-blue)',
+        borderTop: '3px solid var(--eerie-black)',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }} />
+      <style jsx>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }

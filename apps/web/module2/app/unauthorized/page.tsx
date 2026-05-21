@@ -1,9 +1,24 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function UnauthorizedPage() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  const handleBackToDashboard = () => {
+    const role = user?.role?.toLowerCase();
+    if (role === 'dosen') {
+      router.push('/dosen');
+    } else if (role === 'admin' || role === 'admin_prodi') {
+      router.push('/admin');
+    } else if (role === 'mahasiswa') {
+      router.push('/mahasiswa');
+    } else {
+      router.push('/login');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -28,7 +43,7 @@ export default function UnauthorizedPage() {
           Anda tidak memiliki izin untuk mengakses halaman ini.
         </p>
         <button
-          onClick={() => router.push('/dashboard')}
+          onClick={handleBackToDashboard}
           className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
         >
           Kembali ke Dashboard

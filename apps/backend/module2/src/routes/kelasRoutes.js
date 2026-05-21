@@ -23,6 +23,15 @@ const authorize = require("../middlewares/roleMiddleware");
  * - MAHASISWA: R (Read only)
  */
 
+// GET kelas yang diampu dosen - DOSEN (Read)
+// PENTING: Route ini harus di atas route /:id agar tidak tertangkap sebagai parameter
+router.get(
+  "/dosen/my-classes",
+  authMiddleware,
+  authorize("Dosen"),
+  getKelasByDosenHandler
+);
+
 // GET semua kelas - SUPERADMIN, ADMIN PRODI, DOSEN, MAHASISWA (Read)
 router.get(
   "/",
@@ -37,14 +46,6 @@ router.get(
   authMiddleware,
   authorize("Superadmin", "Admin Prodi", "Dosen", "Mahasiswa"),
   getKelasByIdHandler
-);
-
-// GET kelas yang diampu dosen - DOSEN (Read)
-router.get(
-  "/dosen/my-classes",
-  authMiddleware,
-  authorize("Dosen"),
-  getKelasByDosenHandler
 );
 
 // POST buat kelas baru - SUPERADMIN, ADMIN PRODI (Write)

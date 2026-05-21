@@ -54,7 +54,7 @@ const getCapaianByProdiId = async (prodiId) => {
   return result.rows;
 };
 
-// Ambil capaian CPL untuk kelas tertentu
+// Ambil capaian CPL untuk kelas tertentu (summary)
 const getCapaianByKelasId = async (kelasId) => {
   const query = `
     SELECT 
@@ -69,6 +69,33 @@ const getCapaianByKelasId = async (kelasId) => {
     WHERE e.kelas_id = $1
     GROUP BY v.cpl_id, c.kode_cpl, c.deskripsi
     ORDER BY c.kode_cpl
+  `;
+
+  const result = await pool.query(query, [kelasId]);
+  return result.rows;
+};
+
+// Ambil detail capaian per mahasiswa untuk kelas tertentu
+const getCapaianDetailByKelasId = async (kelasId) => {
+  const query = `
+    SELECT 
+      e.id as enrollment_id,
+      e.mahasiswa_id,
+      m.nim,
+      m.nama as nama_mahasiswa,
+      v.cpl_id,
+      c.kode_cpl,
+      c.deskripsi as deskripsi_cpl,
+      v.nilai_capaian_cpl_mk as nilai_capaian,
+      ts.nama_status as status
+    FROM enrollment e
+    JOIN mahasiswa m ON e.mahasiswa_id = m.id
+    LEFT JOIN v_capaian_cpl_mk v ON e.id = v.enrollment_id
+    LEFT JOIN cpl c ON v.cpl_id = c.id
+    LEFT JOIN threshold_status ts ON m.prodi_id = ts.prodi_id 
+      AND v.nilai_capaian_cpl_mk BETWEEN ts.nilai_min AND ts.nilai_max
+    WHERE e.kelas_id = $1
+    ORDER BY m.nim, c.kode_cpl
   `;
 
   const result = await pool.query(query, [kelasId]);
@@ -130,6 +157,7 @@ module.exports = {
   getCapaianByMahasiswaId,
   getCapaianByProdiId,
   getCapaianByKelasId,
+  getCapaianDetailByKelasId,
   getCapaianDetailByMahasiswaId,
   getMahasiswaBelumCapaiCPL,
 };

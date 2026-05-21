@@ -35,7 +35,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const decoded = authStorage.decodeToken(response.token);
       setUser(decoded);
       
-      router.push('/dashboard');
+      // Redirect based on role
+      if (decoded.role?.toLowerCase() === 'dosen') {
+        router.push('/dosen');
+      } else if (decoded.role?.toLowerCase() === 'admin' || decoded.role?.toLowerCase() === 'admin_prodi') {
+        router.push('/admin');
+      } else if (decoded.role?.toLowerCase() === 'mahasiswa') {
+        router.push('/mahasiswa');
+      } else {
+        router.push('/dashboard'); // Fallback
+      }
     } catch (error) {
       throw error;
     }
