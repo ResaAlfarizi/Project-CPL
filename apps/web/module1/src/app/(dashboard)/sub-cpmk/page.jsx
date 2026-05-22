@@ -182,7 +182,7 @@ export default function SubCpmkPage() {
             <div className="empty-state-icon">📋</div>
             <div className="empty-state-title">Belum ada Mata Kuliah</div>
             <div className="empty-state-text">Pastikan MK sudah dipetakan ke CPL terlebih dahulu</div>
-            <a href="/mapping" className="btn btn-primary">→ Ke Pemetaan MK–CPL</a>
+            <a href="/mapping" className="btn btn-primary"> Ke Pemetaan MK–CPL</a>
           </div>
         </div>
       ) : (

@@ -26,7 +26,7 @@ export default function ThresholdPage() {
       const [prodiData, threshData] = await Promise.all([ProdiAPI.list(), ThresholdAPI.listAll()]);
       setProdi(prodiData || []);
       setAllThresholds(threshData || []);
-      setSelectedProdi(prev => prev || (prodiData && prodiData.length > 0 ? prodiData[0].id : ''));
+      setSelectedProdi(prev => prev || '');
     } catch (err) { toast(err.message, 'error'); }
     setLoading(false);
   };

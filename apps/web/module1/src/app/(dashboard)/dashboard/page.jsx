@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { ProdiAPI, CPLAPI, DosenAPI, MahasiswaAPI, MKAPI, MkCplAPI, SubCpmkAPI } from '@/lib/api';
 
 const StatCard = ({ icon, label, value, color, bg, href }) => (
-  <Link href={href} style={{ textDecoration: 'none' }}>
-    <div className="stat-card card" style={{ background: bg, borderColor: color, cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+  <Link href={href} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+    <div className="stat-card card" style={{ height: '100%', background: bg, borderColor: color, cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(33,33,33,0.12)'; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}>
       <div className="stat-icon" style={{ background: color }}>{icon}</div>
@@ -59,17 +59,17 @@ export default function DashboardPage() {
         <h1 style={{ fontSize: 30, fontWeight: 800, marginBottom: 4 }}>Selamat Datang di CPL System 👋</h1>
       </div>
 
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {CARDS.map(c => <StatCard key={c.label} {...c} />)}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 8 }}>
+      <div className="dashboard-grid">
         {/* Quick Links */}
-        <div className="card">
-          <div className="card-header">
-            <div><div className="card-title">🚀 Mulai Cepat</div><div className="card-subtitle">Urutan setup sistem</div></div>
-          </div>
-          <div className="card-body">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="card-header">
+              <div><div className="card-title">🚀 Mulai Cepat</div><div className="card-subtitle">Urutan setup sistem</div></div>
+            </div>
+          <div className="card-body" style={{ flex: 1 }}>
             {[
               { step: '①', label: 'Daftarkan Program Studi', href: '/prodi', done: (stats.prodi ?? 0) > 0 },
               { step: '②', label: 'Definisikan CPL per Prodi', href: '/cpl', done: (stats.cpl ?? 0) > 0 },
@@ -89,11 +89,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Info Panel */}
-        <div className="card">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="card-header">
             <div><div className="card-title">ℹ️ Tentang Sistem</div><div className="card-subtitle">Modul 1 CPL Management</div></div>
           </div>
-          <div className="card-body">
+          <div className="card-body" style={{ flex: 1 }}>
             <p style={{ fontSize: 14, color: '#4b5563', lineHeight: 1.7, marginBottom: 16 }}>
               Sistem ini digunakan untuk mengelola <strong>Capaian Pembelajaran Lulusan (CPL)</strong> secara terstruktur mulai dari pendaftaran program studi hingga pemetaan sub-CPMK ke mata kuliah.
             </p>
