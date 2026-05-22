@@ -86,7 +86,7 @@ export default function Sidebar() {
           <button
             onClick={() => window.location.reload()}
             className="btn btn-ghost w-full mt-8"
-            style={{ fontSize: 15, justifyContent: 'center' }}
+            style={{ fontSize: 16, justifyContent: 'center' }}
           >
              Keluar
           </button>
