@@ -36,7 +36,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(decoded);
       
       // Redirect based on role
-      if (decoded.role?.toLowerCase() === 'dosen') {
+      if (decoded.role?.toLowerCase() === 'superadmin') {
+        router.push('/superadmin');
+      } else if (decoded.role?.toLowerCase() === 'dosen') {
         router.push('/dosen');
       } else if (decoded.role?.toLowerCase() === 'admin' || decoded.role?.toLowerCase() === 'admin_prodi') {
         router.push('/admin');
