@@ -86,9 +86,9 @@ export default function Sidebar() {
           <button
             onClick={() => window.location.reload()}
             className="btn btn-ghost w-full mt-8"
-            style={{ fontSize: 13, justifyContent: 'center' }}
+            style={{ fontSize: 16, justifyContent: 'center' }}
           >
-            🚪 Keluar
+             Keluar
           </button>
         )}
         {collapsed && (
@@ -97,7 +97,6 @@ export default function Sidebar() {
             title="Keluar"
             style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', width: '100%', padding: '8px', fontSize: 20, textAlign: 'center' }}
           >
-            🚪
           </button>
         )}
       </div>

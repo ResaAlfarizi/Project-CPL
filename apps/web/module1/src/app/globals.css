@@ -62,12 +62,16 @@ html, body { height: 100%; font-family: 'Urbanist', sans-serif; background: var(
   display: flex; align-items: center; justify-content: center;
   font-size: 18px; flex-shrink: 0;
 }
-.sidebar-logo-text { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; }
+.sidebar-logo-text { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sidebar-logo-text span { display: block; font-size: 11px; font-weight: 400; color: var(--alice-blue); opacity: 0.7; }
 .sidebar-toggle { background: transparent; border: none; color: var(--ghost-white); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; transition: var(--transition); flex-shrink: 0; }
 .sidebar-toggle:hover { background: rgba(255,255,255,0.1); }
 
-.sidebar-nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 8px; }
+.sidebar-nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 8px; -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */}
+.sidebar-nav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
 .sidebar-section-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.35); padding: 12px 8px 6px; white-space: nowrap; overflow: hidden; }
 .sidebar.collapsed .sidebar-section-label { opacity: 0; }
 
@@ -82,7 +86,7 @@ html, body { height: 100%; font-family: 'Urbanist', sans-serif; background: var(
 .nav-item.active { background: rgba(216,223,233,0.15); color: var(--alice-blue); }
 .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: var(--vanilla); border-radius: 0 3px 3px 0; }
 .nav-item-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.nav-item-text { font-size: 14px; font-weight: 500; overflow: hidden; transition: var(--transition-slow); }
+.nav-item-text { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: var(--transition-slow); }
 .sidebar.collapsed .nav-item-text { opacity: 0; width: 0; }
 .nav-tooltip { position: absolute; left: calc(var(--sidebar-collapsed) + 8px); background: var(--eerie-black); color: var(--ghost-white); font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: var(--radius-sm); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; box-shadow: var(--shadow-md); }
 .sidebar.collapsed .nav-item:hover .nav-tooltip { opacity: 1; }
@@ -92,9 +96,9 @@ html, body { height: 100%; font-family: 'Urbanist', sans-serif; background: var(
 .sidebar .btn-ghost:hover { background: rgba(255, 255, 255, 0.08); color: var(--white); }
 .user-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); overflow: hidden; }
 .user-avatar { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--alice-blue), var(--honeydew)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--eerie-black); font-size: 14px; flex-shrink: 0; }
-.user-info { overflow: hidden; }
-.user-name { font-size: 13px; font-weight: 600; color: var(--ghost-white); white-space: nowrap; }
-.user-role { font-size: 11px; color: rgba(255,255,255,0.45); white-space: nowrap; }
+.user-info { overflow: hidden; flex: 1; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 600; color: var(--ghost-white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 11px; color: rgba(255,255,255,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ─── Main Content ─── */
 .main-content { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; transition: var(--transition-slow); min-height: 100vh; }
@@ -227,7 +231,7 @@ tbody tr:last-child td { border-bottom: none; }
 .weight-bar-fill.over { background: linear-gradient(90deg, var(--warning), var(--danger)); }
 
 /* ─── Dashboard ─── */
-.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
 
 /* ─── Breadcrumb ─── */
 .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #9ca3af; margin-bottom: 20px; }
