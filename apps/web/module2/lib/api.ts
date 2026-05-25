@@ -81,6 +81,11 @@ export const profileApi = {
 export const prodiApi = {
   getAll: () => apiFetch('/prodi'),
   getById: (id: string) => apiFetch(`/prodi/${id}`),
+  create: (body: { kode_prodi: string; nama_prodi: string; jenjang: string }) =>
+    apiFetch('/prodi', { method: 'POST', body: JSON.stringify(body) }),
+  update: (id: string, body: { kode_prodi: string; nama_prodi: string; jenjang: string }) =>
+    apiFetch(`/prodi/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  delete: (id: string) => apiFetch(`/prodi/${id}`, { method: 'DELETE' }),
 };
 
 // CPL
@@ -88,6 +93,11 @@ export const cplApi = {
   getAll: () => apiFetch('/cpl'),
   getById: (id: string) => apiFetch(`/cpl/${id}`),
   getByProdi: (prodiId: string) => apiFetch(`/cpl/prodi/${prodiId}`),
+  create: (body: { kode_cpl: string; deskripsi: string; prodi_id: string; is_active?: boolean }) =>
+    apiFetch('/cpl', { method: 'POST', body: JSON.stringify(body) }),
+  update: (id: string, body: { kode_cpl: string; deskripsi: string; prodi_id: string; is_active?: boolean }) =>
+    apiFetch(`/cpl/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  delete: (id: string) => apiFetch(`/cpl/${id}`, { method: 'DELETE' }),
 };
 
 // KELAS
@@ -95,6 +105,11 @@ export const kelasApi = {
   getAll: () => apiFetch('/kelas'),
   getById: (id: string) => apiFetch(`/kelas/${id}`),
   getMyClasses: () => apiFetch('/kelas/dosen/my-classes'),
+  create: (body: { mk_id: string; dosen_id?: string; tahun_akademik: string; semester_aktif: number; nama_kelas?: string }) =>
+    apiFetch('/kelas', { method: 'POST', body: JSON.stringify(body) }),
+  update: (id: string, body: { mk_id: string; dosen_id?: string; tahun_akademik: string; semester_aktif: number; nama_kelas?: string }) =>
+    apiFetch(`/kelas/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  delete: (id: string) => apiFetch(`/kelas/${id}`, { method: 'DELETE' }),
 };
 
 // SUB-CPMK
@@ -108,10 +123,12 @@ export const subCpmkApi = {
     apiFetch('/sub-cpmk', { method: 'POST', body: JSON.stringify(body) }),
   update: (id: string, body: { kode_sub_cpmk: string; deskripsi: string; bobot: number }) =>
     apiFetch(`/sub-cpmk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  delete: (id: string) => apiFetch(`/sub-cpmk/${id}`, { method: 'DELETE' }),
 };
 
 // NILAI
 export const nilaiApi = {
+  getAll: () => apiFetch('/nilai'),
   getByKelas: (kelasId: string) => apiFetch(`/nilai/kelas/${kelasId}`),
   getByEnrollment: (enrollmentId: string) => apiFetch(`/nilai/enrollment/${enrollmentId}`),
   getById: (id: string) => apiFetch(`/nilai/${id}`),
@@ -119,17 +136,68 @@ export const nilaiApi = {
     apiFetch('/nilai', { method: 'POST', body: JSON.stringify(body) }),
   update: (id: string, body: { nilai: number }) =>
     apiFetch(`/nilai/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  delete: (id: string) => apiFetch(`/nilai/${id}`, { method: 'DELETE' }),
 };
 
 // CAPAIAN
 export const capaianApi = {
   getByMahasiswa: (mahasiswaId: string) => apiFetch(`/capaian/mahasiswa/${mahasiswaId}`),
   getByKelas: (kelasId: string) => apiFetch(`/capaian/kelas/${kelasId}`),
+  getByProdi: (prodiId: string) => apiFetch(`/capaian/prodi/${prodiId}`),
 };
 
 // ENROLLMENT
 export const enrollmentApi = {
   getByKelas: (kelasId: string) => apiFetch(`/enrollment/kelas/${kelasId}`),
+};
+
+// USER API (for Superadmin)
+export const userApi = {
+  getAll: () => apiFetch('/users'),
+  getById: (id: string) => apiFetch(`/users/${id}`),
+  getByEmail: (email: string) => apiFetch(`/users/email/${email}`),
+  create: (body: { email: string; password: string; role: string }) =>
+    apiFetch('/users', { method: 'POST', body: JSON.stringify(body) }),
+  update: (id: string, body: { email: string; role: string }) =>
+    apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  delete: (id: string) => apiFetch(`/users/${id}`, { method: 'DELETE' }),
+};
+
+// AUDIT LOG API (for Superadmin)
+export const auditLogApi = {
+  getAll: () => apiFetch('/auth-audit-log'),
+  getById: (id: string) => apiFetch(`/auth-audit-log/${id}`),
+  getByUser: (userId: string) => apiFetch(`/auth-audit-log/user/${userId}`),
+  getByEventType: (eventType: string) => apiFetch(`/auth-audit-log/event/${eventType}`),
+  getLoginStatistics: () => apiFetch('/auth-audit-log/statistics/login'),
+  getFailedLogins: () => apiFetch('/auth-audit-log/statistics/failed-logins'),
+  deleteOld: () => apiFetch('/auth-audit-log/cleanup', { method: 'DELETE' }),
+};
+
+// MATA KULIAH API (from module1)
+export const mataKuliahApi = {
+  getAll: async () => {
+    const token = authStorage.getToken();
+    const res = await fetch(`${API_URL}/api/v1/m1/kurikulum/mk`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal memuat mata kuliah');
+    return data;
+  },
+};
+
+// DOSEN API (from module1)
+export const dosenApi = {
+  getAll: async () => {
+    const token = authStorage.getToken();
+    const res = await fetch(`${API_URL}/api/v1/m1/dosen`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal memuat dosen');
+    return data;
+  },
 };
 
 // MAHASISWA API

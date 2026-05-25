@@ -1,36 +1,106 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { auditLogApi } from '@/lib/api';
+import ToastContainer, { showToast } from '@/components/Toast';
 
 interface AuditLog {
   id: number;
-  timestamp: string;
-  user: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'READ';
-  resource: string;
-  details: string;
-  ipAddress: string;
+  user_id: number;
+  user_email?: string;
+  user_name?: string;
+  event_type: string;
+  ip_address?: string;
+  user_agent?: string;
+  detail?: any;
+  created_at: string;
 }
 
 export default function AuditLogPage() {
-  const [logs] = useState<AuditLog[]>([
-    { id: 1, timestamp: '2024-05-25 14:30:15', user: 'admin_prodi', action: 'CREATE', resource: 'Mata Kuliah', details: 'Menambahkan mata kuliah "Pemrograman Web"', ipAddress: '192.168.1.100' },
-    { id: 2, timestamp: '2024-05-25 14:15:42', user: 'dosen_a', action: 'UPDATE', resource: 'Input Nilai', details: 'Mengupdate nilai Sub-CPMK mahasiswa 001', ipAddress: '192.168.1.105' },
-    { id: 3, timestamp: '2024-05-25 13:45:20', user: 'superadmin', action: 'DELETE', resource: 'Manajemen User', details: 'Menghapus user "user_inactive"', ipAddress: '192.168.1.1' },
-    { id: 4, timestamp: '2024-05-25 13:20:10', user: 'admin_prodi', action: 'READ', resource: 'Capaian CPL', details: 'Melihat capaian CPL mahasiswa angkatan 2023', ipAddress: '192.168.1.100' },
-  ]);
-
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAction, setFilterAction] = useState<string>('all');
 
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const loadLogs = async () => {
+    try {
+      setLoading(true);
+      const response = await auditLogApi.getAll();
+      setLogs(response.data || []);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Gagal memuat audit log', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = () => {
+    try {
+      // Prepare CSV data
+      const headers = ['No', 'Timestamp', 'Nama User', 'Email', 'Event Type', 'IP Address', 'Status'];
+      const csvData = filteredLogs.map((log, index) => [
+        index + 1,
+        new Date(log.created_at).toLocaleString('id-ID', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }),
+        log.user_name || 'Unknown',
+        log.user_email || `User ID: ${log.user_id}`,
+        log.event_type,
+        log.ip_address || '-',
+        log.event_type.includes('success') || log.event_type === 'logout' || log.event_type === 'password_changed' 
+          ? 'success' 
+          : log.event_type.includes('failed') || log.event_type === 'account_locked'
+          ? 'failed'
+          : 'pending'
+      ]);
+
+      // Convert to CSV string
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      // Create blob and download
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `audit-log-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Audit log berhasil diexport', 'success');
+    } catch (error) {
+      showToast('Gagal export audit log', 'error');
+    }
+  };
+
   const filteredLogs = logs.filter(log => {
-    const matchSearch = log.user.toLowerCase().includes(searchTerm.toLowerCase()) || log.resource.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchFilter = filterAction === 'all' || log.action === filterAction;
+    const matchSearch = 
+      (log.user_email && log.user_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (log.user_name && log.user_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      log.event_type.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchFilter = filterAction === 'all' || log.event_type === filterAction;
     return matchSearch && matchFilter;
   });
 
   return (
     <>
+      <ToastContainer />
+      
       {/* Header */}
       <div className="page-header animate-fade-in">
         <h1 className="page-title">Audit Log</h1>
@@ -47,14 +117,17 @@ export default function AuditLogPage() {
             <input type="text" placeholder="Cari log..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
           </div>
           <select className="select-field" value={filterAction} onChange={(e) => setFilterAction(e.target.value)} style={{ minWidth: '150px' }}>
-            <option value="all">Semua Aksi</option>
-            <option value="CREATE">CREATE</option>
-            <option value="READ">READ</option>
-            <option value="UPDATE">UPDATE</option>
-            <option value="DELETE">DELETE</option>
+            <option value="all">Semua Event</option>
+            <option value="login_success">Login Success</option>
+            <option value="login_failed">Login Failed</option>
+            <option value="logout">Logout</option>
+            <option value="token_refresh">Token Refresh</option>
+            <option value="account_locked">Account Locked</option>
+            <option value="password_reset_req">Password Reset Request</option>
+            <option value="password_changed">Password Changed</option>
           </select>
         </div>
-        <button className="btn btn-secondary">
+        <button className="btn btn-secondary" onClick={handleExport} disabled={filteredLogs.length === 0}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
@@ -64,7 +137,12 @@ export default function AuditLogPage() {
 
       {/* Table */}
       <div className="card animate-fade-in stagger-2" style={{ padding: 0, overflow: 'hidden' }}>
-        {filteredLogs.length === 0 ? (
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
+            <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
+          </div>
+        ) : filteredLogs.length === 0 ? (
           <div className="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
@@ -79,30 +157,67 @@ export default function AuditLogPage() {
                 <th>No</th>
                 <th>Timestamp</th>
                 <th>User</th>
-                <th>Aksi</th>
-                <th>Resource</th>
-                <th>Detail</th>
+                <th>Event</th>
                 <th>IP Address</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {filteredLogs.map((log, index) => (
                 <tr key={log.id}>
                   <td>{index + 1}</td>
-                  <td style={{ fontSize: '13px', whiteSpace: 'nowrap' }}>{log.timestamp}</td>
-                  <td style={{ fontWeight: '600' }}>{log.user}</td>
+                  <td style={{ fontSize: '13px', whiteSpace: 'nowrap' }}>
+                    {new Date(log.created_at).toLocaleString('id-ID', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontWeight: '600', fontSize: '13px' }}>
+                        {log.user_name || 'Unknown'}
+                      </span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        {log.user_email || `User ID: ${log.user_id}`}
+                      </span>
+                    </div>
+                  </td>
                   <td>
                     <span className={`badge ${
-                      log.action === 'CREATE' ? 'badge-green' :
-                      log.action === 'UPDATE' ? 'badge-yellow' :
-                      log.action === 'DELETE' ? 'badge-red' : 'badge-blue'
+                      log.event_type === 'login_success' ? 'badge-green' :
+                      log.event_type === 'login_failed' ? 'badge-red' :
+                      log.event_type === 'logout' ? 'badge-blue' :
+                      log.event_type === 'token_refresh' ? 'badge-yellow' :
+                      log.event_type === 'account_locked' ? 'badge-red' :
+                      log.event_type === 'password_reset_req' ? 'badge-yellow' :
+                      log.event_type === 'password_changed' ? 'badge-green' :
+                      'badge-dark'
                     }`}>
-                      {log.action}
+                      {log.event_type}
                     </span>
                   </td>
-                  <td>{log.resource}</td>
-                  <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{log.details}</td>
-                  <td style={{ fontSize: '13px', fontFamily: 'monospace' }}>{log.ipAddress}</td>
+                  <td style={{ fontSize: '13px', fontFamily: 'monospace' }}>
+                    {log.ip_address || '-'}
+                  </td>
+                  <td>
+                    <span className={`badge ${
+                      log.event_type.includes('success') || log.event_type === 'logout' || log.event_type === 'password_changed' 
+                        ? 'badge-green' 
+                        : log.event_type.includes('failed') || log.event_type === 'account_locked'
+                        ? 'badge-red'
+                        : 'badge-yellow'
+                    }`}>
+                      {log.event_type.includes('success') || log.event_type === 'logout' || log.event_type === 'password_changed' 
+                        ? 'success' 
+                        : log.event_type.includes('failed') || log.event_type === 'account_locked'
+                        ? 'failed'
+                        : 'pending'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

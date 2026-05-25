@@ -101,7 +101,7 @@ const updateUser = async (id, email, role) => {
     const result = await pool.query(
       `
       UPDATE users 
-      SET email = $1, role_id = $2, updated_at = NOW()
+      SET email = $1, role_id = $2
       WHERE id = $3
       RETURNING id, email, role_id
       `,
