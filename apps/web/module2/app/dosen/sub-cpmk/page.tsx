@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Modal from '@/components/Modal';
 import ToastContainer, { showToast } from '@/components/Toast';
-import { subCpmkApi, kelasApi } from '@/lib/api';
+import { subCpmkApi, kelasApi, mkCplApi } from '@/lib/api';
 
 interface SubCpmk {
   id: string;
@@ -14,6 +14,17 @@ interface SubCpmk {
   kode_mk?: string;
   nama_mk?: string;
   kode_cpl?: string;
+}
+
+interface MkCpl {
+  id: string;
+  mk_id: string;
+  cpl_id: string;
+  bobot: number;
+  kode_mk: string;
+  nama_mk: string;
+  kode_cpl: string;
+  deskripsi_cpl?: string;
 }
 
 interface Kelas {
@@ -27,6 +38,7 @@ interface Kelas {
 export default function SubCpmkPage() {
   const [subCpmkList, setSubCpmkList] = useState<SubCpmk[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  const [mkCplList, setMkCplList] = useState<MkCpl[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -37,15 +49,18 @@ export default function SubCpmkPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [subRes, kelasRes] = await Promise.all([
-        subCpmkApi.getAll(),
+      const [subRes, kelasRes, mkCplRes] = await Promise.all([
+        subCpmkApi.getMySubCpmk(), // Changed from getAll() to getMySubCpmk()
         kelasApi.getMyClasses(),
+        mkCplApi.getMyMkCpl(),
       ]);
       setSubCpmkList(subRes.data || []);
       setKelasList(kelasRes.data || []);
+      setMkCplList(mkCplRes.data || []);
     } catch {
       setSubCpmkList([]);
       setKelasList([]);
+      setMkCplList([]);
     } finally {
       setLoading(false);
     }
@@ -185,23 +200,35 @@ export default function SubCpmkPage() {
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>MK-CPL ID</label>
-              <input
-                className="input-field"
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
+                Mata Kuliah → CPL <span style={{ color: 'red' }}>*</span>
+              </label>
+              <select
+                className="select-field"
                 value={formData.mk_cpl_id}
                 onChange={(e) => setFormData({ ...formData, mk_cpl_id: e.target.value })}
-                placeholder="UUID dari mk_cpl"
                 required
-                disabled={!!editItem}
-              />
+              >
+                <option value="">-- Pilih MK dan CPL --</option>
+                {mkCplList.map((mc) => (
+                  <option key={mc.id} value={mc.id}>
+                    {mc.nama_mk} ({mc.kode_mk}) → {mc.kode_cpl} (Bobot: {(mc.bobot * 100).toFixed(0)}%)
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                {editItem ? '⚠️ Mengubah MK-CPL akan memindahkan Sub-CPMK ke pemetaan yang berbeda' : 'Pilih pemetaan Mata Kuliah ke CPL yang sesuai'}
+              </p>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>Kode Sub-CPMK</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
+                Kode Sub-CPMK <span style={{ color: 'red' }}>*</span>
+              </label>
               <input
                 className="input-field"
                 value={formData.kode_sub_cpmk}
                 onChange={(e) => setFormData({ ...formData, kode_sub_cpmk: e.target.value })}
-                placeholder="Contoh: SUB-CPMK-01"
+                placeholder="Contoh: SCPL-01"
                 required
               />
             </div>
@@ -217,7 +244,9 @@ export default function SubCpmkPage() {
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>Bobot (0-1)</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
+                Bobot (0-1) <span style={{ color: 'red' }}>*</span>
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -226,9 +255,12 @@ export default function SubCpmkPage() {
                 className="input-field"
                 value={formData.bobot}
                 onChange={(e) => setFormData({ ...formData, bobot: e.target.value })}
-                placeholder="Contoh: 0.25"
+                placeholder="Contoh: 0.25 (25%)"
                 required
               />
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                ⚠️ Total bobot semua Sub-CPMK untuk MK-CPL yang sama harus = 1.0 (100%)
+              </p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>

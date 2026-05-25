@@ -6,6 +6,7 @@ const {
   getSubCPMKByIdHandler,
   getSubCPMKByMKCPLHandler,
   getSubCPMKByMKHandler,
+  getSubCPMKByDosenHandler,
   getSubCPMKByCPLHandler,
   createSubCPMKHandler,
   updateSubCPMKHandler,
@@ -55,6 +56,14 @@ router.get(
   authMiddleware,
   authorize("Superadmin", "Admin Prodi", "Dosen", "Mahasiswa"),
   getSubCPMKByMKHandler
+);
+
+// GET Sub-CPMK berdasarkan dosen (hanya MK yang diampu) - Dosen only
+router.get(
+  "/dosen/my-sub-cpmk",
+  authMiddleware,
+  authorize("Dosen"),
+  getSubCPMKByDosenHandler
 );
 
 // GET Sub-CPMK berdasarkan CPL - Semua role (Read)

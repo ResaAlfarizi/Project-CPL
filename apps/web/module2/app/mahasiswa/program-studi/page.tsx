@@ -76,121 +76,121 @@ export default function ProgramStudiPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       {/* Search */}
-      <div className="relative">
+      <div style={{ position: 'relative' }}>
         <input
           type="text"
           placeholder="Cari program studi..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-3 pl-10 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white"
+          className="input-field"
+          style={{ paddingLeft: '40px' }}
         />
-        <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg style={{ width: '20px', height: '20px', color: '#9CA3AF', position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">NO</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">KODE PRODI</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">NAMA PROGRAM STUDI</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">JENJANG</th>
-              <th className="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">AKSI</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
+      {isLoading ? (
+        <div className="skeleton" style={{ height: '300px', borderRadius: 'var(--radius-md)' }} />
+      ) : (
+        <div className="card animate-fade-in" style={{ padding: 0, overflow: 'hidden' }}>
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-                    <span>Memuat data...</span>
-                  </div>
-                </td>
+                <th style={{ width: '80px' }}>NO</th>
+                <th>KODE PRODI</th>
+                <th>NAMA PROGRAM STUDI</th>
+                <th>JENJANG</th>
+                <th style={{ textAlign: 'center' }}>AKSI</th>
               </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
-                  Tidak ada data program studi
-                </td>
-              </tr>
-            ) : (
-              filtered.map((prodi, idx) => (
-                <tr key={prodi.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-gray-900">{idx + 1}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-900 text-white">
-                      {prodi.kode_prodi || '-'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">{prodi.nama_prodi || '-'}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" style={{ background: '#E8F3FF', color: '#1E40AF' }}>
-                      {prodi.jenjang || '-'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <button 
-                      onClick={() => handleSelectProdi(prodi)}
-                      className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-medium transition-colors hover:opacity-80" 
-                      style={{ background: '#E8F3FF', color: '#1E40AF' }}
-                    >
-                      Lihat CPL
-                    </button>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-secondary)' }}>
+                    Tidak ada data program studi
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                filtered.map((prodi, idx) => (
+                  <tr key={prodi.id}>
+                    <td style={{ fontWeight: '500' }}>{idx + 1}</td>
+                    <td>
+                      <span className="badge badge-dark">{prodi.kode_prodi || '-'}</span>
+                    </td>
+                    <td style={{ fontWeight: '600' }}>{prodi.nama_prodi || '-'}</td>
+                    <td>
+                      <span className="badge badge-blue">{prodi.jenjang || '-'}</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button 
+                        onClick={() => handleSelectProdi(prodi)}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        Lihat CPL
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {/* CPL Modal/Section */}
+      {/* CPL Section */}
       {selectedProdi && (
-        <div className="bg-white rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card animate-fade-in">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">CPL - {selectedProdi.nama_prodi}</h3>
-              <p className="text-sm text-gray-500">Daftar Capaian Pembelajaran Lulusan</p>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--eerie-black)', marginBottom: '4px' }}>
+                CPL - {selectedProdi.nama_prodi}
+              </h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                Daftar Capaian Pembelajaran Lulusan
+              </p>
             </div>
             <button
               onClick={() => setSelectedProdi(null)}
-              className="text-gray-400 hover:text-gray-600"
+              className="btn-ghost"
+              style={{ padding: '8px', borderRadius: 'var(--radius-sm)' }}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
           {cplLoading ? (
-            <div className="py-8 text-center text-gray-400">
-              <div className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-                <span>Memuat CPL...</span>
+            <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <div className="skeleton" style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
+                <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Memuat CPL...</span>
               </div>
             </div>
           ) : filteredCpl.length === 0 ? (
-            <div className="py-8 text-center text-gray-400">
+            <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '14px' }}>
               Tidak ada CPL untuk program studi ini
             </div>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {filteredCpl.map((cpl, idx) => (
-                <div key={cpl.id || idx} className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-900 text-white flex-shrink-0">
+                <div key={cpl.id || idx} className="card-flat" style={{ padding: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <span className="badge badge-dark" style={{ flexShrink: 0 }}>
                       {cpl.kode_cpl || `CPL-${idx + 1}`}
                     </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{cpl.nama_cpl || '-'}</p>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--eerie-black)', marginBottom: '4px' }}>
+                        {cpl.nama_cpl || '-'}
+                      </p>
                       {cpl.deskripsi && (
-                        <p className="text-xs text-gray-500 mt-1">{cpl.deskripsi}</p>
+                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                          {cpl.deskripsi}
+                        </p>
                       )}
                     </div>
                   </div>

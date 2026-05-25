@@ -80,30 +80,41 @@ export default function CapaianPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Header Card */}
-      <div className="bg-white rounded-xl p-6">
-        <div className="flex items-start justify-between">
+      <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Capaian CPL Saya</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827' }}>Capaian CPL Saya</h2>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '4px' }}>
               Data capaian pembelajaran untuk {user?.name || 'Mahasiswa'}
             </p>
           </div>
           <button
             onClick={handleShowDetail}
             disabled={detailLoading}
-            className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-medium transition-colors hover:opacity-80 disabled:opacity-50"
-            style={{ background: '#E8F3FF', color: '#1E40AF' }}
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              padding: '10px 16px', 
+              borderRadius: '8px', 
+              fontSize: '13px', 
+              fontWeight: '500', 
+              background: '#E8F3FF', 
+              color: '#1E40AF',
+              border: 'none',
+              cursor: detailLoading ? 'not-allowed' : 'pointer',
+              opacity: detailLoading ? 0.5 : 1
+            }}
           >
             {detailLoading ? (
               <>
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-2"></div>
+                <div style={{ width: '12px', height: '12px', border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', marginRight: '8px' }}></div>
                 Memuat...
               </>
             ) : (
               <>
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style={{ width: '16px', height: '16px', marginRight: '8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Lihat Detail
@@ -114,16 +125,16 @@ export default function CapaianPage() {
       </div>
 
       {/* Capaian CPL Cards */}
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {isLoading ? (
-          <div className="bg-white rounded-xl p-12 text-center text-gray-400">
-            <div className="flex items-center justify-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '48px 24px', textAlign: 'center', color: '#9CA3AF', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <div style={{ width: '20px', height: '20px', border: '2px solid #9CA3AF', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
               <span>Memuat data capaian...</span>
             </div>
           </div>
         ) : capaianList.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center text-gray-400">
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '48px 24px', textAlign: 'center', color: '#9CA3AF', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             Belum ada data capaian CPL
           </div>
         ) : (
@@ -133,40 +144,41 @@ export default function CapaianPage() {
             const persentase = capaian.persentase || 0;
             
             return (
-              <div key={`capaian-${capaian.id}-${idx}`} className="bg-white rounded-xl p-6 border border-gray-100">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-900 text-white">
+              <div key={`capaian-${capaian.id}-${idx}`} style={{ background: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: '600', background: '#1F2937', color: '#fff' }}>
                         {capaian.kode_cpl || '-'}
                       </span>
                       {capaian.status && (
                         <span 
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                          style={{ background: statusColor.bg, color: statusColor.text }}
+                          style={{ display: 'inline-flex', alignItems: 'center', padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: '600', background: statusColor.bg, color: statusColor.text }}
                         >
                           {capaian.status}
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900">
+                    <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#111827', lineHeight: '1.5' }}>
                       {capaian.nama_cpl || '-'}
                     </h3>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900">{persentase.toFixed(1)}%</p>
+                  <div style={{ textAlign: 'right', marginLeft: '16px' }}>
+                    <p style={{ fontSize: '32px', fontWeight: '700', color: '#111827', lineHeight: '1' }}>{persentase.toFixed(1)}%</p>
                     {capaian.target && (
-                      <p className="text-xs text-gray-500">Target: {capaian.target}%</p>
+                      <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Target: {capaian.target}%</p>
                     )}
                   </div>
                 </div>
                 
                 {/* Progress Bar */}
-                <div className="relative">
-                  <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div style={{ position: 'relative', marginBottom: '8px' }}>
+                  <div style={{ width: '100%', height: '12px', background: '#F3F4F6', borderRadius: '999px', overflow: 'hidden' }}>
                     <div 
-                      className="h-full rounded-full transition-all duration-500"
                       style={{ 
+                        height: '100%',
+                        borderRadius: '999px',
+                        transition: 'width 0.5s ease',
                         width: `${Math.min(persentase, 100)}%`,
                         backgroundColor: progressColor
                       }}
@@ -174,16 +186,22 @@ export default function CapaianPage() {
                   </div>
                   {capaian.target && (
                     <div 
-                      className="absolute top-0 bottom-0 w-0.5 bg-gray-400"
-                      style={{ left: `${Math.min(capaian.target, 100)}%` }}
+                      style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        width: '2px',
+                        background: '#6B7280',
+                        left: `${Math.min(capaian.target, 100)}%`
+                      }}
                       title={`Target: ${capaian.target}%`}
                     />
                   )}
                 </div>
                 
                 {capaian.nilai !== undefined && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Nilai: <span className="font-semibold text-gray-900">{capaian.nilai.toFixed(2)}</span>
+                  <p style={{ fontSize: '13px', color: '#6B7280' }}>
+                    Nilai: <span style={{ fontWeight: '600', color: '#111827' }}>{capaian.nilai.toFixed(2)}</span>
                   </p>
                 )}
               </div>
@@ -194,52 +212,52 @@ export default function CapaianPage() {
 
       {/* Detail Modal/Section */}
       {showDetail && (
-        <div className="bg-white rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Detail Capaian per Mata Kuliah</h3>
-              <p className="text-sm text-gray-500">Rincian nilai dari setiap mata kuliah</p>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#111827' }}>Detail Capaian per Mata Kuliah</h3>
+              <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '4px' }}>Rincian nilai dari setiap mata kuliah</p>
             </div>
             <button
               onClick={() => setShowDetail(false)}
-              className="text-gray-400 hover:text-gray-600"
+              style={{ color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
           {capaianDetail.length === 0 ? (
-            <div className="py-8 text-center text-gray-400">
+            <div style={{ padding: '32px 24px', textAlign: 'center', color: '#9CA3AF' }}>
               Tidak ada detail capaian
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">KODE MK</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">MATA KULIAH</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">SEMESTER</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">NILAI</th>
+                  <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                    <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>KODE MK</th>
+                    <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MATA KULIAH</th>
+                    <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>SEMESTER</th>
+                    <th style={{ textAlign: 'right', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>NILAI</th>
                   </tr>
                 </thead>
                 <tbody>
                   {capaianDetail.map((detail, idx) => (
-                    <tr key={`detail-${detail.mk_id || idx}-${idx}`} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-900 text-white">
+                    <tr key={`detail-${detail.mk_id || idx}-${idx}`} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <td style={{ padding: '16px 24px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', background: '#1F2937', color: '#fff' }}>
                           {detail.kode_mk || '-'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{detail.nama_mk || '-'}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium" style={{ background: '#E8F3FF', color: '#1E40AF' }}>
+                      <td style={{ padding: '16px 24px', fontSize: '14px', color: '#111827' }}>{detail.nama_mk || '-'}</td>
+                      <td style={{ padding: '16px 24px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', background: '#E8F3FF', color: '#1E40AF' }}>
                           {detail.semester || '-'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                      <td style={{ padding: '16px 24px', textAlign: 'right', fontSize: '14px', fontWeight: '600', color: '#111827' }}>
                         {detail.nilai !== undefined ? detail.nilai.toFixed(2) : '-'}
                       </td>
                     </tr>

@@ -42,7 +42,7 @@ export default function MataKuliahPage() {
   return (
     <>
       <div className="page-header animate-fade-in">
-        <h1 className="page-title">Mata Kuliah & Pemetaan</h1>
+        <h1 className="page-title">Mata Kuliah</h1>
         <p className="page-subtitle">Daftar mata kuliah dan kelas yang Anda ampu (hanya baca)</p>
       </div>
 
