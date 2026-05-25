@@ -13,6 +13,7 @@ const cplRoutes = require("./cplRoutes");
 const subCpmkRoutes = require("./subCpmkRoutes");
 const authAuditLogRoutes = require("./authAuditLogRoutes");
 const dosenProfileRoutes = require("./dosenProfileRoutes");
+const mahasiswaProfileRoutes = require("./mahasiswaProfileRoutes");
 
 // grouping routes
 router.use("/auth", authRoutes);
@@ -27,5 +28,6 @@ router.use("/cpl", cplRoutes);
 router.use("/sub-cpmk", subCpmkRoutes);
 router.use("/auth-audit-log", authAuditLogRoutes);
 router.use("/profile", dosenProfileRoutes);
+router.use("/profile", mahasiswaProfileRoutes);
 
 module.exports = router;

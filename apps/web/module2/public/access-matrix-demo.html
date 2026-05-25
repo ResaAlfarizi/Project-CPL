@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Hak Akses per Role - SUPERADMIN</title>
+    
+    <!-- Google Fonts - Urbanist -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Urbanist', sans-serif;
+            background-color: #212121;
+            color: #F6F5FA;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 48px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #CFDECA;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: #D8DFE9;
+        }
+
+        /* Table Container */
+        .table-container {
+            background-color: #2a2a2a;
+            border: 1px solid rgba(216, 223, 233, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #1a1a1a;
+        }
+
+        thead th {
+            padding: 16px 24px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #F6F5FA;
+            border-bottom: 2px solid rgba(207, 222, 202, 0.2);
+        }
+
+        thead th:last-child {
+            text-align: center;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(216, 223, 233, 0.08);
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background-color: rgba(207, 222, 202, 0.05);
+        }
+
+        tbody td {
+            padding: 20px 24px;
+            font-size: 15px;
+            color: #F6F5FA;
+        }
+
+        tbody td:last-child {
+            text-align: center;
+        }
+
+        /* Badge */
+        .badge-container {
+            display: inline-flex;
+            gap: 6px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            background-color: rgba(239, 253, 163, 0.15);
+            color: #EFFDA3;
+            border: 1px solid rgba(239, 253, 163, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .badge:hover {
+            background-color: rgba(239, 253, 163, 0.25);
+            transform: scale(1.05);
+        }
+
+        /* Legend */
+        .legend {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: rgba(42, 42, 42, 0.5);
+            border: 1px solid rgba(216, 223, 233, 0.1);
+            border-radius: 12px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .legend-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-item .badge {
+            cursor: default;
+        }
+
+        .legend-item span {
+            font-size: 13px;
+            color: #D8DFE9;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 16px;
+            text-align: center;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        .footer p {
+            font-size: 14px;
+            color: rgba(216, 223, 233, 0.6);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 24px 16px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 600px;
+            }
+
+            thead th,
+            tbody td {
+                padding: 12px 16px;
+            }
+
+            .legend-content {
+                gap: 16px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(216, 223, 233, 0.2);
+            border-top-color: #EFFDA3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Matrix Hak Akses per Role</h1>
+            <p>Kelola dan pantau hak akses untuk setiap role dalam sistem</p>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="color: #D8DFE9;">Memuat data...</p>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container" id="tableContainer">
+            <table>
+                <thead>
+                    <tr>
+                        <th>RESOURCE</th>
+                        <th>SUPERADMIN</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data akan diisi oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-content">
+                <div class="legend-item">
+                    <span class="badge">R</span>
+                    <span>Read (Baca)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="badge">W</span>
+                    <span>Write (Tulis)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="badge">D</span>
+                    <span>Delete (Hapus)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>💡 Hak akses dapat dikonfigurasi melalui sistem manajemen role</p>
+        </div>
+    </div>
+
+    <script>
+        // Mock data untuk hak akses
+        const accessData = [
+            {
+                resource: 'Program Studi & CPL',
+                superadmin: { read: true, write: true, delete: true }
+            },
+            {
+                resource: 'Mata Kuliah & Pemetaan',
+                superadmin: { read: true, write: true, delete: true }
+            },
+            {
+                resource: 'Sub-CPMK',
+                superadmin: { read: true, write: true, delete: true }
+            },
+            {
+                resource: 'Input Nilai Sub-CPMK',
+                superadmin: { read: true, write: true, delete: true }
+            },
+            {
+                resource: 'Capaian CPL Mahasiswa',
+                superadmin: { read: true, write: true, delete: true }
+            },
+            {
+                resource: 'Manajemen User',
+                superadmin: { read: true, write: true, delete: true }
+            },
+            {
+                resource: 'Audit Log',
+                superadmin: { read: true, write: false, delete: false }
+            }
+        ];
+
+        // Function untuk membuat badge
+        function createBadges(access) {
+            const badges = [];
+            if (access.read) badges.push('R');
+            if (access.write) badges.push('W');
+            if (access.delete) badges.push('D');
+
+            return badges.map(badge => 
+                `<span class="badge">${badge}</span>`
+            ).join('');
+        }
+
+        // Function untuk render tabel
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            
+            accessData.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.style.animationDelay = `${index * 0.05}s`;
+                
+                row.innerHTML = `
+                    <td>${item.resource}</td>
+                    <td>
+                        <div class="badge-container">
+                            ${createBadges(item.superadmin)}
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Simulate loading
+        window.addEventListener('DOMContentLoaded', () => {
+            const loading = document.getElementById('loading');
+            const tableContainer = document.getElementById('tableContainer');
+            
+            // Show loading
+            loading.style.display = 'block';
+            tableContainer.style.display = 'none';
+            
+            // Simulate API call
+            setTimeout(() => {
+                loading.style.display = 'none';
+                tableContainer.style.display = 'block';
+                renderTable();
+            }, 800);
+        });
+
+        // Add smooth scroll behavior
+        document.documentElement.style.scrollBehavior = 'smooth';
+    </script>
+</body>
+</html>

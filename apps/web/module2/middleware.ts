@@ -25,7 +25,9 @@ export function middleware(request: NextRequest) {
         const role = payload.role?.toLowerCase();
         
         // Redirect based on role
-        if (role === 'dosen') {
+        if (role === 'superadmin') {
+          return NextResponse.redirect(new URL('/superadmin', request.url));
+        } else if (role === 'dosen') {
           return NextResponse.redirect(new URL('/dosen', request.url));
         } else if (role === 'admin' || role === 'admin_prodi') {
           return NextResponse.redirect(new URL('/admin', request.url));

@@ -13,14 +13,16 @@ export default function Home() {
       if (isAuthenticated && user) {
         // Redirect based on role
         const role = user.role?.toLowerCase();
-        if (role === 'dosen') {
+        if (role === 'superadmin') {
+          router.push('/superadmin');
+        } else if (role === 'dosen') {
           router.push('/dosen');
         } else if (role === 'admin' || role === 'admin_prodi') {
           router.push('/admin');
         } else if (role === 'mahasiswa') {
           router.push('/mahasiswa');
         } else {
-          router.push('/dosen'); // Default fallback
+          router.push('/login'); // Default fallback
         }
       } else {
         router.push('/login');

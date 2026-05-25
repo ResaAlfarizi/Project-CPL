@@ -1,6 +1,6 @@
 import { authStorage } from './auth';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const API_BASE = `${API_URL}/api/v1/m2`;
 
 export interface LoginCredentials {
@@ -20,15 +20,19 @@ export interface ApiError {
 // Helper fetch with JWT
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const token = authStorage.getToken();
+  
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> || {}),
   };
+  
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
+  
   const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
   const data = await res.json();
+  
   if (!res.ok) {
     throw new Error(data.message || 'Request gagal');
   }
@@ -126,4 +130,30 @@ export const capaianApi = {
 // ENROLLMENT
 export const enrollmentApi = {
   getByKelas: (kelasId: string) => apiFetch(`/enrollment/kelas/${kelasId}`),
+};
+
+// MAHASISWA API
+export const mahasiswaApi = {
+  // Profile
+  getMyProfile: () => apiFetch('/profile/mahasiswa/me'),
+
+  // Capaian CPL diri sendiri
+  getMyCapaian: () => apiFetch('/capaian/mahasiswa/my-capaian'),
+  getMyCapaianDetail: () => apiFetch('/capaian/mahasiswa/my-capaian/detail'),
+
+  // Program Studi (Read only)
+  getAllProdi: () => apiFetch('/prodi'),
+  getProdiById: (id: number) => apiFetch(`/prodi/${id}`),
+
+  // CPL (Read only)
+  getAllCPL: () => apiFetch('/cpl'),
+  getCPLByProdi: (prodiId: number) => apiFetch(`/cpl/prodi/${prodiId}`),
+
+  // Mata Kuliah / Kelas (Read only)
+  getAllKelas: () => apiFetch('/kelas'),
+  getKelasById: (id: number) => apiFetch(`/kelas/${id}`),
+
+  // Sub-CPMK (Read only)
+  getAllSubCpmk: () => apiFetch('/sub-cpmk'),
+  getSubCpmkByMK: (mkId: number) => apiFetch(`/sub-cpmk/mk/${mkId}`),
 };

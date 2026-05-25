@@ -30,8 +30,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await authApi.login(credentials);
-      authStorage.setToken(response.token);
       
+      if (!response.token) {
+        throw new Error('Token tidak diterima dari server');
+      }
+      
+      authStorage.setToken(response.token);
       const decoded = authStorage.decodeToken(response.token);
       setUser(decoded);
       
@@ -40,14 +44,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.push('/superadmin');
       } else if (decoded.role?.toLowerCase() === 'dosen') {
         router.push('/dosen');
-      } else if (decoded.role?.toLowerCase() === 'admin' || decoded.role?.toLowerCase() === 'admin_prodi') {
+      } else if (decoded?.role?.toLowerCase() === 'admin' || decoded?.role?.toLowerCase() === 'admin_prodi') {
         router.push('/admin');
-      } else if (decoded.role?.toLowerCase() === 'mahasiswa') {
+      } else if (decoded?.role?.toLowerCase() === 'mahasiswa') {
         router.push('/mahasiswa');
       } else {
-        router.push('/dashboard'); // Fallback
+        router.push('/dashboard');
       }
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
