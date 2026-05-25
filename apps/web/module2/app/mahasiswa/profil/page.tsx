@@ -42,48 +42,58 @@ export default function ProfilMahasiswaPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800"></div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+        <div style={{ width: '48px', height: '48px', border: '2px solid #1F2937', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-        <p className="text-red-600">{error}</p>
+      <div style={{ background: '#FEF2F2', border: '1px solid #FEE2E2', borderRadius: '12px', padding: '16px' }}>
+        <p style={{ color: '#DC2626' }}>{error}</p>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-        <p className="text-yellow-600">Profil tidak ditemukan</p>
+      <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '12px', padding: '16px' }}>
+        <p style={{ color: '#D97706' }}>Profil tidak ditemukan</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-6">
+      <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #E5E7EB', padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           {/* Avatar */}
           <div 
-            className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold"
-            style={{ background: '#FFF063', color: '#1a1a1a' }}
+            style={{ 
+              width: '96px', 
+              height: '96px', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              fontSize: '32px', 
+              fontWeight: '700',
+              background: '#FFF063', 
+              color: '#1a1a1a' 
+            }}
           >
             {profile.nama.charAt(0).toUpperCase()}
           </div>
           
           {/* Info */}
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">{profile.nama}</h1>
-            <p className="text-gray-600 mt-1">NIM: {profile.nim}</p>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827' }}>{profile.nama}</h1>
+            <p style={{ color: '#6B7280', marginTop: '4px', fontSize: '14px' }}>NIM: {profile.nim}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: '500', background: '#D1FAE5', color: '#065F46' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', marginRight: '8px' }}></span>
                 Mahasiswa Aktif
               </span>
             </div>
@@ -92,105 +102,105 @@ export default function ProfilMahasiswaPage() {
       </div>
 
       {/* Grid 2 Kolom */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
         {/* Informasi Pribadi */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#E8F3FF' }}>
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #E5E7EB', padding: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#E8F3FF' }}>
+              <svg style={{ width: '20px', height: '20px', color: '#1E40AF' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900">Informasi Pribadi</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827' }}>Informasi Pribadi</h2>
           </div>
           
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Lengkap</label>
-              <p className="text-gray-900 font-medium mt-1">{profile.nama}</p>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Nama Lengkap</label>
+              <p style={{ color: '#111827', fontWeight: '500', marginTop: '4px', fontSize: '14px' }}>{profile.nama}</p>
             </div>
             
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">NIM</label>
-              <p className="text-gray-900 font-medium mt-1">{profile.nim}</p>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>NIM</label>
+              <p style={{ color: '#111827', fontWeight: '500', marginTop: '4px', fontSize: '14px' }}>{profile.nim}</p>
             </div>
             
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</label>
-              <p className="text-gray-900 font-medium mt-1">{profile.email}</p>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</label>
+              <p style={{ color: '#111827', fontWeight: '500', marginTop: '4px', fontSize: '14px' }}>{profile.email}</p>
             </div>
           </div>
         </div>
 
         {/* Informasi Akademik */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#CFECCA' }}>
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #E5E7EB', padding: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#CFECCA' }}>
+              <svg style={{ width: '20px', height: '20px', color: '#166534' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900">Informasi Akademik</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827' }}>Informasi Akademik</h2>
           </div>
           
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Program Studi</label>
-              <p className="text-gray-900 font-medium mt-1">{profile.nama_prodi}</p>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Program Studi</label>
+              <p style={{ color: '#111827', fontWeight: '500', marginTop: '4px', fontSize: '14px' }}>{profile.nama_prodi}</p>
             </div>
             
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Kode Prodi</label>
-              <p className="text-gray-900 font-medium mt-1">{profile.kode_prodi}</p>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kode Prodi</label>
+              <p style={{ color: '#111827', fontWeight: '500', marginTop: '4px', fontSize: '14px' }}>{profile.kode_prodi}</p>
             </div>
             
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Jenjang</label>
-              <p className="text-gray-900 font-medium mt-1">{profile.jenjang}</p>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Jenjang</label>
+              <p style={{ color: '#111827', fontWeight: '500', marginTop: '4px', fontSize: '14px' }}>{profile.jenjang}</p>
             </div>
             
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Angkatan</label>
-              <p className="text-gray-900 font-medium mt-1">{profile.angkatan}</p>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Angkatan</label>
+              <p style={{ color: '#111827', fontWeight: '500', marginTop: '4px', fontSize: '14px' }}>{profile.angkatan}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Statistik */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#FFF063' }}>
-            <svg className="w-5 h-5" style={{ color: '#1a1a1a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #E5E7EB', padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFF063' }}>
+            <svg style={{ width: '20px', height: '20px', color: '#1a1a1a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-gray-900">Statistik Akademik</h2>
+          <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827' }}>Statistik Akademik</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-lg" style={{ background: '#E8F3FF' }}>
-            <p className="text-sm text-gray-600 mb-1">Total Kelas Diambil</p>
-            <p className="text-3xl font-bold text-gray-900">{profile.total_kelas}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+          <div style={{ padding: '20px', borderRadius: '8px', background: '#E8F3FF' }}>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '8px' }}>Total Kelas Diambil</p>
+            <p style={{ fontSize: '32px', fontWeight: '700', color: '#111827' }}>{profile.total_kelas}</p>
           </div>
           
-          <div className="p-4 rounded-lg" style={{ background: '#CFECCA' }}>
-            <p className="text-sm text-gray-600 mb-1">Total Nilai Tersimpan</p>
-            <p className="text-3xl font-bold text-gray-900">{profile.total_nilai}</p>
+          <div style={{ padding: '20px', borderRadius: '8px', background: '#CFECCA' }}>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '8px' }}>Total Nilai Tersimpan</p>
+            <p style={{ fontSize: '32px', fontWeight: '700', color: '#111827' }}>{profile.total_nilai}</p>
           </div>
         </div>
       </div>
 
       {/* Info Note */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div className="flex gap-3">
-          <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div style={{ background: '#EFF6FF', border: '1px solid #DBEAFE', borderRadius: '12px', padding: '16px' }}>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <svg style={{ width: '20px', height: '20px', color: '#1E40AF', flexShrink: 0, marginTop: '2px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <p className="text-sm font-semibold text-blue-900">Informasi</p>
-            <p className="text-sm text-blue-700 mt-1">
+            <p style={{ fontSize: '14px', fontWeight: '600', color: '#1E3A8A' }}>Informasi</p>
+            <p style={{ fontSize: '14px', color: '#1E40AF', marginTop: '4px' }}>
               Data profil ini bersifat <strong>read-only</strong>. Jika ada perubahan data, silakan hubungi admin atau bagian akademik.
             </p>
           </div>

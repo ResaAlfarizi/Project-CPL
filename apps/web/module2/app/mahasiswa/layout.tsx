@@ -62,7 +62,7 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Default: sidebar terbuka penuh
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -104,105 +104,160 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#F8F8FB' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
       {/* Sidebar overlay mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed top-0 left-0 h-full z-40 transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'} w-64`}
-        style={{ background: '#1a1a1a' }}
+        } lg:translate-x-0`}
+        style={{
+          width: '270px',
+          background: 'var(--eerie-black)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-700">
-          {!sidebarCollapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#FFF063' }}>
-                <svg className="w-5 h-5" style={{ color: '#1a1a1a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-bold text-sm">Sistem CPL</p>
-                <p className="text-gray-400 text-xs">Portal Mahasiswa</p>
-              </div>
-            </div>
-          )}
-          {sidebarCollapsed && (
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto" style={{ background: '#FFF063' }}>
-              <svg className="w-5 h-5" style={{ color: '#1a1a1a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+        <div style={{ padding: '28px 24px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'var(--vanilla)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#212121" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
               </svg>
             </div>
-          )}
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-400 hover:text-white"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+            <div>
+              <h1 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', lineHeight: 1.2 }}>Sistem CPL</h1>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Portal Mahasiswa</p>
+            </div>
+          </div>
         </div>
 
-        {/* Menu Utama Label */}
-        {!sidebarCollapsed && (
-          <div className="px-6 py-4">
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Menu Utama</p>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <nav className="px-4 space-y-1 flex-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                }`}
-                title={sidebarCollapsed ? item.label : ''}
-              >
-                <div className={`flex items-center ${sidebarCollapsed ? '' : 'gap-3'}`}>
-                  {item.icon}
-                  {!sidebarCollapsed && item.label}
-                </div>
-                {!sidebarCollapsed && item.badge && (
-                  <span className={`text-xs px-2 py-0.5 rounded ${
-                    item.badge === 'R/W' ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-300'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
+          <p style={{ fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 12px', marginBottom: '8px' }}>
+            Menu Utama
+          </p>
+          <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '11px 14px',
+                      borderRadius: '10px',
+                      color: isActive ? '#fff' : 'rgba(255,255,255,0.6)',
+                      background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                      textDecoration: 'none',
+                      fontSize: '14px',
+                      fontWeight: isActive ? '600' : '500',
+                      transition: 'all 0.2s',
+                      position: 'relative',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                        e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                      }
+                    }}
+                  >
+                    {isActive && (
+                      <div style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '3px',
+                        height: '20px',
+                        borderRadius: '0 3px 3px 0',
+                        background: 'var(--vanilla)',
+                      }} />
+                    )}
+                    <span style={{ opacity: isActive ? 1 : 0.7, flexShrink: 0 }}>{item.icon}</span>
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {item.badge && (
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        padding: '2px 7px',
+                        borderRadius: '6px',
+                        background: item.badge === 'R/W' ? 'rgba(239,253,163,0.15)' : 'rgba(255,255,255,0.08)',
+                        color: item.badge === 'R/W' ? 'var(--vanilla)' : 'rgba(255,255,255,0.4)',
+                      }}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div style={{
+        flex: 1,
+        marginLeft: sidebarCollapsed ? '0' : '270px',
+        transition: 'margin-left 0.3s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        minWidth: 0,
+      }}
+        className="main-wrapper"
+      >
         {/* Top bar */}
-        <header className="bg-white h-16 flex items-center px-4 lg:px-6 gap-4 border-b border-gray-200">
+        <header style={{
+          background: '#fff',
+          height: '72px',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 32px',
+          gap: '16px',
+          borderBottom: '1px solid #e5e7eb',
+          flexShrink: 0,
+        }}>
           {/* Hamburger button - Mobile */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-gray-500 hover:text-gray-700"
+            className="lg:hidden"
+            style={{
+              color: '#6b7280',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+            }}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
@@ -210,63 +265,138 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
           {/* Hamburger button - Desktop (Toggle collapse) */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:block text-gray-500 hover:text-gray-700"
+            className="hidden lg:block"
+            style={{
+              color: '#6b7280',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+            }}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
 
           {/* Page title */}
-          <div className="flex-1">
-            <h1 className="text-lg font-bold text-gray-900">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', lineHeight: 1.2 }}>
               {navItems.find(item => item.href === pathname)?.label || 'Dashboard'}
             </h1>
-            <p className="text-xs text-gray-500">
+            <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
               Sistem CPL - Modul 2
             </p>
           </div>
 
           {/* Profile dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div style={{ position: 'relative', flexShrink: 0 }} ref={dropdownRef}>
             <button
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '8px 12px',
+                borderRadius: '10px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFF063', color: '#1a1a1a' }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+                fontWeight: '700',
+                background: 'var(--vanilla)',
+                color: '#212121',
+              }}>
                 M
               </div>
-              <div className="hidden md:block text-left">
-                <p className="text-sm font-semibold text-gray-900">Mahasiswa</p>
-                <p className="text-xs text-gray-500">Online</p>
+              <div className="hidden md:block" style={{ textAlign: 'left' }}>
+                <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', lineHeight: 1.2 }}>Mahasiswa</p>
+                <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>Online</p>
               </div>
-              <svg className={`w-4 h-4 text-gray-400 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{
+                width: '16px',
+                height: '16px',
+                color: '#9ca3af',
+                transform: profileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s',
+              }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {/* Dropdown menu */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+              <div style={{
+                position: 'absolute',
+                right: 0,
+                marginTop: '8px',
+                width: '220px',
+                background: '#fff',
+                borderRadius: '12px',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                border: '1px solid #e5e7eb',
+                padding: '8px',
+                zIndex: 50,
+              }}>
                 <Link
                   href="/mahasiswa/profil"
                   onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    textDecoration: 'none',
+                    borderRadius: '8px',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{ width: '18px', height: '18px', color: '#9ca3af' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   <span>Lihat Profil</span>
                 </Link>
-                <hr className="my-2 border-gray-100" />
+                <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid #f3f4f6' }} />
                 <button
                   onClick={() => {
                     setProfileDropdownOpen(false);
                     logout();
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    color: '#dc2626',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
                   <span>Logout</span>
@@ -277,10 +407,28 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+        <main style={{
+          flex: 1,
+          padding: '32px',
+          minWidth: 0,
+          overflowY: 'auto',
+        }}
+          className="main-content"
+        >
           {children}
         </main>
       </div>
+
+      <style jsx>{`
+        @media (max-width: 1023px) {
+          .main-wrapper {
+            margin-left: 0 !important;
+          }
+          .main-content {
+            padding: 24px 16px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
