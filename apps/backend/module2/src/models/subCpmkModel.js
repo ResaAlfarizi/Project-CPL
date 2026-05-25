@@ -107,6 +107,36 @@ const getSubCPMKByMKId = async (mkId) => {
   return result.rows;
 };
 
+// Ambil Sub-CPMK berdasarkan dosen (hanya MK yang diampu)
+const getSubCPMKByDosenId = async (dosenId) => {
+  const query = `
+    SELECT DISTINCT
+      sc.id,
+      sc.kode_sub_cpmk,
+      sc.deskripsi,
+      sc.mk_cpl_id,
+      sc.bobot,
+      mc.cpl_id,
+      mc.mk_id,
+      cpl.kode_cpl,
+      mk.kode_mk,
+      mk.nama_mk
+    FROM sub_cpmk sc
+    JOIN mk_cpl mc ON sc.mk_cpl_id = mc.id
+    JOIN cpl ON mc.cpl_id = cpl.id
+    JOIN mata_kuliah mk ON mc.mk_id = mk.id
+    WHERE mc.mk_id IN (
+      SELECT DISTINCT k.mk_id 
+      FROM kelas k 
+      WHERE k.dosen_id = $1
+    )
+    ORDER BY mk.nama_mk, sc.kode_sub_cpmk ASC
+  `;
+
+  const result = await pool.query(query, [dosenId]);
+  return result.rows;
+};
+
 // Ambil Sub-CPMK berdasarkan CPL
 const getSubCPMKByCPLId = async (cplId) => {
   const query = `
@@ -178,6 +208,7 @@ module.exports = {
   getSubCPMKById,
   getSubCPMKByMKCPLId,
   getSubCPMKByMKId,
+  getSubCPMKByDosenId,
   getSubCPMKByCPLId,
   createSubCPMK,
   updateSubCPMK,

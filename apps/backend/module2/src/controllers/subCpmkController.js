@@ -3,6 +3,7 @@ const {
   getSubCPMKById,
   getSubCPMKByMKCPLId,
   getSubCPMKByMKId,
+  getSubCPMKByDosenId,
   getSubCPMKByCPLId,
   createSubCPMK,
   updateSubCPMK,
@@ -71,6 +72,23 @@ const getSubCPMKByCPLHandler = async (req, res) => {
   try {
     const { cpl_id } = req.params;
     const subCpmk = await getSubCPMKByCPLId(cpl_id);
+
+    return successResponse(res, subCpmk, "Berhasil mengambil data Sub-CPMK");
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
+// GET Sub-CPMK berdasarkan dosen (hanya MK yang diampu)
+const getSubCPMKByDosenHandler = async (req, res) => {
+  try {
+    const dosenId = req.user.entity_id;
+    
+    if (!dosenId) {
+      return errorResponse(res, "Entity ID dosen tidak ditemukan", 400);
+    }
+    
+    const subCpmk = await getSubCPMKByDosenId(dosenId);
 
     return successResponse(res, subCpmk, "Berhasil mengambil data Sub-CPMK");
   } catch (error) {
@@ -162,6 +180,7 @@ module.exports = {
   getSubCPMKByIdHandler,
   getSubCPMKByMKCPLHandler,
   getSubCPMKByMKHandler,
+  getSubCPMKByDosenHandler,
   getSubCPMKByCPLHandler,
   createSubCPMKHandler,
   updateSubCPMKHandler,

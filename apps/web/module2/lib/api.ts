@@ -90,6 +90,13 @@ export const cplApi = {
   getByProdi: (prodiId: string) => apiFetch(`/cpl/prodi/${prodiId}`),
 };
 
+// MK-CPL
+export const mkCplApi = {
+  getAll: () => apiFetch('/mk-cpl'),
+  getMyMkCpl: () => apiFetch('/mk-cpl/dosen/my-mk-cpl'),
+  getByMk: (mkId: string) => apiFetch(`/mk-cpl/mk/${mkId}`),
+};
+
 // KELAS
 export const kelasApi = {
   getAll: () => apiFetch('/kelas'),
@@ -103,6 +110,7 @@ export const subCpmkApi = {
   getById: (id: string) => apiFetch(`/sub-cpmk/${id}`),
   getByMkCpl: (mkCplId: string) => apiFetch(`/sub-cpmk/mk-cpl/${mkCplId}`),
   getByMk: (mkId: string) => apiFetch(`/sub-cpmk/mk/${mkId}`),
+  getMySubCpmk: () => apiFetch('/sub-cpmk/dosen/my-sub-cpmk'),
   getByCpl: (cplId: string) => apiFetch(`/sub-cpmk/cpl/${cplId}`),
   create: (body: { mk_cpl_id: string; kode_sub_cpmk: string; deskripsi: string; bobot: number }) =>
     apiFetch('/sub-cpmk', { method: 'POST', body: JSON.stringify(body) }),

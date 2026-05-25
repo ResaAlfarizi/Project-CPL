@@ -64,6 +64,7 @@ const getKelasByDosenId = async (dosenId) => {
   const query = `
     SELECT 
       kelas.id,
+      kelas.mk_id,
       kelas.tahun_akademik,
       kelas.semester_aktif,
       kelas.nama_kelas,
@@ -75,7 +76,7 @@ const getKelasByDosenId = async (dosenId) => {
     JOIN mata_kuliah mk ON kelas.mk_id = mk.id
     LEFT JOIN enrollment e ON kelas.id = e.kelas_id
     WHERE kelas.dosen_id = $1
-    GROUP BY kelas.id, mk.kode_mk, mk.nama_mk, mk.sks
+    GROUP BY kelas.id, kelas.mk_id, mk.kode_mk, mk.nama_mk, mk.sks
     ORDER BY kelas.tahun_akademik DESC, kelas.semester_aktif DESC
   `;
 
