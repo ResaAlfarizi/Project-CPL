@@ -127,13 +127,13 @@ export default function CapaianPage() {
             Belum ada data capaian CPL
           </div>
         ) : (
-          capaianList.map((capaian) => {
+          capaianList.map((capaian, idx) => {
             const statusColor = getStatusColor(capaian.status);
             const progressColor = getProgressColor(capaian.persentase);
             const persentase = capaian.persentase || 0;
             
             return (
-              <div key={capaian.id} className="bg-white rounded-xl p-6 border border-gray-100">
+              <div key={`capaian-${capaian.id}-${idx}`} className="bg-white rounded-xl p-6 border border-gray-100">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -227,7 +227,7 @@ export default function CapaianPage() {
                 </thead>
                 <tbody>
                   {capaianDetail.map((detail, idx) => (
-                    <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <tr key={`detail-${detail.mk_id || idx}-${idx}`} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-900 text-white">
                           {detail.kode_mk || '-'}
