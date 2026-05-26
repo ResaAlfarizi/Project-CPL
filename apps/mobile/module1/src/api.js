@@ -1,22 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 // Read-only API client for Module 1
 // Only GET endpoints — no create/update/delete
 
-// Default IP lokal komputer
-let cachedAPIUrl = 'http://192.168.137.1:3000/api/v1/m1';
-
 export async function getAPIUrl() {
-  try {
-    const saved = await AsyncStorage.getItem('API_URL');
-    if (saved) {
-      cachedAPIUrl = saved;
-      return saved;
-    }
-  } catch (e) {
-    // ignore
-  }
-  return cachedAPIUrl;
+  // Otomatis mengambil IP dari server Expo yang sedang berjalan
+  const hostUri = Constants.expoConfig?.hostUri;
+  // Jika gagal, akan fallback ke 127.0.0.1 (tapi hampir selalu berhasil jika dari Expo Go)
+  const ip = hostUri ? hostUri.split(':')[0] : '127.0.0.1';
+  return `http://${ip}:3000/api/v1/m1`;
 }
 
 async function fetchAPI(endpoint) {
