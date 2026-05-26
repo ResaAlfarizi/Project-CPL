@@ -17,6 +17,7 @@ export default function MKListScreen({ route, navigation }) {
   const [prodi, setProdi] = useState([]);
   const [mkcpl, setMkcpl] = useState([]);
   const [search, setSearch] = useState('');
+  const [activeSemester, setActiveSemester] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -47,10 +48,12 @@ export default function MKListScreen({ route, navigation }) {
     setRefreshing(false);
   };
 
-  const searched = list.filter((m) =>
-    m.kode_mk.toLowerCase().includes(search.toLowerCase()) ||
-    m.nama_mk.toLowerCase().includes(search.toLowerCase())
-  );
+  const searched = list.filter((m) => {
+    const matchesSearch = m.kode_mk.toLowerCase().includes(search.toLowerCase()) ||
+                          m.nama_mk.toLowerCase().includes(search.toLowerCase());
+    const matchesSem = activeSemester ? m.semester === activeSemester : true;
+    return matchesSearch && matchesSem;
+  });
 
   const getMkCplCount = (mkId) => mkcpl.filter((m) => m.mk_id === mkId).length;
   const getProdiCode = (id) => prodi.find((p) => p.id === id)?.kode_prodi || '—';
@@ -105,12 +108,20 @@ export default function MKListScreen({ route, navigation }) {
       {/* Semester Summary */}
       {semesters.length > 0 && (
         <View style={styles.semRow}>
-          {semesters.map((s) => (
-            <View key={s} style={styles.semChip}>
-              <Text style={styles.semChipLabel}>Sem {s}</Text>
-              <Text style={styles.semChipValue}>{list.filter((m) => m.semester === s).length}</Text>
-            </View>
-          ))}
+          {semesters.map((s) => {
+            const isActive = activeSemester === s;
+            return (
+              <TouchableOpacity 
+                key={s} 
+                style={[styles.semChip, isActive && styles.semChipActive]}
+                activeOpacity={0.7}
+                onPress={() => setActiveSemester(isActive ? null : s)}
+              >
+                <Text style={[styles.semChipLabel, isActive && styles.semChipLabelActive]}>Sem {s}</Text>
+                <Text style={[styles.semChipValue, isActive && styles.semChipValueActive]}>{list.filter((m) => m.semester === s).length}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
 
@@ -196,6 +207,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Urbanist_800ExtraBold',
     color: Colors.eerieBlack,
+  },
+  semChipActive: {
+    backgroundColor: Colors.eerieBlack,
+    borderColor: Colors.eerieBlack,
+  },
+  semChipLabelActive: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  semChipValueActive: {
+    color: Colors.white,
   },
   searchContainer: {
     paddingHorizontal: 16,

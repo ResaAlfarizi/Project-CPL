@@ -13,6 +13,7 @@ export default function CPLListScreen({ route, navigation }) {
   const { prodi_id, prodi_name, kode_prodi } = route.params || {};
   const [list, setList] = useState([]);
   const [search, setSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState(null); // 'aktif' | 'nonaktif' | null
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -40,10 +41,13 @@ export default function CPLListScreen({ route, navigation }) {
     setRefreshing(false);
   };
 
-  const searched = list.filter((c) =>
-    c.kode_cpl.toLowerCase().includes(search.toLowerCase()) ||
-    c.deskripsi.toLowerCase().includes(search.toLowerCase())
-  );
+  const searched = list.filter((c) => {
+    const matchesSearch = c.kode_cpl.toLowerCase().includes(search.toLowerCase()) ||
+                          c.deskripsi.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter = activeFilter === 'aktif' ? c.is_active :
+                          activeFilter === 'nonaktif' ? !c.is_active : true;
+    return matchesSearch && matchesFilter;
+  });
 
   const activeCount = list.filter((c) => c.is_active).length;
   const inactiveCount = list.filter((c) => !c.is_active).length;
@@ -75,18 +79,30 @@ export default function CPLListScreen({ route, navigation }) {
 
       {/* Summary */}
       <View style={styles.summaryRow}>
-        <View style={[styles.summaryChip, { backgroundColor: '#f0f7ee' }]}>
-          <Text style={styles.summaryValue}>{activeCount}</Text>
-          <Text style={styles.summaryLabel}>Aktif</Text>
-        </View>
-        <View style={[styles.summaryChip, { backgroundColor: '#f0f4f9' }]}>
-          <Text style={styles.summaryValue}>{inactiveCount}</Text>
-          <Text style={styles.summaryLabel}>Nonaktif</Text>
-        </View>
-        <View style={[styles.summaryChip, { backgroundColor: '#fef6ed' }]}>
-          <Text style={styles.summaryValue}>{list.length}</Text>
-          <Text style={styles.summaryLabel}>Total</Text>
-        </View>
+        <TouchableOpacity
+          style={[styles.summaryChip, activeFilter === 'aktif' ? styles.summaryChipActive : { backgroundColor: '#f0f7ee' }]}
+          activeOpacity={0.7}
+          onPress={() => setActiveFilter(activeFilter === 'aktif' ? null : 'aktif')}
+        >
+          <Text style={[styles.summaryValue, activeFilter === 'aktif' && styles.summaryValueActive]}>{activeCount}</Text>
+          <Text style={[styles.summaryLabel, activeFilter === 'aktif' && styles.summaryLabelActive]}>Aktif</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.summaryChip, activeFilter === 'nonaktif' ? styles.summaryChipActive : { backgroundColor: '#f0f4f9' }]}
+          activeOpacity={0.7}
+          onPress={() => setActiveFilter(activeFilter === 'nonaktif' ? null : 'nonaktif')}
+        >
+          <Text style={[styles.summaryValue, activeFilter === 'nonaktif' && styles.summaryValueActive]}>{inactiveCount}</Text>
+          <Text style={[styles.summaryLabel, activeFilter === 'nonaktif' && styles.summaryLabelActive]}>Nonaktif</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.summaryChip, activeFilter === null ? styles.summaryChipActive : { backgroundColor: '#fef6ed' }]}
+          activeOpacity={0.7}
+          onPress={() => setActiveFilter(null)}
+        >
+          <Text style={[styles.summaryValue, activeFilter === null && styles.summaryValueActive]}>{list.length}</Text>
+          <Text style={[styles.summaryLabel, activeFilter === null && styles.summaryLabelActive]}>Total</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Search */}
@@ -174,11 +190,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist_800ExtraBold',
     color: Colors.eerieBlack,
   },
+  summaryValueActive: {
+    color: Colors.white,
+  },
   summaryLabel: {
     fontSize: 11,
     fontFamily: 'Urbanist_500Medium',
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+  summaryLabelActive: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  summaryChipActive: {
+    backgroundColor: Colors.eerieBlack,
+    borderColor: Colors.eerieBlack,
   },
   searchContainer: {
     paddingHorizontal: 16,

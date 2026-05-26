@@ -15,6 +15,7 @@ const JENJANG_VARIANT = { D3: 'gray', S1: 'blue', S2: 'green', S3: 'yellow' };
 export default function ProdiListScreen({ navigation }) {
   const [list, setList] = useState([]);
   const [search, setSearch] = useState('');
+  const [activeJenjang, setActiveJenjang] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -40,10 +41,12 @@ export default function ProdiListScreen({ navigation }) {
     setRefreshing(false);
   };
 
-  const filtered = list.filter((p) =>
-    p.kode_prodi.toLowerCase().includes(search.toLowerCase()) ||
-    p.nama_prodi.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = list.filter((p) => {
+    const matchesSearch = p.kode_prodi.toLowerCase().includes(search.toLowerCase()) ||
+                          p.nama_prodi.toLowerCase().includes(search.toLowerCase());
+    const matchesJenjang = activeJenjang ? p.jenjang === activeJenjang : true;
+    return matchesSearch && matchesJenjang;
+  });
 
   // Jenjang summary
   const jenjangCounts = ['D3', 'S1', 'S2', 'S3'].map((j) => ({
@@ -77,12 +80,20 @@ export default function ProdiListScreen({ navigation }) {
     <View style={styles.screen}>
       {/* Jenjang Summary */}
       <View style={styles.summaryRow}>
-        {jenjangCounts.map((j) => (
-          <View key={j.label} style={styles.summaryChip}>
-            <Text style={styles.summaryValue}>{j.count}</Text>
-            <Text style={styles.summaryLabel}>{j.label}</Text>
-          </View>
-        ))}
+        {jenjangCounts.map((j) => {
+          const isActive = activeJenjang === j.label;
+          return (
+            <TouchableOpacity 
+              key={j.label} 
+              style={[styles.summaryChip, isActive && styles.summaryChipActive]}
+              activeOpacity={0.7}
+              onPress={() => setActiveJenjang(isActive ? null : j.label)}
+            >
+              <Text style={[styles.summaryValue, isActive && styles.summaryValueActive]}>{j.count}</Text>
+              <Text style={[styles.summaryLabel, isActive && styles.summaryLabelActive]}>{j.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Search */}
@@ -147,11 +158,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist_800ExtraBold',
     color: Colors.eerieBlack,
   },
+  summaryValueActive: {
+    color: Colors.white,
+  },
   summaryLabel: {
     fontSize: 12,
     fontFamily: 'Urbanist_600SemiBold',
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+  summaryLabelActive: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  summaryChipActive: {
+    backgroundColor: Colors.eerieBlack,
+    borderColor: Colors.eerieBlack,
   },
   searchContainer: {
     paddingHorizontal: 16,

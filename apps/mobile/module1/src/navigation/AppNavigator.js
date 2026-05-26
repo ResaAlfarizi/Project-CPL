@@ -1,4 +1,5 @@
 import React from 'react';
+import { TouchableOpacity, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Colors } from '../theme';
@@ -10,6 +11,7 @@ import MKListScreen from '../screens/MKListScreen';
 import MKDetailScreen from '../screens/MKDetailScreen';
 import MappingScreen from '../screens/MappingScreen';
 import SubCPMKScreen from '../screens/SubCPMKScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -37,13 +39,18 @@ export default function AppNavigator() {
         <Stack.Screen
           name="Dashboard"
           component={DashboardScreen}
-          options={{
+          options={({ navigation }) => ({
             title: 'CPL System',
             headerTitleStyle: {
               fontFamily: 'Urbanist_700Bold',
               fontSize: 18,
             },
-          }}
+            headerRight: () => (
+              <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ paddingRight: 5 }}>
+                <Text style={{ fontSize: 20 }}>⚙️</Text>
+              </TouchableOpacity>
+            ),
+          })}
         />
         <Stack.Screen
           name="ProdiList"
@@ -76,6 +83,11 @@ export default function AppNavigator() {
           name="SubCPMKList"
           component={SubCPMKScreen}
           options={{ title: 'Sub-CPMK' }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: 'Pengaturan IP' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
