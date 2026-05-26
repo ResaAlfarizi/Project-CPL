@@ -15,13 +15,21 @@ import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import LoginScreen from './screens/auth/LoginScreen';
 
 // ── Dosen screens ────────────────────────────────────────────────────────────
-import DashboardScreen    from './screens/dosen/DashboardScreen';
-import ProdiCplScreen     from './screens/dosen/ProdiCplScreen';
-import MataKuliahScreen   from './screens/dosen/MataKuliahScreen';
-import SubCpmkScreen      from './screens/dosen/SubCpmkScreen';
-import InputNilaiScreen   from './screens/dosen/InputNilaiScreen';
-import CapaianScreen      from './screens/dosen/CapaianScreen';
-import ProfilDetailScreen from './screens/dosen/ProfilDetailScreen';
+import DosenDashboardScreen    from './screens/dosen/DashboardScreen';
+import DosenProdiCplScreen     from './screens/dosen/ProdiCplScreen';
+import DosenMataKuliahScreen   from './screens/dosen/MataKuliahScreen';
+import DosenSubCpmkScreen      from './screens/dosen/SubCpmkScreen';
+import InputNilaiScreen        from './screens/dosen/InputNilaiScreen';
+import DosenCapaianScreen      from './screens/dosen/CapaianScreen';
+import DosenProfilDetailScreen from './screens/dosen/ProfilDetailScreen';
+
+// ── Mahasiswa screens ────────────────────────────────────────────────────────
+import MahasiswaDashboardScreen   from './screens/mahasiswa/DashboardScreen';
+import MahasiswaProgramStudiScreen from './screens/mahasiswa/ProgramStudiScreen';
+import MahasiswaMataKuliahScreen  from './screens/mahasiswa/MataKuliahScreen';
+import MahasiswaSubCpmkScreen     from './screens/mahasiswa/SubCpmkScreen';
+import MahasiswaCapaianScreen     from './screens/mahasiswa/CapaianScreen';
+import MahasiswaProfileScreen     from './screens/mahasiswa/ProfileScreen';
 
 // ── Shared component ─────────────────────────────────────────────────────────
 import ScreenBackground from './components/ScreenBackground';
@@ -113,10 +121,11 @@ const getSidebarMenu = (role) => {
     }
     if (r === 'mahasiswa') {
         return [
-            { key: 'dashboard',   icon: 'monitor-dashboard',           label: 'Dashboard'          },
-            { key: 'mata_kuliah', icon: 'book-open-outline',           label: 'Mata Kuliah'        },
-            { key: 'capaian_mhs', icon: 'chart-bell-curve-cumulative', label: 'Capaian Saya'       },
-            { key: 'prodi_cpl',   icon: 'school-outline',              label: 'Program Studi'      },
+            { key: 'dashboard',     icon: 'monitor-dashboard',           label: 'Dashboard'       },
+            { key: 'program_studi', icon: 'school-outline',              label: 'Program Studi'   },
+            { key: 'mata_kuliah',   icon: 'book-open-outline',           label: 'Mata Kuliah'     },
+            { key: 'sub_cpmk',      icon: 'clipboard-text-outline',      label: 'Sub-CPMK'        },
+            { key: 'capaian',       icon: 'chart-bell-curve-cumulative', label: 'Capaian Saya'    },
         ];
     }
     // dosen (default)
@@ -335,23 +344,55 @@ export default function App() {
 
     // ── Screen router ────────────────────────────────────────────────────────
     const renderActiveScreen = () => {
+        const r = (role || '').toLowerCase();
+        
+        // Mahasiswa screens
+        if (r === 'mahasiswa') {
+            switch (currentScreen) {
+                case 'dashboard':
+                    return <MahasiswaDashboardScreen user={enrichedUser} onNavigate={handleNavigation} />;
+                case 'program_studi':
+                    return <MahasiswaProgramStudiScreen />;
+                case 'mata_kuliah':
+                    return <MahasiswaMataKuliahScreen />;
+                case 'sub_cpmk':
+                    return <MahasiswaSubCpmkScreen />;
+                case 'capaian':
+                    return <MahasiswaCapaianScreen user={enrichedUser} />;
+                case 'profile_detail':
+                    return <MahasiswaProfileScreen user={enrichedUser} onLogout={async () => {
+                        await tokenStorage.remove();
+                        setIsLoggedIn(false);
+                        setLoggedInUser(null);
+                        setKelasList([]);
+                        setSubCpmkList([]);
+                        setDashboardData({});
+                        setCurrentScreen('dashboard');
+                        showToast('Berhasil keluar dari sistem');
+                    }} />;
+                default:
+                    return <MahasiswaDashboardScreen user={enrichedUser} onNavigate={handleNavigation} />;
+            }
+        }
+        
+        // Dosen/Admin screens (default)
         switch (currentScreen) {
             case 'dashboard':
-                return <DashboardScreen currentRole={role} rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
+                return <DosenDashboardScreen currentRole={role} rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
             case 'prodi_cpl':
-                return <ProdiCplScreen />;
+                return <DosenProdiCplScreen />;
             case 'mata_kuliah':
-                return <MataKuliahScreen kelasList={formattedKelas} />;
+                return <DosenMataKuliahScreen kelasList={formattedKelas} />;
             case 'sub_cpmk':
-                return <SubCpmkScreen subCpmkList={subCpmkList} onAdd={handleAddSubCpmk} onUpdate={handleUpdateSubCpmk} onDelete={handleDeleteSubCpmk} />;
+                return <DosenSubCpmkScreen subCpmkList={subCpmkList} onAdd={handleAddSubCpmk} onUpdate={handleUpdateSubCpmk} onDelete={handleDeleteSubCpmk} />;
             case 'input_nilai':
                 return <InputNilaiScreen kelasList={formattedKelas} subCpmkList={subCpmkList} onAddGrade={handleAddGrade} onUpdateGrade={handleUpdateGrade} />;
             case 'capaian_mhs':
-                return <CapaianScreen kelasList={formattedKelas} />;
+                return <DosenCapaianScreen kelasList={formattedKelas} />;
             case 'profile_detail':
-                return <ProfilDetailScreen user={enrichedUser} />;
+                return <DosenProfilDetailScreen user={enrichedUser} />;
             default:
-                return <DashboardScreen currentRole={role} rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
+                return <DosenDashboardScreen currentRole={role} rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
         }
     };
 
