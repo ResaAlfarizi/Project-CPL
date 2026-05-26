@@ -307,7 +307,15 @@ export default function InputNilaiPage() {
                         )}
                       </td>
                       <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                        {n.input_at ? new Date(n.input_at).toLocaleDateString('id-ID') : '-'}
+                        {n.input_at ? new Date(n.input_at).toLocaleDateString('id-ID', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          year: 'numeric' 
+                        }) : new Date().toLocaleDateString('id-ID', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          year: 'numeric' 
+                        })}
                       </td>
                       <td>
                         {editId === n.id ? (

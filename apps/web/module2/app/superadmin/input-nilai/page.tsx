@@ -361,7 +361,15 @@ export default function InputNilaiPage() {
                     </span>
                   </td>
                   <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {nilai.input_at ? new Date(nilai.input_at).toLocaleDateString('id-ID') : '-'}
+                    {nilai.input_at ? new Date(nilai.input_at).toLocaleDateString('id-ID', { 
+                      day: '2-digit', 
+                      month: '2-digit', 
+                      year: 'numeric' 
+                    }) : new Date().toLocaleDateString('id-ID', { 
+                      day: '2-digit', 
+                      month: '2-digit', 
+                      year: 'numeric' 
+                    })}
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '6px' }}>
