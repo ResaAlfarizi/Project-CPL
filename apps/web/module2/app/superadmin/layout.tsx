@@ -91,6 +91,7 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
+          minHeight: '100vh',
         }}
         className="main-wrapper"
       >
@@ -104,6 +105,8 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
             flex: 1,
             padding: '32px',
             minWidth: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
           }}
           className="main-content"
         >

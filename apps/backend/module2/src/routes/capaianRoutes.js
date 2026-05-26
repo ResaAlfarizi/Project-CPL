@@ -8,6 +8,9 @@ const {
   getCapaianKelasHandler,
   getCapaianDetailMahasiswaHandler,
   getMahasiswaBelumCapaiHandler,
+  createCapaianHandler,
+  updateCapaianHandler,
+  deleteCapaianHandler,
 } = require("../controllers/capaianController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -69,6 +72,30 @@ router.get(
   authMiddleware,
   authorize("Superadmin", "Admin Prodi"),
   getMahasiswaBelumCapaiHandler
+);
+
+// CREATE - Tambah capaian manual - SUPERADMIN, ADMIN PRODI
+router.post(
+  "/",
+  authMiddleware,
+  authorize("Superadmin", "Admin Prodi"),
+  createCapaianHandler
+);
+
+// UPDATE - Edit capaian manual - SUPERADMIN, ADMIN PRODI
+router.put(
+  "/:mahasiswa_id/:cpl_id",
+  authMiddleware,
+  authorize("Superadmin", "Admin Prodi"),
+  updateCapaianHandler
+);
+
+// DELETE - Hapus capaian manual - SUPERADMIN, ADMIN PRODI
+router.delete(
+  "/:mahasiswa_id/:cpl_id",
+  authMiddleware,
+  authorize("Superadmin", "Admin Prodi"),
+  deleteCapaianHandler
 );
 
 module.exports = router;

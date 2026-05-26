@@ -129,7 +129,7 @@ export const subCpmkApi = {
   getByCpl: (cplId: string) => apiFetch(`/sub-cpmk/cpl/${cplId}`),
   create: (body: { mk_cpl_id: string; kode_sub_cpmk: string; deskripsi: string; bobot: number }) =>
     apiFetch('/sub-cpmk', { method: 'POST', body: JSON.stringify(body) }),
-  update: (id: string, body: { kode_sub_cpmk: string; deskripsi: string; bobot: number }) =>
+  update: (id: string, body: { kode_sub_cpmk: string; deskripsi: string; mk_cpl_id: string; bobot: number }) =>
     apiFetch(`/sub-cpmk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   delete: (id: string) => apiFetch(`/sub-cpmk/${id}`, { method: 'DELETE' }),
 };
@@ -156,6 +156,7 @@ export const capaianApi = {
 
 // ENROLLMENT
 export const enrollmentApi = {
+  getAll: () => apiFetch('/enrollment'),
   getByKelas: (kelasId: string) => apiFetch(`/enrollment/kelas/${kelasId}`),
 };
 

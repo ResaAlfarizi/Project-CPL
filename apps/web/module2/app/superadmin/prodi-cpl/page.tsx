@@ -299,7 +299,6 @@ export default function ProdiCPLPage() {
                 <th>No</th>
                 <th>Kode</th>
                 <th>Nama Program Studi</th>
-                <th>Fakultas</th>
                 <th>Dibuat</th>
                 <th>Aksi</th>
               </tr>
@@ -310,7 +309,6 @@ export default function ProdiCPLPage() {
                   <td>{index + 1}</td>
                   <td><span className="badge badge-dark">{item.kode_prodi}</span></td>
                   <td style={{ fontWeight: '600' }}>{item.nama_prodi}</td>
-                  <td>{item.fakultas || '-'}</td>
                   <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                     {item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-'}
                   </td>

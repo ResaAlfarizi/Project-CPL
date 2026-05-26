@@ -1,22 +1,68 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { nilaiApi } from '@/lib/api';
+import { nilaiApi, enrollmentApi, subCpmkApi, kelasApi } from '@/lib/api';
 import ToastContainer, { showToast } from '@/components/Toast';
 
 interface Nilai {
-  id: number;
-  enrollment_id: number;
+  id: string;
+  enrollment_id: string;
   sub_cpmk_id: number;
   nilai: number;
   nim?: string;
   nama_mahasiswa?: string;
   kode_sub_cpmk?: string;
+  kode_mk?: string;
+  nama_mk?: string;
+  tahun_akademik?: string;
+  semester_aktif?: number;
   input_at?: string;
+}
+
+interface Enrollment {
+  id: string;
+  mahasiswa_id: string;
+  kelas_id: string;
+  nim: string;
+  nama_mahasiswa: string;
+  kode_mk: string;
+  nama_mk: string;
+  tahun_akademik: string;
+  semester_aktif: number;
+}
+
+interface SubCPMK {
+  id: number;
+  kode_sub_cpmk: string;
+  deskripsi: string;
+  kode_mk?: string;
+  nama_mk?: string;
+  mk_cpl_id?: string;
+}
+
+interface Mahasiswa {
+  id: string;
+  nim: string;
+  nama: string;
+}
+
+interface Kelas {
+  id: string;
+  mk_id: string;
+  kode_mk: string;
+  nama_mk: string;
+  tahun_akademik: string;
+  semester_aktif: number;
+  nama_kelas?: string;
 }
 
 export default function InputNilaiPage() {
   const [nilaiList, setNilaiList] = useState<Nilai[]>([]);
+  const [mahasiswaList, setMahasiswaList] = useState<Mahasiswa[]>([]);
+  const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  const [subCpmkList, setSubCpmkList] = useState<SubCPMK[]>([]);
+  const [filteredKelasList, setFilteredKelasList] = useState<Kelas[]>([]);
+  const [filteredSubCpmkList, setFilteredSubCpmkList] = useState<SubCPMK[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -25,7 +71,8 @@ export default function InputNilaiPage() {
   
   // Form state
   const [formData, setFormData] = useState({
-    enrollment_id: '',
+    mahasiswa_id: '',
+    kelas_id: '',
     sub_cpmk_id: '',
     nilai: '',
   });
@@ -33,7 +80,35 @@ export default function InputNilaiPage() {
 
   useEffect(() => {
     loadNilai();
+    loadMahasiswa();
+    loadKelas();
+    loadSubCpmk();
   }, []);
+
+  // Filter kelas when mahasiswa is selected
+  useEffect(() => {
+    if (formData.mahasiswa_id && !editMode) {
+      // For now, show all kelas since enrollment might be empty
+      // In production, you should filter based on enrollment
+      setFilteredKelasList(kelasList);
+      // Reset kelas and sub-cpmk selection
+      setFormData(prev => ({ ...prev, kelas_id: '', sub_cpmk_id: '' }));
+      setFilteredSubCpmkList([]);
+    }
+  }, [formData.mahasiswa_id, kelasList, editMode]);
+
+  // Filter sub-CPMK when kelas is selected
+  useEffect(() => {
+    if (formData.kelas_id && !editMode) {
+      const selectedKelas = kelasList.find(k => k.id === formData.kelas_id);
+      if (selectedKelas) {
+        // Filter sub-CPMK by mk_id from selected kelas
+        loadSubCpmkByMk(selectedKelas.mk_id);
+      }
+      // Reset sub-cpmk selection
+      setFormData(prev => ({ ...prev, sub_cpmk_id: '' }));
+    }
+  }, [formData.kelas_id, kelasList, editMode]);
 
   const loadNilai = async () => {
     try {
@@ -47,11 +122,53 @@ export default function InputNilaiPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const loadMahasiswa = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/m1/mahasiswa', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setMahasiswaList(data.data || []);
+    } catch (error) {
+      console.error('Error loading mahasiswa:', error);
+    }
+  };
+
+  const loadKelas = async () => {
+    try {
+      const response = await kelasApi.getAll();
+      setKelasList(response.data || []);
+    } catch (error) {
+      console.error('Error loading kelas:', error);
+    }
+  };
+
+  const loadSubCpmk = async () => {
+    try {
+      const response = await subCpmkApi.getAll();
+      setSubCpmkList(response.data || []);
+    } catch (error) {
+      console.error('Error loading sub-CPMK:', error);
+    }
+  };
+
+  const loadSubCpmkByMk = async (mkId: string) => {
+    try {
+      const response = await subCpmkApi.getByMk(mkId);
+      setFilteredSubCpmkList(response.data || []);
+    } catch (error) {
+      console.error('Error loading sub-CPMK by MK:', error);
+      setFilteredSubCpmkList([]);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
     if (!confirm('Apakah Anda yakin ingin menghapus nilai ini?')) return;
     
     try {
-      await nilaiApi.delete(String(id));
+      await nilaiApi.delete(id);
       showToast('Nilai berhasil dihapus', 'success');
       loadNilai();
     } catch (error) {
@@ -63,7 +180,8 @@ export default function InputNilaiPage() {
     setEditMode(true);
     setSelectedNilai(nilai);
     setFormData({
-      enrollment_id: String(nilai.enrollment_id),
+      mahasiswa_id: '',
+      kelas_id: '',
       sub_cpmk_id: String(nilai.sub_cpmk_id),
       nilai: String(nilai.nilai),
     });
@@ -74,7 +192,12 @@ export default function InputNilaiPage() {
     e.preventDefault();
     
     // Validasi
-    if (!formData.enrollment_id || !formData.sub_cpmk_id || !formData.nilai) {
+    if (!editMode && (!formData.mahasiswa_id || !formData.kelas_id)) {
+      showToast('Pilih mahasiswa dan kelas terlebih dahulu', 'error');
+      return;
+    }
+    
+    if (!formData.sub_cpmk_id || !formData.nilai) {
       showToast('Semua field wajib diisi', 'error');
       return;
     }
@@ -89,12 +212,43 @@ export default function InputNilaiPage() {
       setFormLoading(true);
       if (editMode && selectedNilai) {
         // Update
-        await nilaiApi.update(String(selectedNilai.id), { nilai: nilaiNum });
+        await nilaiApi.update(selectedNilai.id, { nilai: nilaiNum });
         showToast('Nilai berhasil diupdate', 'success');
       } else {
-        // Create
+        // Create: First check/create enrollment, then create nilai
+        // Step 1: Check if enrollment exists
+        const enrollmentResponse = await enrollmentApi.getByKelas(formData.kelas_id);
+        let enrollmentId = null;
+        
+        const existingEnrollment = enrollmentResponse.data?.find(
+          (e: any) => e.mahasiswa_id === formData.mahasiswa_id
+        );
+        
+        if (existingEnrollment) {
+          enrollmentId = existingEnrollment.id;
+        } else {
+          // Create enrollment
+          const newEnrollment = await fetch('http://localhost:3000/api/v1/m2/enrollment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+            },
+            body: JSON.stringify({
+              mahasiswa_id: formData.mahasiswa_id,
+              kelas_id: formData.kelas_id,
+            }),
+          });
+          const enrollmentData = await newEnrollment.json();
+          if (!newEnrollment.ok) {
+            throw new Error(enrollmentData.message || 'Gagal membuat enrollment');
+          }
+          enrollmentId = enrollmentData.data.id;
+        }
+        
+        // Step 2: Create nilai
         await nilaiApi.create({
-          enrollment_id: formData.enrollment_id,
+          enrollment_id: enrollmentId,
           sub_cpmk_id: formData.sub_cpmk_id,
           nilai: nilaiNum,
         });
@@ -112,10 +266,13 @@ export default function InputNilaiPage() {
 
   const resetForm = () => {
     setFormData({
-      enrollment_id: '',
+      mahasiswa_id: '',
+      kelas_id: '',
       sub_cpmk_id: '',
       nilai: '',
     });
+    setFilteredKelasList([]);
+    setFilteredSubCpmkList([]);
     setEditMode(false);
     setSelectedNilai(null);
   };
@@ -178,6 +335,7 @@ export default function InputNilaiPage() {
                 <th>No</th>
                 <th>NIM</th>
                 <th>Nama Mahasiswa</th>
+                <th>Mata Kuliah</th>
                 <th>Sub-CPMK</th>
                 <th>Nilai</th>
                 <th>Tanggal Input</th>
@@ -190,7 +348,13 @@ export default function InputNilaiPage() {
                   <td>{index + 1}</td>
                   <td><span className="badge badge-dark">{nilai.nim || '-'}</span></td>
                   <td style={{ fontWeight: '600' }}>{nilai.nama_mahasiswa || '-'}</td>
-                  <td><span className="badge badge-blue">{nilai.kode_sub_cpmk || '-'}</span></td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span className="badge badge-blue" style={{ fontSize: '11px' }}>{nilai.kode_mk || '-'}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{nilai.nama_mk || '-'}</span>
+                    </div>
+                  </td>
+                  <td><span className="badge badge-green">{nilai.kode_sub_cpmk || '-'}</span></td>
                   <td>
                     <span className={`badge ${nilai.nilai >= 80 ? 'badge-green' : nilai.nilai >= 70 ? 'badge-yellow' : 'badge-red'}`}>
                       {nilai.nilai}
@@ -241,10 +405,10 @@ export default function InputNilaiPage() {
             </p>
             
             <form onSubmit={handleSubmit}>
-              {/* Enrollment ID (Mahasiswa + Kelas) */}
+              {/* Step 1: Pilih Mahasiswa */}
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Mahasiswa & Kelas <span style={{ color: '#e74c3c' }}>*</span>
+                  Mahasiswa <span style={{ color: '#e74c3c' }}>*</span>
                 </label>
                 {editMode ? (
                   <input
@@ -256,88 +420,120 @@ export default function InputNilaiPage() {
                   />
                 ) : (
                   <select
-                    value={formData.enrollment_id}
-                    onChange={(e) => setFormData({ ...formData, enrollment_id: e.target.value })}
+                    value={formData.mahasiswa_id}
+                    onChange={(e) => setFormData({ ...formData, mahasiswa_id: e.target.value })}
                     className="select-field"
                     required
                     disabled={formLoading}
                   >
-                    <option value="">Pilih Mahasiswa & Kelas</option>
-                    {/* Unique enrollment dari nilaiList */}
-                    {Array.from(new Set(nilaiList.map(n => n.enrollment_id))).map(enrollId => {
-                      const enroll = nilaiList.find(n => n.enrollment_id === enrollId);
-                      return (
-                        <option key={enrollId} value={enrollId}>
-                          {enroll?.nim} - {enroll?.nama_mahasiswa}
-                        </option>
-                      );
-                    })}
+                    <option value="">Pilih Mahasiswa</option>
+                    {mahasiswaList.map((mhs) => (
+                      <option key={mhs.id} value={mhs.id}>
+                        {mhs.nim} - {mhs.nama}
+                      </option>
+                    ))}
                   </select>
                 )}
                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  {editMode ? 'Mahasiswa tidak dapat diubah saat edit' : 'Pilih mahasiswa yang akan dinilai'}
+                  {editMode ? 'Mahasiswa tidak dapat diubah saat edit' : 'Pilih mahasiswa terlebih dahulu'}
                 </p>
               </div>
 
-              {/* Sub-CPMK */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Sub-CPMK <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                {editMode ? (
-                  <input
-                    type="text"
-                    value={selectedNilai?.kode_sub_cpmk || '-'}
-                    className="input-field"
-                    disabled
-                    style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
-                  />
-                ) : (
-                  <select
-                    value={formData.sub_cpmk_id}
-                    onChange={(e) => setFormData({ ...formData, sub_cpmk_id: e.target.value })}
-                    className="select-field"
-                    required
-                    disabled={formLoading}
-                  >
-                    <option value="">Pilih Sub-CPMK</option>
-                    {/* Unique sub-CPMK dari nilaiList */}
-                    {Array.from(new Set(nilaiList.map(n => n.sub_cpmk_id))).map(subCpmkId => {
-                      const subCpmk = nilaiList.find(n => n.sub_cpmk_id === subCpmkId);
-                      return (
-                        <option key={subCpmkId} value={subCpmkId}>
-                          {subCpmk?.kode_sub_cpmk || `Sub-CPMK ${subCpmkId}`}
+              {/* Step 2: Pilih Kelas (shown after mahasiswa selected) */}
+              {(formData.mahasiswa_id || editMode) && (
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                    Kelas <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={`${selectedNilai?.kode_mk} - ${selectedNilai?.nama_mk}`}
+                      className="input-field"
+                      disabled
+                      style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                    />
+                  ) : (
+                    <select
+                      value={formData.kelas_id}
+                      onChange={(e) => setFormData({ ...formData, kelas_id: e.target.value })}
+                      className="select-field"
+                      required
+                      disabled={formLoading}
+                    >
+                      <option value="">Pilih Kelas</option>
+                      {filteredKelasList.map((kelas) => (
+                        <option key={kelas.id} value={kelas.id}>
+                          {kelas.kode_mk} - {kelas.nama_mk} ({kelas.tahun_akademik} - Semester {kelas.semester_aktif})
                         </option>
-                      );
-                    })}
-                  </select>
-                )}
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  {editMode ? 'Sub-CPMK tidak dapat diubah saat edit' : 'Pilih sub-CPMK yang akan dinilai'}
-                </p>
-              </div>
+                      ))}
+                    </select>
+                  )}
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                    {editMode ? 'Kelas tidak dapat diubah saat edit' : 'Pilih kelas yang diikuti mahasiswa'}
+                  </p>
+                </div>
+              )}
+
+              {/* Step 3: Pilih Sub-CPMK (shown after kelas selected) */}
+              {(formData.kelas_id || editMode) && (
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                    Sub-CPMK <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={selectedNilai?.kode_sub_cpmk || '-'}
+                      className="input-field"
+                      disabled
+                      style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                    />
+                  ) : (
+                    <select
+                      value={formData.sub_cpmk_id}
+                      onChange={(e) => setFormData({ ...formData, sub_cpmk_id: e.target.value })}
+                      className="select-field"
+                      required
+                      disabled={formLoading}
+                    >
+                      <option value="">Pilih Sub-CPMK</option>
+                      {filteredSubCpmkList.map((subCpmk) => (
+                        <option key={subCpmk.id} value={subCpmk.id}>
+                          {subCpmk.kode_sub_cpmk} - {subCpmk.deskripsi.substring(0, 50)}...
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                    {editMode ? 'Sub-CPMK tidak dapat diubah saat edit' : 'Pilih sub-CPMK yang akan dinilai'}
+                  </p>
+                </div>
+              )}
 
               {/* Nilai */}
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Nilai <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="number"
-                  value={formData.nilai}
-                  onChange={(e) => setFormData({ ...formData, nilai: e.target.value })}
-                  placeholder="Masukkan nilai 0-100"
-                  className="input-field"
-                  required
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  disabled={formLoading}
-                />
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Masukkan nilai antara 0-100
-                </p>
-              </div>
+              {(formData.sub_cpmk_id || editMode) && (
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                    Nilai <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.nilai}
+                    onChange={(e) => setFormData({ ...formData, nilai: e.target.value })}
+                    placeholder="Masukkan nilai 0-100"
+                    className="input-field"
+                    required
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    disabled={formLoading}
+                  />
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                    Masukkan nilai antara 0-100
+                  </p>
+                </div>
+              )}
 
               {/* Buttons */}
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

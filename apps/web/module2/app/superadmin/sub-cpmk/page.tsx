@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { subCpmkApi } from '@/lib/api';
+import { subCpmkApi, mkCplApi } from '@/lib/api';
 import ToastContainer, { showToast } from '@/components/Toast';
 
 interface SubCPMK {
@@ -10,11 +10,25 @@ interface SubCPMK {
   deskripsi: string;
   bobot: number;
   mk_cpl_id?: number;
+  kode_cpl?: string;
+  kode_mk?: string;
+  nama_mk?: string;
   created_at?: string;
+}
+
+interface MKCPL {
+  id: number;
+  mk_id: string;
+  cpl_id: string;
+  kode_mk: string;
+  nama_mk: string;
+  kode_cpl: string;
+  deskripsi_cpl: string;
 }
 
 export default function SubCPMKPage() {
   const [items, setItems] = useState<SubCPMK[]>([]);
+  const [mkCplList, setMkCplList] = useState<MKCPL[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -32,6 +46,7 @@ export default function SubCPMKPage() {
 
   useEffect(() => {
     loadSubCpmk();
+    loadMKCPL();
   }, []);
 
   const loadSubCpmk = async () => {
@@ -43,6 +58,15 @@ export default function SubCPMKPage() {
       showToast(error instanceof Error ? error.message : 'Gagal memuat data sub-CPMK', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMKCPL = async () => {
+    try {
+      const response = await mkCplApi.getAll();
+      setMkCplList(response.data || []);
+    } catch (error) {
+      console.error('Error loading MK-CPL:', error);
     }
   };
 
@@ -90,10 +114,11 @@ export default function SubCPMKPage() {
       const bobotDecimal = bobotNum / 100; // Convert 0-100 to 0-1 for backend
       
       if (editMode && selectedItem) {
-        // Update
+        // Update - sekarang bisa update mk_cpl_id juga
         await subCpmkApi.update(String(selectedItem.id), {
           kode_sub_cpmk: formData.kode_sub_cpmk,
           deskripsi: formData.deskripsi,
+          mk_cpl_id: formData.mk_cpl_id,
           bobot: bobotDecimal,
         });
         showToast('Sub-CPMK berhasil diupdate', 'success');
@@ -186,8 +211,9 @@ export default function SubCPMKPage() {
                 <th>No</th>
                 <th>Kode Sub-CPMK</th>
                 <th>Deskripsi</th>
+                <th>Mata Kuliah</th>
+                <th>CPL</th>
                 <th>Bobot (%)</th>
-                <th>Dibuat</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -196,11 +222,15 @@ export default function SubCPMKPage() {
                 <tr key={item.id}>
                   <td>{index + 1}</td>
                   <td><span className="badge badge-blue">{item.kode_sub_cpmk}</span></td>
-                  <td style={{ maxWidth: '300px' }}>{item.deskripsi}</td>
-                  <td><span className="badge badge-yellow">{item.bobot}%</span></td>
-                  <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-'}
+                  <td style={{ maxWidth: '250px', fontSize: '13px' }}>{item.deskripsi}</td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span className="badge badge-dark" style={{ fontSize: '11px' }}>{item.kode_mk || '-'}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{item.nama_mk || '-'}</span>
+                    </div>
                   </td>
+                  <td><span className="badge badge-green">{item.kode_cpl || '-'}</span></td>
+                  <td><span className="badge badge-yellow">{(item.bobot * 100).toFixed(1)}%</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button 
@@ -276,32 +306,27 @@ export default function SubCPMKPage() {
                 />
               </div>
 
-              {/* MK-CPL ID */}
+              {/* Mata Kuliah & CPL */}
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  MK-CPL ID <span style={{ color: '#e74c3c' }}>*</span>
+                  Mata Kuliah & CPL <span style={{ color: '#e74c3c' }}>*</span>
                 </label>
-                {editMode ? (
-                  <input
-                    type="text"
-                    value={formData.mk_cpl_id}
-                    className="input-field"
-                    disabled
-                    style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={formData.mk_cpl_id}
-                    onChange={(e) => setFormData({ ...formData, mk_cpl_id: e.target.value })}
-                    placeholder="ID relasi mata kuliah dan CPL"
-                    className="input-field"
-                    required
-                    disabled={formLoading}
-                  />
-                )}
+                <select
+                  value={formData.mk_cpl_id}
+                  onChange={(e) => setFormData({ ...formData, mk_cpl_id: e.target.value })}
+                  className="select-field"
+                  required
+                  disabled={formLoading}
+                >
+                  <option value="">Pilih Mata Kuliah & CPL</option>
+                  {mkCplList.map((mkCpl) => (
+                    <option key={mkCpl.id} value={mkCpl.id}>
+                      {mkCpl.kode_mk} - {mkCpl.nama_mk} → {mkCpl.kode_cpl}
+                    </option>
+                  ))}
+                </select>
                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  {editMode ? 'MK-CPL ID tidak dapat diubah saat edit' : 'Masukkan ID relasi antara mata kuliah dan CPL'}
+                  Pilih pemetaan mata kuliah ke CPL yang sesuai
                 </p>
               </div>
 

@@ -153,6 +153,54 @@ const getMahasiswaBelumCapaiCPL = async (cplId, prodiId) => {
   return result.rows;
 };
 
+// CREATE - Tambah capaian manual
+const createCapaian = async (mahasiswaId, cplId, nilaiCplTotal) => {
+  const query = `
+    INSERT INTO capaian_cpl_mahasiswa (mahasiswa_id, cpl_id, nilai_cpl_total)
+    VALUES ($1, $2, $3)
+    RETURNING *
+  `;
+  
+  const result = await pool.query(query, [mahasiswaId, cplId, nilaiCplTotal]);
+  return result.rows[0];
+};
+
+// UPDATE - Edit capaian manual
+const updateCapaian = async (mahasiswaId, cplId, nilaiCplTotal) => {
+  const query = `
+    UPDATE capaian_cpl_mahasiswa
+    SET nilai_cpl_total = $3, updated_at = CURRENT_TIMESTAMP
+    WHERE mahasiswa_id = $1 AND cpl_id = $2
+    RETURNING *
+  `;
+  
+  const result = await pool.query(query, [mahasiswaId, cplId, nilaiCplTotal]);
+  return result.rows[0];
+};
+
+// DELETE - Hapus capaian manual
+const deleteCapaian = async (mahasiswaId, cplId) => {
+  const query = `
+    DELETE FROM capaian_cpl_mahasiswa
+    WHERE mahasiswa_id = $1 AND cpl_id = $2
+    RETURNING *
+  `;
+  
+  const result = await pool.query(query, [mahasiswaId, cplId]);
+  return result.rows[0];
+};
+
+// CHECK - Cek apakah capaian sudah ada
+const checkCapaianExists = async (mahasiswaId, cplId) => {
+  const query = `
+    SELECT * FROM capaian_cpl_mahasiswa
+    WHERE mahasiswa_id = $1 AND cpl_id = $2
+  `;
+  
+  const result = await pool.query(query, [mahasiswaId, cplId]);
+  return result.rows[0];
+};
+
 module.exports = {
   getCapaianByMahasiswaId,
   getCapaianByProdiId,
@@ -160,4 +208,8 @@ module.exports = {
   getCapaianDetailByKelasId,
   getCapaianDetailByMahasiswaId,
   getMahasiswaBelumCapaiCPL,
+  createCapaian,
+  updateCapaian,
+  deleteCapaian,
+  checkCapaianExists,
 };

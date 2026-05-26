@@ -64,7 +64,7 @@ const menuItems = [
   },
   {
     icon: Settings,
-    label: 'Pengaturan',
+    label: 'Threshold',
     href: '/superadmin/settings',
   },
 ];

@@ -5,6 +5,10 @@ const {
   getCapaianDetailByKelasId,
   getCapaianDetailByMahasiswaId,
   getMahasiswaBelumCapaiCPL,
+  createCapaian,
+  updateCapaian,
+  deleteCapaian,
+  checkCapaianExists,
 } = require("../models/capaianModel");
 
 const { successResponse, errorResponse } = require("../utils/response");
@@ -102,6 +106,81 @@ const getMahasiswaBelumCapaiHandler = async (req, res) => {
   }
 };
 
+// CREATE - Tambah capaian manual
+const createCapaianHandler = async (req, res) => {
+  try {
+    const { mahasiswa_id, cpl_id, nilai_cpl_total } = req.body;
+
+    // Validasi input
+    if (!mahasiswa_id || !cpl_id || nilai_cpl_total === undefined) {
+      return errorResponse(res, "Data tidak lengkap", 400);
+    }
+
+    // Validasi nilai (0-100)
+    if (nilai_cpl_total < 0 || nilai_cpl_total > 100) {
+      return errorResponse(res, "Nilai harus antara 0-100", 400);
+    }
+
+    // Cek apakah capaian sudah ada
+    const existing = await checkCapaianExists(mahasiswa_id, cpl_id);
+    if (existing) {
+      return errorResponse(res, "Capaian untuk mahasiswa dan CPL ini sudah ada. Gunakan fitur edit untuk mengubah.", 409);
+    }
+
+    const capaian = await createCapaian(mahasiswa_id, cpl_id, nilai_cpl_total);
+    return successResponse(res, capaian, "Berhasil menambahkan capaian", 201);
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
+// UPDATE - Edit capaian manual
+const updateCapaianHandler = async (req, res) => {
+  try {
+    const { mahasiswa_id, cpl_id } = req.params;
+    const { nilai_cpl_total } = req.body;
+
+    // Validasi input
+    if (nilai_cpl_total === undefined) {
+      return errorResponse(res, "Nilai capaian harus diisi", 400);
+    }
+
+    // Validasi nilai (0-100)
+    if (nilai_cpl_total < 0 || nilai_cpl_total > 100) {
+      return errorResponse(res, "Nilai harus antara 0-100", 400);
+    }
+
+    // Cek apakah capaian ada
+    const existing = await checkCapaianExists(mahasiswa_id, cpl_id);
+    if (!existing) {
+      return errorResponse(res, "Capaian tidak ditemukan", 404);
+    }
+
+    const capaian = await updateCapaian(mahasiswa_id, cpl_id, nilai_cpl_total);
+    return successResponse(res, capaian, "Berhasil mengupdate capaian");
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
+// DELETE - Hapus capaian manual
+const deleteCapaianHandler = async (req, res) => {
+  try {
+    const { mahasiswa_id, cpl_id } = req.params;
+
+    // Cek apakah capaian ada
+    const existing = await checkCapaianExists(mahasiswa_id, cpl_id);
+    if (!existing) {
+      return errorResponse(res, "Capaian tidak ditemukan", 404);
+    }
+
+    await deleteCapaian(mahasiswa_id, cpl_id);
+    return successResponse(res, null, "Berhasil menghapus capaian");
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
 module.exports = {
   getCapaianMahasiswaHandler,
   getCapaianMahasiswaByIdHandler,
@@ -109,4 +188,7 @@ module.exports = {
   getCapaianKelasHandler,
   getCapaianDetailMahasiswaHandler,
   getMahasiswaBelumCapaiHandler,
+  createCapaianHandler,
+  updateCapaianHandler,
+  deleteCapaianHandler,
 };
