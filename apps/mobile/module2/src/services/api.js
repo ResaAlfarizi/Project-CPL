@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Cara cek IP:
 // Windows: ipconfig (lihat IPv4 Address)
 // Mac/Linux: ifconfig (lihat inet)
-const API_BASE = 'http://192.168.235.189:3000/api/v1/m2'; // GANTI IP INI!
+const API_BASE = 'http://192.168.1.103:3000/api/v1/m2'; // GANTI IP INI!
 
 const TOKEN_KEY = 'auth_token';
 
@@ -175,11 +175,15 @@ export const capaianApi = {
 // ─── MAHASISWA API ────────────────────────────────────────────────────────────
 
 export const mahasiswaApi = {
-    // Profile - Gunakan endpoint profile yang sudah ada
+    // Profile - Gunakan endpoint profile/mahasiswa/me (sesuai dengan routing backend)
     getMyProfile: async () => {
         try {
-            return await apiFetch('/profile/me');
+            console.log('📡 Calling: /profile/mahasiswa/me');
+            const result = await apiFetch('/profile/mahasiswa/me');
+            console.log('✅ Success: /profile/mahasiswa/me');
+            return result;
         } catch (error) {
+            console.error('❌ API Error:', error.message);
             // Fallback dummy data jika endpoint belum ada
             return {
                 success: true,

@@ -6,7 +6,7 @@
 import React from 'react';
 import { StyleSheet, ImageBackground, View } from 'react-native';
 
-const BG_IMAGE = require('../assets/uinsa2.jpeg');
+const BG_IMAGE = require('../../assets/uinsa2.jpeg');
 
 export default function ScreenBackground({ children }) {
     return (

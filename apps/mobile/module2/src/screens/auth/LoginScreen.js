@@ -9,9 +9,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 const { width, height } = Dimensions.get('window');
 
 // Background gedung UINSA full screen
-const BG_IMAGE = require('../../assets/uinsa2.jpeg');
+const BG_IMAGE = require('../../../assets/uinsa2.jpeg');
 
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ navigation }) {
     const [email,        setEmail]        = useState('');
     const [password,     setPassword]     = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -30,8 +30,62 @@ export default function LoginScreen({ onLogin }) {
 
         setIsLoading(true);
         try {
-            await onLogin({ email: trimmedEmail, password: trimmedPassword });
+            // Import authApi and tokenStorage
+            const { authApi, tokenStorage } = require('../../services/api');
+            
+            // Call login API
+            const res = await authApi.login({ email: trimmedEmail, password: trimmedPassword });
+            await tokenStorage.set(res.token);
+
+            const user = res.user || {};
+            const role = (user.role || 'dosen').toLowerCase();
+            
+            // Decode JWT to get user info
+            const decodeJwt = (token) => {
+                try {
+                    const base64Url = token.split('.')[1];
+                    if (!base64Url) return null;
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+                    let str = '';
+                    let i = 0;
+                    while (i < base64.length) {
+                        const e1 = chars.indexOf(base64[i++]);
+                        const e2 = chars.indexOf(base64[i++]);
+                        const e3 = chars.indexOf(base64[i++]);
+                        const e4 = chars.indexOf(base64[i++]);
+                        str += String.fromCharCode((e1 << 2) | (e2 >> 4));
+                        if (e3 !== 64) str += String.fromCharCode(((e2 & 15) << 4) | (e3 >> 2));
+                        if (e4 !== 64) str += String.fromCharCode(((e3 & 3) << 6) | e4);
+                    }
+                    return JSON.parse(decodeURIComponent(
+                        str.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+                    ));
+                } catch { return null; }
+            };
+
+            const payload = decodeJwt(res.token);
+            
+            // Format user data
+            const formattedUser = {
+                id:          user.id || payload?.id,
+                name:        user.nama || user.name || payload?.nama || '',
+                email:       user.email || trimmedEmail,
+                role:        role,
+                entity_id:   user.entity_id || payload?.entity_id,
+                entity_type: user.entity_type || payload?.entity_type,
+                avatar:      (user.nama || user.name || 'U').charAt(0).toUpperCase(),
+                badge:       role === 'mahasiswa' ? 'Mahasiswa' : 'Dosen Pengajar',
+            };
+
+            // Navigate based on role
+            if (role === 'mahasiswa') {
+                navigation.replace('MahasiswaMain', { user: formattedUser });
+            } else {
+                navigation.replace('DosenMain', { user: formattedUser });
+            }
         } catch (err) {
+            console.error('Login error:', err);
             setErrorMsg(err.message || 'Email atau password salah');
         } finally {
             setIsLoading(false);

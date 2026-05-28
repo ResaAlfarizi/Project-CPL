@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { prodiApi, cplApi } from '../../services/api';
 
 // Memuat asset gambar untuk background dasar aplikasi (samar-samar di belakang)
-const BG_IMAGE = require('../../assets/uinsa2.jpeg');
+const BG_IMAGE = require('../../../assets/uinsa2.jpeg');
 
 export default function ProdiCplScreen() {
     const [prodiList, setProdiList]       = useState([]);
