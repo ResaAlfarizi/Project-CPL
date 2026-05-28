@@ -44,8 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.push('/superadmin');
       } else if (decoded.role?.toLowerCase() === 'dosen') {
         router.push('/dosen');
-      } else if (decoded?.role?.toLowerCase() === 'admin' || decoded?.role?.toLowerCase() === 'admin_prodi') {
-        router.push('/admin');
+      } else if (decoded?.role?.toLowerCase() === 'admin prodi' || decoded?.role?.toLowerCase() === 'admin_prodi') {
+        router.push('/admin-prodi');
       } else if (decoded?.role?.toLowerCase() === 'mahasiswa') {
         router.push('/mahasiswa');
       } else {

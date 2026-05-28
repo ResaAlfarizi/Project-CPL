@@ -134,6 +134,7 @@ export default function CapaianPage() {
       const allCapaian: CapaianDetail[] = [];
       
       // Fetch CPL untuk mapping kode_cpl
+      
       const cplResponse = await cplApi.getByProdi(prodiId);
       const cplList = cplResponse.data || [];
       const cplMap = new Map(cplList.map((c: any) => [c.id, c]));

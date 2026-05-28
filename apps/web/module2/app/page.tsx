@@ -17,8 +17,8 @@ export default function Home() {
           router.push('/superadmin');
         } else if (role === 'dosen') {
           router.push('/dosen');
-        } else if (role === 'admin' || role === 'admin_prodi') {
-          router.push('/admin');
+        } else if (role === 'admin prodi' || role === 'admin_prodi') {
+          router.push('/admin-prodi');
         } else if (role === 'mahasiswa') {
           router.push('/mahasiswa');
         } else {
