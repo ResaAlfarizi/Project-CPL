@@ -12,7 +12,7 @@ const PRIMARY_BLUE = '#577590';
 const CANCEL_BG = '#ffebee';
 const CANCEL_TEXT = '#c62828';
 
-export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }) {
+export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate }) {
     const [modalVisible, setModalVisible] = useState(false);
     const [editMode, setEditMode]         = useState(false);
     const [selectedId, setSelectedId]     = useState(null);
@@ -29,9 +29,9 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }
     const [mkCplLoading, setMkCplLoading]     = useState(false);
     const [showMkDropdown, setShowMkDropdown] = useState(false);
 
-    // Alert / confirm modal
+    // Alert modal
     const [alertConfig, setAlertConfig] = useState({
-        visible: false, type: '', title: '', message: '', onConfirm: null,
+        visible: false, type: '', title: '', message: '',
     });
 
     useEffect(() => {
@@ -103,28 +103,28 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }
         setMkCplId(''); setKode(''); setDeskripsi(''); setBobot('');
     };
 
-    const closeAlert = () => setAlertConfig(prev => ({ ...prev, visible: false, onConfirm: null }));
+    const closeAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
     // ── Save ─────────────────────────────────────────────────────────────────
     const handleSave = async () => {
         if (!mkCplId) {
-            setAlertConfig({ visible: true, type: 'error', title: 'Pilih MK-CPL', message: 'Mata Kuliah → CPL harus dipilih.', onConfirm: null });
+            setAlertConfig({ visible: true, type: 'error', title: 'Pilih MK-CPL', message: 'Mata Kuliah → CPL harus dipilih.' });
             return;
         }
         if (!kode.trim()) {
-            setAlertConfig({ visible: true, type: 'error', title: 'Kode Kosong', message: 'Kode Sub-CPMK harus diisi.', onConfirm: null });
+            setAlertConfig({ visible: true, type: 'error', title: 'Kode Kosong', message: 'Kode Sub-CPMK harus diisi.' });
             return;
         }
         if (!deskripsi.trim()) {
-            setAlertConfig({ visible: true, type: 'error', title: 'Deskripsi Kosong', message: 'Deskripsi Sub-CPMK harus diisi.', onConfirm: null });
+            setAlertConfig({ visible: true, type: 'error', title: 'Deskripsi Kosong', message: 'Deskripsi Sub-CPMK harus diisi.' });
             return;
         }
         const floatBobot = parseFloat(bobot);
         if (isNaN(floatBobot) || floatBobot <= 0 || floatBobot > 1) {
-            setAlertConfig({ visible: true, type: 'error', title: 'Bobot Tidak Valid', message: 'Bobot harus antara 0.01 dan 1.00 (contoh: 0.25).', onConfirm: null });
+            setAlertConfig({ visible: true, type: 'error', title: 'Bobot Tidak Valid', message: 'Bobot harus antara 0.01 dan 1.00 (contoh: 0.25).' });
             return;
         }
-        // Validasi total bobot per MK-CPL (seperti web)
+        // Validasi total bobot per MK-CPL
         const currentTotal = subCpmkList
             .filter(s => s.mk_cpl_id === mkCplId && s.id !== selectedId)
             .reduce((sum, s) => sum + Number(s.bobot || 0), 0);
@@ -134,7 +134,6 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }
                 visible: true, type: 'error',
                 title: 'Bobot Melebihi 100%',
                 message: `Total bobot Sub-CPMK untuk ${mc?.nama_mk || 'MK'} → ${mc?.kode_cpl || 'CPL'} akan menjadi ${((currentTotal + floatBobot) * 100).toFixed(1)}%. Maksimal 100%.`,
-                onConfirm: null,
             });
             return;
         }
@@ -149,7 +148,6 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }
                 visible: true, type: 'success',
                 title: 'Berhasil!',
                 message: editMode ? 'Sub-CPMK berhasil diperbarui.' : 'Sub-CPMK baru berhasil ditambahkan.',
-                onConfirm: null,
             }), 300);
         } catch (err) {
             const msg = err?.message || 'Terjadi kesalahan';
@@ -158,37 +156,12 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }
                 visible: true, type: 'error',
                 title: isDup ? 'Kode Sudah Ada' : 'Gagal Menyimpan',
                 message: isDup ? `Kode "${kode}" sudah digunakan untuk MK-CPL yang sama. Gunakan kode lain.` : msg,
-                onConfirm: null,
             });
         } finally { setSaving(false); }
     };
 
-    // ── Delete ────────────────────────────────────────────────────────────────
-    const confirmDelete = (item) => {
-        setAlertConfig({
-            visible: true, type: 'confirm',
-            title: 'Hapus Sub-CPMK?',
-            message: `Yakin hapus "${item.kode_sub_cpmk || item.kode}"? Data tidak bisa dikembalikan.`,
-            onConfirm: () => executeDelete(item.id),
-        });
-    };
-
-    const executeDelete = async (id) => {
-        setAlertConfig(prev => ({ ...prev, visible: false }));
-        try {
-            await onDelete(id);
-            setAlertConfig({ visible: true, type: 'success', title: 'Terhapus!', message: 'Sub-CPMK berhasil dihapus.', onConfirm: null });
-        } catch (err) {
-            const msg = err?.message || 'Gagal menghapus';
-            const isForbidden = msg.includes('403') || msg.toLowerCase().includes('forbidden') || msg.toLowerCase().includes('tidak diizinkan');
-            setAlertConfig({
-                visible: true, type: 'error',
-                title: isForbidden ? 'Akses Ditolak' : 'Gagal Menghapus',
-                message: isForbidden ? 'Hanya Superadmin yang dapat menghapus Sub-CPMK.' : msg,
-                onConfirm: null,
-            });
-        }
-    };
+    // ── Delete — tidak tersedia untuk Dosen (hanya Superadmin)
+    // Backend mengembalikan 403 jika dosen mencoba hapus Sub-CPMK
 
     // ── Render sub-cpmk card per CPL ─────────────────────────────────────────
     const renderSubCard = (sub) => (
@@ -208,14 +181,9 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }
                     </View>
                 </View>
             </View>
-            <View style={styles.subCardActions}>
-                <TouchableOpacity style={styles.editIconBtn} activeOpacity={0.7} onPress={() => openEditModal(sub)}>
-                    <Ionicons name="pencil-outline" size={15} color={PRIMARY_BLUE} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteIconBtn} activeOpacity={0.7} onPress={() => confirmDelete(sub)}>
-                    <Ionicons name="trash-outline" size={15} color={CANCEL_TEXT} />
-                </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.editIconBtn} activeOpacity={0.7} onPress={() => openEditModal(sub)}>
+                <Ionicons name="pencil-outline" size={15} color={PRIMARY_BLUE} />
+            </TouchableOpacity>
         </View>
     );
 
@@ -242,7 +210,7 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }
                     </View>
                     <Text style={styles.mkNama}>{group.nama_mk}</Text>
                 </View>
-                <Ionicons name="book-open-outline" size={28} color="rgba(33,44,33,0.2)" />
+                <Ionicons name="book-outline" size={28} color="rgba(33,44,33,0.2)" />
             </View>
 
             {/* Per CPL dalam MK ini */}
@@ -435,36 +403,29 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate, onDelete }
                 </View>
             </Modal>
 
-            {/* ── Alert / Confirm Modal ── */}
+            {/* ── Alert Modal ── */}
             <Modal visible={alertConfig.visible} animationType="fade" transparent onRequestClose={closeAlert}>
-                <TouchableOpacity style={styles.alertOverlay} activeOpacity={1} onPress={alertConfig.type === 'confirm' ? undefined : closeAlert}>
+                <TouchableOpacity style={styles.alertOverlay} activeOpacity={1} onPress={closeAlert}>
                     <TouchableWithoutFeedback onPress={() => {}}>
                         <View style={styles.alertBox}>
                             <View style={[styles.alertIconWrap, {
-                                backgroundColor: alertConfig.type === 'success' ? '#e0f2f1' : alertConfig.type === 'confirm' ? '#fff8e1' : '#ffebee',
+                                backgroundColor: alertConfig.type === 'success' ? '#e0f2f1' : '#ffebee',
                             }]}>
                                 <Ionicons
-                                    name={alertConfig.type === 'success' ? 'checkmark-circle' : alertConfig.type === 'confirm' ? 'help-circle' : 'warning'}
+                                    name={alertConfig.type === 'success' ? 'checkmark-circle' : 'warning'}
                                     size={45}
-                                    color={alertConfig.type === 'success' ? '#00796b' : alertConfig.type === 'confirm' ? '#f57c00' : '#c62828'}
+                                    color={alertConfig.type === 'success' ? '#00796b' : '#c62828'}
                                 />
                             </View>
                             <Text style={styles.alertTitle}>{alertConfig.title}</Text>
                             <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-                            {alertConfig.type === 'confirm' ? (
-                                <View style={styles.alertBtnRow}>
-                                    <TouchableOpacity style={styles.btnAlertCancel} onPress={closeAlert} activeOpacity={0.8}>
-                                        <Text style={styles.btnAlertCancelText}>Batal</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.btnAlertOK, { backgroundColor: '#c62828' }]} onPress={alertConfig.onConfirm} activeOpacity={0.8}>
-                                        <Text style={styles.btnAlertOKText}>Ya, Hapus</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ) : (
-                                <TouchableOpacity style={[styles.btnAlertOK, { backgroundColor: alertConfig.type === 'success' ? PRIMARY_BLUE : '#c62828' }]} onPress={closeAlert} activeOpacity={0.8}>
-                                    <Text style={styles.btnAlertOKText}>Oke, Mengerti</Text>
-                                </TouchableOpacity>
-                            )}
+                            <TouchableOpacity
+                                style={[styles.btnAlertOK, { backgroundColor: alertConfig.type === 'success' ? PRIMARY_BLUE : '#c62828' }]}
+                                onPress={closeAlert}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={styles.btnAlertOKText}>Oke, Mengerti</Text>
+                            </TouchableOpacity>
                         </View>
                     </TouchableWithoutFeedback>
                 </TouchableOpacity>
@@ -596,7 +557,7 @@ const styles = StyleSheet.create({
     },
     bobotBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: '#92400e' },
     subCardActions: { flexDirection: 'column', gap: 6, marginLeft: 8 },
-    editIconBtn:   { padding: 7, borderRadius: 10, backgroundColor: '#EFF0A3' },
+    editIconBtn:   { padding: 7, borderRadius: 10, backgroundColor: '#EFF0A3', marginLeft: 8 },
     deleteIconBtn: { padding: 7, borderRadius: 10, backgroundColor: '#ffebee' },
 
     // ── FAB ──
@@ -644,9 +605,6 @@ const styles = StyleSheet.create({
     alertIconWrap: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 18 },
     alertTitle:   { fontFamily: 'Urbanist-Bold', fontSize: 20, color: '#212121', marginBottom: 8, textAlign: 'center' },
     alertMessage: { fontFamily: 'Urbanist-Regular', fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 22, lineHeight: 21 },
-    alertBtnRow:  { flexDirection: 'row', gap: 10, width: '100%' },
-    btnAlertCancel: { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 18, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0' },
-    btnAlertCancelText: { color: '#64748B', fontFamily: 'Urbanist-Bold', fontSize: 14 },
-    btnAlertOK:   { flex: 1, borderRadius: 18, paddingVertical: 13, paddingHorizontal: 28, alignItems: 'center', elevation: 3 },
+    btnAlertOK:   { borderRadius: 18, paddingVertical: 13, paddingHorizontal: 28, alignItems: 'center', elevation: 3, minWidth: 140 },
     btnAlertOKText: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 15 },
 });

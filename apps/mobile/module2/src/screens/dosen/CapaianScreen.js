@@ -66,11 +66,22 @@ export default function CapaianScreen({ kelasList = [] }) {
                     style={styles.selectBtn}
                     onPress={() => setShowKelasDropdown(!showKelasDropdown)}
                 >
-                    <Text style={styles.selectBtnText}>
-                        {selectedKelas
-                            ? `${selectedKelas.mk_nama} - ${selectedKelas.kelas} (${selectedKelas.ta} ${selectedKelas.semester})`
-                            : '-- Pilih Kelas --'}
-                    </Text>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                        {selectedKelas ? (
+                            <>
+                                <Text style={styles.selectBtnText} numberOfLines={1}>
+                                    {selectedKelas.mk_nama}
+                                </Text>
+                                <Text style={styles.selectBtnSub} numberOfLines={1}>
+                                    Kelas {selectedKelas.kelas} • {selectedKelas.ta} {selectedKelas.semester}
+                                </Text>
+                            </>
+                        ) : (
+                            <Text style={[styles.selectBtnText, { color: '#94A3B8', fontWeight: '400' }]}>
+                                -- Pilih Kelas --
+                            </Text>
+                        )}
+                    </View>
                     <MaterialCommunityIcons name={showKelasDropdown ? "menu-up" : "menu-down"} size={24} color="#64748B" />
                 </TouchableOpacity>
 
@@ -86,8 +97,11 @@ export default function CapaianScreen({ kelasList = [] }) {
                                 style={styles.dropdownOptionRow}
                                 onPress={() => handleSelectKelas(k.id)}
                             >
-                                <Text style={styles.dropdownOptionText}>
-                                    {k.mk_nama} - {k.kelas} ({k.ta} {k.semester})
+                                <Text style={styles.dropdownOptionText} numberOfLines={1}>
+                                    {k.mk_nama}
+                                </Text>
+                                <Text style={styles.dropdownOptionSub} numberOfLines={1}>
+                                    Kelas {k.kelas} • {k.ta} {k.semester}
                                 </Text>
                             </TouchableOpacity>
                         ))}
@@ -251,18 +265,25 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        height: 48,
+        minHeight: 52,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: 'rgba(0,0,0,0.05)',
         backgroundColor: 'rgba(255,255,255,0.92)',
         paddingHorizontal: 16,
+        paddingVertical: 10,
     },
     selectBtnText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
         fontWeight: '700',
         color: '#212121',
+    },
+    selectBtnSub: {
+        fontFamily: 'Urbanist-Regular',
+        fontSize: 11,
+        color: '#64748B',
+        marginTop: 2,
     },
     dropdownOptions: {
         backgroundColor: 'rgba(255,255,255,0.92)',
@@ -283,9 +304,15 @@ const styles = StyleSheet.create({
         borderBottomColor: '#F1F5F9',
     },
     dropdownOptionText: {
-        fontFamily: 'Urbanist-SemiBold',
+        fontFamily: 'Urbanist-Bold',
         fontSize: 13,
         color: '#212121',
+    },
+    dropdownOptionSub: {
+        fontFamily: 'Urbanist-Regular',
+        fontSize: 11,
+        color: '#64748B',
+        marginTop: 2,
     },
     contentSection: {
         marginTop: 4,

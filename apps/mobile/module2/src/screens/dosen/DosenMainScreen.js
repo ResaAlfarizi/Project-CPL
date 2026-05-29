@@ -140,7 +140,7 @@ export default function DosenMainScreen() {
             case 'dashboard':   return <DashboardScreen currentRole="dosen" rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
             case 'prodi_cpl':   return <ProdiCplScreen />;
             case 'mata_kuliah': return <MataKuliahScreen kelasList={formattedKelas} />;
-            case 'sub_cpmk':    return <SubCpmkScreen subCpmkList={subCpmkList} onAdd={handleAddSubCpmk} onUpdate={handleUpdateSubCpmk} onDelete={handleDeleteSubCpmk} />;
+            case 'sub_cpmk':    return <SubCpmkScreen subCpmkList={subCpmkList} onAdd={handleAddSubCpmk} onUpdate={handleUpdateSubCpmk} />;
             case 'input_nilai': return <InputNilaiScreen kelasList={formattedKelas} subCpmkList={subCpmkList} onAddGrade={handleAddGrade} onUpdateGrade={handleUpdateGrade} />;
             case 'capaian_mhs': return <CapaianScreen kelasList={formattedKelas} />;
             case 'profile':     return <ProfilDetailScreen user={enrichedUser} />;
