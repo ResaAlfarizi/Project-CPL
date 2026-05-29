@@ -78,9 +78,10 @@ export default function LoginScreen({ navigation }) {
                 badge:       role === 'mahasiswa' ? 'Mahasiswa' : 'Dosen Pengajar',
             };
 
-            // Navigate based on role
             if (role === 'mahasiswa') {
                 navigation.replace('MahasiswaMain', { user: formattedUser });
+            } else if (role === 'admin' || role === 'admin_prodi') {
+                navigation.replace('AdminMain', { user: formattedUser });
             } else {
                 navigation.replace('DosenMain', { user: formattedUser });
             }

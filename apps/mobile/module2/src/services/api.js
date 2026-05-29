@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Cara cek IP:
 // Windows: ipconfig (lihat IPv4 Address)
 // Mac/Linux: ifconfig (lihat inet)
-const API_BASE = 'http://192.168.1.103:3000/api/v1/m2'; // GANTI IP INI!
+const API_BASE = 'http://192.168.1.94:3000/api/v1/m2'; // GANTI IP INI!
 
 const TOKEN_KEY = 'auth_token';
 

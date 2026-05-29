@@ -2,14 +2,15 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-// Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
 
-// Dosen Screens
 import DosenMainScreen from '../screens/dosen/DosenMainScreen';
 
-// Mahasiswa Screens
 import MahasiswaMainScreen from '../screens/mahasiswa/MahasiswaMainScreen';
+
+import AdminNavigation from '../screens/admin-prodi/admin_navigation';
+
+import SuperAdminNavigation from '../screens/super-admin/superadmin_navigation';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,6 +18,7 @@ export default function AppNavigator() {
     return (
         <NavigationContainer>
             <Stack.Navigator
+                initialRouteName="SuperAdminMain"
                 screenOptions={{
                     headerShown: false,
                     animation: 'slide_from_right',
@@ -30,6 +32,12 @@ export default function AppNavigator() {
                 
                 {/* Mahasiswa Stack */}
                 <Stack.Screen name="MahasiswaMain" component={MahasiswaMainScreen} />
+
+                {/* Admin Prodi Stack */}
+                <Stack.Screen name="AdminMain" component={AdminNavigation} />
+
+                {/* Super Admin Stack */}
+                <Stack.Screen name="SuperAdminMain" component={SuperAdminNavigation} />
             </Stack.Navigator>
         </NavigationContainer>
     );
