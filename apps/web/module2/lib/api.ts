@@ -165,7 +165,7 @@ export const userApi = {
   getAll: () => apiFetch('/users'),
   getById: (id: string) => apiFetch(`/users/${id}`),
   getByEmail: (email: string) => apiFetch(`/users/email/${email}`),
-  create: (body: { email: string; password: string; role: string }) =>
+  create: (body: { email: string; password: string; role: string; prodi_id?: string; nama?: string; identifier?: string }) =>
     apiFetch('/users', { method: 'POST', body: JSON.stringify(body) }),
   update: (id: string, body: { email: string; role: string }) =>
     apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
@@ -192,6 +192,20 @@ export const mataKuliahApi = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Gagal memuat mata kuliah');
+    return data;
+  },
+  create: async (body: { kode_mk: string; nama_mk: string; sks: number; prodi_id: string; semester?: number }) => {
+    const token = authStorage.getToken();
+    const res = await fetch(`${API_URL}/api/v1/m1/kurikulum/mk`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal menambah mata kuliah');
     return data;
   },
 };

@@ -15,8 +15,82 @@ interface AccessRight {
 export default function AdminProdiDashboard() {
   const { user } = useAuth();
   const [accessRights, setAccessRights] = useState<AccessRight[]>([]);
+  const [stats, setStats] = useState({
+    total_cpl: 0,
+    total_cpmk: 0,
+    total_dosen: 0,
+    total_mahasiswa: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('Admin');
+  const [userRole, setUserRole] = useState('Admin Prodi');
 
   useEffect(() => {
+    // Load stats from API
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        // Import API
+        const { dashboardApi, userApi, cplApi, profileApi } = await import('@/lib/api');
+        
+        // Fetch user profile to get full name
+        try {
+          const profileRes = await profileApi.getMyProfile();
+          const fullName = profileRes.data.nama || profileRes.data.email?.split('@')[0] || 'Admin';
+          const prodiName = profileRes.data.nama_prodi || '';
+          
+          setUserName(fullName);
+          setUserRole(prodiName ? `Admin Prodi ${prodiName}` : 'Admin Prodi');
+        } catch {
+          setUserName(user?.email?.split('@')[0] || 'Admin');
+          setUserRole('Admin Prodi');
+        }
+        
+        // Get dashboard data if available
+        try {
+          const dashRes = await dashboardApi.getDosen();
+          if (dashRes.data && dashRes.data.statistik) {
+            setStats({
+              total_cpl: dashRes.data.statistik.total_cpl || 0,
+              total_cpmk: dashRes.data.statistik.total_cpmk || 0,
+              total_dosen: dashRes.data.statistik.total_dosen || 0,
+              total_mahasiswa: dashRes.data.statistik.total_mahasiswa || 0,
+            });
+          }
+        } catch {
+          // Fallback: Get data from individual APIs
+          const [usersRes, cplRes] = await Promise.all([
+            userApi.getAll().catch(() => ({ data: [] })),
+            cplApi.getAll().catch(() => ({ data: [] })),
+          ]);
+          
+          const users = usersRes.data || [];
+          const userProdiId = (user as any)?.prodi_id;
+          const dosen = users.filter((u: any) => u.role === 'Dosen' && (!userProdiId || u.prodi_id === userProdiId));
+          const mahasiswa = users.filter((u: any) => u.role === 'Mahasiswa' && (!userProdiId || u.prodi_id === userProdiId));
+          
+          // Filter CPL by prodi_id
+          const allCpl = cplRes.data || [];
+          const cplByProdi = userProdiId 
+            ? allCpl.filter((c: any) => c.prodi_id === userProdiId)
+            : allCpl;
+          
+          setStats({
+            total_cpl: cplByProdi.length,
+            total_cpmk: 0, // Will be calculated from CPMK API if needed
+            total_dosen: dosen.length,
+            total_mahasiswa: mahasiswa.length,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadStats();
+
     // Data dummy hak akses Admin Prodi
     const dummyAccessRights: AccessRight[] = [
       {
@@ -73,7 +147,7 @@ export default function AdminProdiDashboard() {
     ];
 
     setAccessRights(dummyAccessRights);
-  }, []);
+  }, [user]);
 
   const getAccessBadgeStyle = (akses: 'R/W' | 'R') => {
     if (akses === 'R/W') {
@@ -94,7 +168,7 @@ export default function AdminProdiDashboard() {
     <div style={{ 
       minHeight: '100vh', 
       background: 'var(--ghost-white)',
-      padding: '32px',
+      padding: '1px',
     }}>
       {/* Header Section */}
       <div className="page-header animate-fade-in">
@@ -117,7 +191,10 @@ export default function AdminProdiDashboard() {
               Dashboard Admin Prodi
             </h1>
             <p className="page-subtitle">
-              Selamat datang, {user?.email || 'Admin'}
+              Selamat datang, {userName}
+            </p>
+            <p style={{ fontSize: '13px', color: '#9CA3AF', fontWeight: '600', marginTop: '4px' }}>
+              {userRole}
             </p>
           </div>
         </div>
@@ -130,53 +207,67 @@ export default function AdminProdiDashboard() {
         gap: '20px',
         marginBottom: '32px',
       }}>
-        <div className="card" style={{
-          background: 'linear-gradient(135deg, #EFFDA3 0%, #E5F195 100%)',
-          border: '1.5px solid #DBE787',
-          padding: '24px',
-        }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>📚</div>
-          <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', marginBottom: '8px' }}>
-            Total CPL
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: '800', color: '#212121' }}>12</p>
-        </div>
+        {loading ? (
+          <>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="card" style={{ padding: '24px' }}>
+                <div className="skeleton" style={{ width: '40px', height: '40px', borderRadius: '8px', marginBottom: '12px' }} />
+                <div className="skeleton" style={{ width: '80px', height: '16px', marginBottom: '8px' }} />
+                <div className="skeleton" style={{ width: '60px', height: '32px' }} />
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="card" style={{
+              background: 'linear-gradient(135deg, #EFFDA3 0%, #E5F195 100%)',
+              border: '1.5px solid #DBE787',
+              padding: '24px',
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>📚</div>
+              <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', marginBottom: '8px' }}>
+                Total CPL
+              </p>
+              <p style={{ fontSize: '32px', fontWeight: '800', color: '#212121' }}>{stats.total_cpl}</p>
+            </div>
 
-        <div className="card" style={{
-          background: 'linear-gradient(135deg, #CFE3CA 0%, #BDD9B6 100%)',
-          border: '1.5px solid #A8CFA0',
-          padding: '24px',
-        }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>📖</div>
-          <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', marginBottom: '8px' }}>
-            Total CPMK
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: '800', color: '#212121' }}>48</p>
-        </div>
+            <div className="card" style={{
+              background: 'linear-gradient(135deg, #CFE3CA 0%, #BDD9B6 100%)',
+              border: '1.5px solid #A8CFA0',
+              padding: '24px',
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>📖</div>
+              <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', marginBottom: '8px' }}>
+                Total CPMK
+              </p>
+              <p style={{ fontSize: '32px', fontWeight: '800', color: '#212121' }}>{stats.total_cpmk}</p>
+            </div>
 
-        <div className="card" style={{
-          background: 'linear-gradient(135deg, #E4EAEF 0%, #D5DDE5 100%)',
-          border: '1.5px solid #C6D0DB',
-          padding: '24px',
-        }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>👨‍🏫</div>
-          <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', marginBottom: '8px' }}>
-            Total Dosen
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: '800', color: '#212121' }}>24</p>
-        </div>
+            <div className="card" style={{
+              background: 'linear-gradient(135deg, #E4EAEF 0%, #D5DDE5 100%)',
+              border: '1.5px solid #C6D0DB',
+              padding: '24px',
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>👨‍🏫</div>
+              <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', marginBottom: '8px' }}>
+                Total Dosen
+              </p>
+              <p style={{ fontSize: '32px', fontWeight: '800', color: '#212121' }}>{stats.total_dosen}</p>
+            </div>
 
-        <div className="card" style={{
-          background: 'linear-gradient(135deg, #F7F5FA 0%, #EBE9F0 100%)',
-          border: '1.5px solid #DDD9E6',
-          padding: '24px',
-        }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>👨‍🎓</div>
-          <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', marginBottom: '8px' }}>
-            Total Mahasiswa
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: '800', color: '#212121' }}>320</p>
-        </div>
+            <div className="card" style={{
+              background: 'linear-gradient(135deg, #F7F5FA 0%, #EBE9F0 100%)',
+              border: '1.5px solid #DDD9E6',
+              padding: '24px',
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>👨‍🎓</div>
+              <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', marginBottom: '8px' }}>
+                Total Mahasiswa
+              </p>
+              <p style={{ fontSize: '32px', fontWeight: '800', color: '#212121' }}>{stats.total_mahasiswa}</p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Access Rights Section */}

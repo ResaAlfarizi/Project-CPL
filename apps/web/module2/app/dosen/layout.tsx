@@ -10,7 +10,7 @@ import DosenSidebar from '@/components/dosen/DosenSidebar';
 import DosenHeader from '@/components/dosen/DosenHeader';
 
 export default function DosenLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -33,16 +33,16 @@ export default function DosenLayout({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (!isLoading) {
       if (!user) {
         router.push('/login');
       } else if (user.role?.toLowerCase() !== 'dosen') {
         router.push('/unauthorized');
       }
     }
-  }, [user, loading, router]);
+  }, [user, isLoading, router]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div style={{
         display: 'flex',

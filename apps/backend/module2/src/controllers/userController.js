@@ -50,11 +50,11 @@ const getUserByEmailHandler = async (req, res) => {
 
 const createUserHandler = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role, prodi_id, nama, identifier } = req.body;
 
     // Validasi input
     if (!email || !password || !role) {
-      return errorResponse(res, "Data tidak lengkap", 400);
+      return errorResponse(res, "Email, password, dan role wajib diisi", 400);
     }
 
     // Cek apakah email sudah ada
@@ -63,7 +63,7 @@ const createUserHandler = async (req, res) => {
       return errorResponse(res, "Email sudah terdaftar", 400);
     }
 
-    const user = await createUser(email, password, role);
+    const user = await createUser(email, password, role, prodi_id, nama, identifier);
 
     return successResponse(res, user, "User berhasil dibuat", 201);
   } catch (error) {

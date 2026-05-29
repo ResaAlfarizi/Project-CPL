@@ -12,7 +12,7 @@ interface SidebarProps {
 interface MenuItem {
   label: string;
   href: string;
-  icon: string;
+  icon: React.ReactNode;
   badge?: string;
   badgeColor?: string;
 }
@@ -21,14 +21,97 @@ export default function AdminProdiSidebar({ collapsed, onClose }: SidebarProps) 
   const pathname = usePathname();
 
   const menuItems: MenuItem[] = [
-    { label: 'Dashboard', href: '/admin-prodi', icon: '🏠' },
-    { label: 'Kelola CPL', href: '/admin-prodi/cpl', icon: '📚', badge: 'R/W', badgeColor: 'green' },
-    { label: 'Kelola CPMK', href: '/admin-prodi/cpmk', icon: '📖', badge: 'R/W', badgeColor: 'green' },
-    { label: 'Kelola Sub-CPMK', href: '/admin-prodi/sub-cpmk', icon: '📝', badge: 'R/W', badgeColor: 'green' },
-    { label: 'Capaian Mahasiswa', href: '/admin-prodi/capaian', icon: '📊', badge: 'R', badgeColor: 'blue' },
-    { label: 'Mata Kuliah', href: '/admin-prodi/mata-kuliah', icon: '📚', badge: 'R/W', badgeColor: 'green' },
-    { label: 'Kelola Dosen', href: '/admin-prodi/dosen', icon: '👨‍🏫', badge: 'R/W', badgeColor: 'green' },
-    { label: 'Data Mahasiswa', href: '/admin-prodi/mahasiswa', icon: '👨‍🎓', badge: 'R', badgeColor: 'blue' },
+    { 
+      label: 'Dashboard', 
+      href: '/admin-prodi', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+      )
+    },
+    { 
+      label: 'Program Studi & CPL', 
+      href: '/admin-prodi/cpl', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      )
+    },
+    { 
+      label: 'Mata Kuliah & Pemetaan', 
+      href: '/admin-prodi/mata-kuliah', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      )
+    },
+    { 
+      label: 'Sub-CPMK', 
+      href: '/admin-prodi/sub-cpmk', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      )
+    },
+    { 
+      label: 'Input Nilai Sub-CPMK', 
+      href: '/admin-prodi/input-nilai', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      )
+    },
+    { 
+      label: 'Capaian CPL Mahasiswa', 
+      href: '/admin-prodi/capaian', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      )
+    },
+    { 
+      label: 'Manajemen User', 
+      href: '/admin-prodi/users', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      )
+    },
+    { 
+      label: 'Audit Log', 
+      href: '/admin-prodi/audit-log', 
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <line x1="12" y1="9" x2="8" y2="9"/>
+        </svg>
+      )
+    },
   ];
 
   const isActive = (href: string) => {
@@ -89,11 +172,13 @@ export default function AdminProdiSidebar({ collapsed, onClose }: SidebarProps) 
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '22px',
                 boxShadow: '0 4px 12px rgba(239, 253, 163, 0.3)',
               }}
             >
-              👨‍💼
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
             </div>
             <div>
               <h2
@@ -154,28 +239,11 @@ export default function AdminProdiSidebar({ collapsed, onClose }: SidebarProps) 
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '18px' }}>{item.icon}</span>
+                  <div style={{ color: isActive(item.href) ? '#EFFDA3' : '#9CA3AF' }}>
+                    {item.icon}
+                  </div>
                   <span>{item.label}</span>
                 </div>
-                {item.badge && (
-                  <span
-                    style={{
-                      fontSize: '9px',
-                      fontWeight: '800',
-                      padding: '4px 8px',
-                      borderRadius: '6px',
-                      letterSpacing: '0.05em',
-                      background:
-                        item.badgeColor === 'green'
-                          ? 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)'
-                          : 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)',
-                      color: item.badgeColor === 'green' ? '#065F46' : '#1E40AF',
-                      border: item.badgeColor === 'green' ? '1px solid #6EE7B7' : '1px solid #93C5FD',
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             ))}
           </div>
@@ -198,7 +266,11 @@ export default function AdminProdiSidebar({ collapsed, onClose }: SidebarProps) 
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <span style={{ fontSize: '16px' }}>💡</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EFFDA3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
               <p
                 style={{
                   fontSize: '12px',

@@ -42,6 +42,7 @@ export default function AdminProdiMataKuliahPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showMKModal, setShowMKModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Kelas | null>(null);
   
@@ -56,6 +57,14 @@ export default function AdminProdiMataKuliahPage() {
     semester_aktif: '',
     nama_kelas: '',
   });
+  
+  const [mkFormData, setMkFormData] = useState({
+    kode_mk: '',
+    nama_mk: '',
+    sks: '',
+    semester: '',
+  });
+  
   const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
@@ -140,13 +149,26 @@ export default function AdminProdiMataKuliahPage() {
       const allMK = mkResponse.data || [];
       const allDosen = dosenResponse.data || [];
       
-      // Filter by prodi
+      console.log('All MK:', allMK); // Debug
+      console.log('All Dosen:', allDosen); // Debug
+      console.log('User prodi_id:', prodiId); // Debug
+      
+      // Filter MK by prodi
       const filteredMK = allMK.filter((mk: MataKuliah) => String(mk.prodi_id) === String(prodiId));
-      const filteredDosen = allDosen.filter((d: Dosen) => String(d.prodi_id) === String(prodiId));
+      
+      // Filter Dosen - lebih fleksibel
+      // Tampilkan semua dosen jika tidak ada prodi_id, atau filter by prodi jika ada
+      const filteredDosen = prodiId 
+        ? allDosen.filter((d: Dosen) => !d.prodi_id || String(d.prodi_id) === String(prodiId))
+        : allDosen;
+      
+      console.log('Filtered MK:', filteredMK); // Debug
+      console.log('Filtered Dosen:', filteredDosen); // Debug
       
       setMataKuliahList(filteredMK);
       setDosenList(filteredDosen);
     } catch (error: any) {
+      console.error('Error loading dropdown:', error); // Debug
       showToast(error.message || 'Gagal memuat data dropdown', 'error');
     } finally {
       setDropdownLoading(false);
@@ -226,6 +248,61 @@ export default function AdminProdiMataKuliahPage() {
     resetForm();
   };
 
+  const handleMKSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!mkFormData.kode_mk || !mkFormData.nama_mk || !mkFormData.sks) {
+      showToast('Kode MK, nama MK, dan SKS wajib diisi', 'error');
+      return;
+    }
+
+    const sks = parseInt(mkFormData.sks);
+    if (isNaN(sks) || sks < 1 || sks > 6) {
+      showToast('SKS harus antara 1-6', 'error');
+      return;
+    }
+
+    const semester = mkFormData.semester ? parseInt(mkFormData.semester) : undefined;
+    if (semester && (isNaN(semester) || semester < 1 || semester > 8)) {
+      showToast('Semester harus antara 1-8', 'error');
+      return;
+    }
+
+    try {
+      setFormLoading(true);
+      const prodiId = (user as any)?.prodi_id || (user as any)?.entity_id;
+      
+      await mataKuliahApi.create({
+        kode_mk: mkFormData.kode_mk,
+        nama_mk: mkFormData.nama_mk,
+        sks: sks,
+        prodi_id: prodiId,
+        semester: semester,
+      });
+      
+      showToast('Mata kuliah berhasil ditambahkan', 'success');
+      setShowMKModal(false);
+      setMkFormData({
+        kode_mk: '',
+        nama_mk: '',
+        sks: '',
+        semester: '',
+      });
+      
+      // Refresh data kelas dan mata kuliah
+      await fetchKelas();
+      
+      // Show info to user
+      setTimeout(() => {
+        showToast('Mata kuliah baru sudah tersedia di dropdown "Tambah Kelas"', 'info');
+      }, 1000);
+    } catch (error: any) {
+      showToast(error.message || 'Gagal menyimpan mata kuliah', 'error');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   const filteredItems = items.filter(item =>
     item.nama_mk.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.kode_mk.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -242,6 +319,30 @@ export default function AdminProdiMataKuliahPage() {
         <p className="page-subtitle">Kelola mata kuliah dan kelas program studi Anda</p>
       </div>
 
+      {/* Info Banner */}
+      <div className="animate-fade-in" style={{
+        padding: '16px 20px',
+        background: 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)',
+        borderRadius: '12px',
+        border: '1.5px solid #93C5FD',
+        marginBottom: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+      }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" strokeWidth="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <div>
+          <p style={{ fontSize: '13px', color: '#1E40AF', fontWeight: '600', margin: 0 }}>
+            <strong>Tambah Mata Kuliah</strong> untuk membuat mata kuliah baru. 
+            <strong> Tambah Kelas</strong> untuk membuka kelas dari mata kuliah yang sudah ada.
+          </p>
+        </div>
+      </div>
+
       {/* Toolbar */}
       <div className="animate-fade-in stagger-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
@@ -250,15 +351,23 @@ export default function AdminProdiMataKuliahPage() {
           </svg>
           <input type="text" placeholder="Cari mata kuliah..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
         </div>
-        <button className="btn btn-primary" onClick={() => {
-          setShowModal(true);
-          fetchDropdownData();
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Tambah Kelas
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn btn-secondary" onClick={() => setShowMKModal(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Tambah Mata Kuliah
+          </button>
+          <button className="btn btn-primary" onClick={() => {
+            setShowModal(true);
+            fetchDropdownData();
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Tambah Kelas
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -287,6 +396,7 @@ export default function AdminProdiMataKuliahPage() {
                 <th>SKS</th>
                 <th>Tahun Akademik</th>
                 <th>Semester</th>
+                <th>Nama Kelas</th>
                 <th>Dosen</th>
                 <th>Aksi</th>
               </tr>
@@ -300,6 +410,7 @@ export default function AdminProdiMataKuliahPage() {
                   <td><span className="badge badge-blue">{item.sks} SKS</span></td>
                   <td style={{ fontSize: '13px' }}>{item.tahun_akademik}</td>
                   <td><span className="badge badge-yellow">Semester {item.semester_aktif}</span></td>
+                  <td style={{ fontSize: '13px' }}>{item.nama_kelas || '-'}</td>
                   <td style={{ fontSize: '13px' }}>{item.nama_dosen || '-'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '6px' }}>
@@ -447,6 +558,108 @@ export default function AdminProdiMataKuliahPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tambah Mata Kuliah */}
+      {showMKModal && (
+        <div className="modal-overlay" onClick={() => setShowMKModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
+              Tambah Mata Kuliah
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
+              Isi form untuk menambahkan mata kuliah baru ke program studi Anda
+            </p>
+            
+            <form onSubmit={handleMKSubmit}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>
+                  Kode Mata Kuliah <span style={{ color: '#e74c3c' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={mkFormData.kode_mk}
+                  onChange={(e) => setMkFormData({ ...mkFormData, kode_mk: e.target.value })}
+                  placeholder="Contoh: IF101"
+                  className="input-field"
+                  required
+                  disabled={formLoading}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>
+                  Nama Mata Kuliah <span style={{ color: '#e74c3c' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={mkFormData.nama_mk}
+                  onChange={(e) => setMkFormData({ ...mkFormData, nama_mk: e.target.value })}
+                  placeholder="Contoh: Pemrograman Web"
+                  className="input-field"
+                  required
+                  disabled={formLoading}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>
+                  SKS <span style={{ color: '#e74c3c' }}>*</span>
+                </label>
+                <select
+                  value={mkFormData.sks}
+                  onChange={(e) => setMkFormData({ ...mkFormData, sks: e.target.value })}
+                  className="input-field"
+                  required
+                  disabled={formLoading}
+                >
+                  <option value="">Pilih SKS</option>
+                  {[1, 2, 3, 4, 5, 6].map((sks) => (
+                    <option key={sks} value={sks}>{sks} SKS</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>
+                  Semester (Opsional)
+                </label>
+                <select
+                  value={mkFormData.semester}
+                  onChange={(e) => setMkFormData({ ...mkFormData, semester: e.target.value })}
+                  className="input-field"
+                  disabled={formLoading}
+                >
+                  <option value="">Pilih Semester (Opsional)</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                    <option key={sem} value={sem}>Semester {sem}</option>
+                  ))}
+                </select>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Semester di mana mata kuliah ini biasanya diambil
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowMKModal(false)} 
+                  className="btn btn-ghost"
+                  disabled={formLoading}
+                >
+                  Batal
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={formLoading}
+                >
+                  {formLoading ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

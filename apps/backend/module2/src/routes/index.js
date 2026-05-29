@@ -13,6 +13,7 @@ const cplRoutes = require("./cplRoutes");
 const mkCplRoutes = require("./mkCplRoutes");
 const subCpmkRoutes = require("./subCpmkRoutes");
 const authAuditLogRoutes = require("./authAuditLogRoutes");
+const profileRoutes = require("./profileRoutes"); // Universal profile route
 const dosenProfileRoutes = require("./dosenProfileRoutes");
 const mahasiswaProfileRoutes = require("./mahasiswaProfileRoutes");
 
@@ -29,6 +30,7 @@ router.use("/cpl", cplRoutes);
 router.use("/mk-cpl", mkCplRoutes);
 router.use("/sub-cpmk", subCpmkRoutes);
 router.use("/auth-audit-log", authAuditLogRoutes);
+router.use("/profile", profileRoutes); // Universal profile route (must be first)
 router.use("/profile", dosenProfileRoutes);
 router.use("/profile", mahasiswaProfileRoutes);
 

@@ -7,7 +7,7 @@ import AdminProdiSidebar from '@/components/admin-prodi/AdminProdiSidebar';
 import AdminProdiHeader from '@/components/admin-prodi/AdminProdiHeader';
 
 export default function AdminProdiLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -30,16 +30,16 @@ export default function AdminProdiLayout({ children }: { children: React.ReactNo
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (!isLoading) {
       if (!user) {
         router.push('/login');
       } else if (user.role?.toLowerCase() !== 'admin prodi' && user.role?.toLowerCase() !== 'admin_prodi') {
         router.push('/unauthorized');
       }
     }
-  }, [user, loading, router]);
+  }, [user, isLoading, router]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div
         style={{
@@ -103,6 +103,7 @@ export default function AdminProdiLayout({ children }: { children: React.ReactNo
         <main
           style={{
             flex: 1,
+            padding: '32px',
             minWidth: 0,
             overflowY: 'auto',
             overflowX: 'hidden',
@@ -117,6 +118,15 @@ export default function AdminProdiLayout({ children }: { children: React.ReactNo
         @media (max-width: 1023px) {
           .main-wrapper {
             margin-left: 0 !important;
+          }
+          .main-content {
+            padding: 20px !important;
+          }
+        }
+        
+        @media (max-width: 640px) {
+          .main-content {
+            padding: 16px !important;
           }
         }
       `}</style>

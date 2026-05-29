@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -10,7 +11,35 @@ interface HeaderProps {
 
 export default function AdminProdiHeader({ onToggleSidebar, sidebarCollapsed }: HeaderProps) {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [userName, setUserName] = useState('Admin');
+  const [userRole, setUserRole] = useState('Admin Prodi');
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    // Fetch user profile to get full name
+    const fetchUserProfile = async () => {
+      try {
+        const { profileApi } = await import('@/lib/api');
+        const response = await profileApi.getMyProfile();
+        const fullName = response.data.nama || response.data.email?.split('@')[0] || 'Admin';
+        const prodiName = response.data.nama_prodi || '';
+        const email = response.data.email || user?.email || '';
+        
+        setUserName(fullName);
+        setUserRole(prodiName ? `Admin Prodi ${prodiName}` : 'Admin Prodi');
+        setUserEmail(email);
+      } catch (error) {
+        // Fallback to email or default
+        setUserName(user?.email?.split('@')[0] || 'Admin');
+        setUserRole('Admin Prodi');
+        setUserEmail(user?.email || '');
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   return (
     <header
@@ -65,55 +94,13 @@ export default function AdminProdiHeader({ onToggleSidebar, sidebarCollapsed }: 
             Selamat datang kembali,
           </p>
           <p style={{ fontSize: '15px', color: '#212121', fontWeight: '700', margin: 0 }}>
-            Admin Program Studi
+            {userName} - {userRole}
           </p>
         </div>
       </div>
 
       {/* Right Section */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* Notification Button */}
-        <button
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '10px',
-            border: '1.5px solid #E5E7EB',
-            background: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            position: 'relative',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#F9FAFB';
-            e.currentTarget.style.borderColor = '#D1D5DB';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#fff';
-            e.currentTarget.style.borderColor = '#E5E7EB';
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#212121" strokeWidth="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-          <span
-            style={{
-              position: 'absolute',
-              top: '6px',
-              right: '6px',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: '#EF4444',
-              border: '2px solid #fff',
-            }}
-          />
-        </button>
-
         {/* User Profile Dropdown */}
         <div style={{ position: 'relative' }}>
           <button
@@ -156,10 +143,10 @@ export default function AdminProdiHeader({ onToggleSidebar, sidebarCollapsed }: 
             </div>
             <div style={{ textAlign: 'left' }}>
               <p style={{ fontSize: '13px', fontWeight: '700', color: '#212121', margin: 0 }}>
-                {user?.email?.split('@')[0] || 'Admin'}
+                {userName}
               </p>
               <p style={{ fontSize: '11px', color: '#6B7280', margin: 0, fontWeight: '600' }}>
-                Admin Prodi
+                {userRole}
               </p>
             </div>
             <svg
@@ -203,14 +190,15 @@ export default function AdminProdiHeader({ onToggleSidebar, sidebarCollapsed }: 
                 }}
               >
                 <p style={{ fontSize: '13px', fontWeight: '700', color: '#212121', margin: '0 0 4px 0' }}>
-                  {user?.email || 'admin@example.com'}
+                  {userEmail || user?.email || 'Email tidak tersedia'}
                 </p>
-                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>Admin Program Studi</p>
+                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>{userRole}</p>
               </div>
 
               <button
                 onClick={() => {
-                  /* Navigate to profile */
+                  router.push('/admin-prodi/profile');
+                  setShowDropdown(false);
                 }}
                 style={{
                   width: '100%',
@@ -240,40 +228,6 @@ export default function AdminProdiHeader({ onToggleSidebar, sidebarCollapsed }: 
                   <circle cx="12" cy="7" r="4" />
                 </svg>
                 Profil Saya
-              </button>
-
-              <button
-                onClick={() => {
-                  /* Navigate to settings */
-                }}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: '#212121',
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#F9FAFB';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3" />
-                </svg>
-                Pengaturan
               </button>
 
               <div style={{ height: '1px', background: '#F3F4F6', margin: '8px 0' }} />
