@@ -160,8 +160,25 @@ export default function SubCPMKPage() {
 
   const filteredItems = items.filter(item =>
     item.kode_sub_cpmk.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.deskripsi.toLowerCase().includes(searchTerm.toLowerCase())
+    item.deskripsi.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.nama_mk && item.nama_mk.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Group by Mata Kuliah
+  const groupedByMK = filteredItems.reduce((acc, item) => {
+    const mkKey = item.kode_mk || 'unknown';
+    if (!acc[mkKey]) {
+      acc[mkKey] = {
+        kode_mk: item.kode_mk || '-',
+        nama_mk: item.nama_mk || 'Tidak diketahui',
+        items: []
+      };
+    }
+    acc[mkKey].items.push(item);
+    return acc;
+  }, {} as Record<string, { kode_mk: string; nama_mk: string; items: SubCPMK[] }>);
+
+  const mkGroups = Object.values(groupedByMK);
 
   return (
     <>
@@ -189,15 +206,15 @@ export default function SubCPMKPage() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="card animate-fade-in stagger-2" style={{ padding: 0, overflow: 'hidden' }}>
+      {/* Grouped by Mata Kuliah */}
+      <div className="animate-fade-in stagger-2" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center' }}>
             <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
             <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
           </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="empty-state">
+        ) : mkGroups.length === 0 ? (
+          <div className="card empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/>
             </svg>
@@ -205,59 +222,156 @@ export default function SubCPMKPage() {
             <p>Coba ubah kata kunci pencarian</p>
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Kode Sub-CPMK</th>
-                <th>Deskripsi</th>
-                <th>Mata Kuliah</th>
-                <th>CPL</th>
-                <th>Bobot (%)</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map((item, index) => (
-                <tr key={item.id}>
-                  <td>{index + 1}</td>
-                  <td><span className="badge badge-blue">{item.kode_sub_cpmk}</span></td>
-                  <td style={{ maxWidth: '250px', fontSize: '13px' }}>{item.deskripsi}</td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span className="badge badge-dark" style={{ fontSize: '11px' }}>{item.kode_mk || '-'}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{item.nama_mk || '-'}</span>
+          mkGroups.map((group, groupIndex) => {
+            // Calculate total bobot for this MK
+            const totalBobot = group.items.reduce((sum, item) => sum + (item.bobot * 100), 0);
+            const isComplete = Math.abs(totalBobot - 100) < 0.1; // Allow small floating point errors
+            
+            return (
+              <div key={groupIndex} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                {/* MK Header */}
+                <div style={{ 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+                  padding: '16px 20px',
+                  color: 'white'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', opacity: 0.9, marginBottom: '4px' }}>{group.kode_mk}</div>
+                      <div style={{ fontSize: '18px', fontWeight: '700' }}>{group.nama_mk}</div>
                     </div>
-                  </td>
-                  <td><span className="badge badge-green">{item.kode_cpl || '-'}</span></td>
-                  <td><span className="badge badge-yellow">{(item.bobot * 100).toFixed(1)}%</span></td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '11px', opacity: 0.9 }}>Total Bobot</div>
+                        <div style={{ fontSize: '20px', fontWeight: '700' }}>{totalBobot.toFixed(1)}%</div>
+                      </div>
                       <button 
-                        onClick={() => handleEdit(item)}
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-primary" 
+                        onClick={() => setShowModal(true)}
+                        style={{ 
+                          background: 'rgba(255,255,255,0.2)', 
+                          border: '1px solid rgba(255,255,255,0.3)',
+                          color: 'white',
+                          whiteSpace: 'nowrap'
+                        }}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                         </svg>
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(item.id)}
-                        className="btn btn-sm" 
-                        style={{ backgroundColor: '#fdecea', color: '#e74c3c' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                        Hapus
+                        Tambah Sub-CPMK
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  
+                  {/* Warning if total bobot != 100% */}
+                  {!isComplete && (
+                    <div style={{ 
+                      marginTop: '12px', 
+                      padding: '10px 12px', 
+                      background: 'rgba(255,255,255,0.15)', 
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <span>Peringatan: Total keseluruhan bobot Sub-CPMK untuk Mata Kuliah ini melebihi 100 ({totalBobot.toFixed(1)}%)</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sub-CPMK List */}
+                <div style={{ padding: '16px 20px' }}>
+                  {/* CPL Groups within MK */}
+                  {(() => {
+                    const cplGroups = group.items.reduce((acc, item) => {
+                      const cplKey = item.kode_cpl || 'unknown';
+                      if (!acc[cplKey]) {
+                        acc[cplKey] = {
+                          kode_cpl: item.kode_cpl || '-',
+                          items: []
+                        };
+                      }
+                      acc[cplKey].items.push(item);
+                      return acc;
+                    }, {} as Record<string, { kode_cpl: string; items: SubCPMK[] }>);
+
+                    return Object.values(cplGroups).map((cplGroup, cplIndex) => {
+                      const cplBobot = cplGroup.items.reduce((sum, item) => sum + (item.bobot * 100), 0);
+                      
+                      return (
+                        <div key={cplIndex} style={{ marginBottom: cplIndex < Object.values(cplGroups).length - 1 ? '20px' : 0 }}>
+                          {/* CPL Header */}
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            padding: '10px 12px',
+                            background: 'linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)',
+                            borderRadius: '8px',
+                            marginBottom: '12px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className="badge badge-green" style={{ fontSize: '12px' }}>{cplGroup.kode_cpl}</span>
+                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                Bobot MK→CPL: {cplBobot.toFixed(1)}%
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Sub-CPMK Table */}
+                          <table style={{ width: '100%', fontSize: '13px' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                <th style={{ padding: '8px', textAlign: 'left', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>KODE SUB-CPMK</th>
+                                <th style={{ padding: '8px', textAlign: 'left', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>DESKRIPSI</th>
+                                <th style={{ padding: '8px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>BOBOT</th>
+                                <th style={{ padding: '8px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>% KONTRIBUSI</th>
+                                <th style={{ padding: '8px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>AKSI</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {cplGroup.items.map((item, itemIndex) => (
+                                <tr key={item.id} style={{ borderBottom: itemIndex < cplGroup.items.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                                  <td style={{ padding: '12px 8px' }}>
+                                    <span className="badge badge-blue" style={{ fontSize: '11px' }}>{item.kode_sub_cpmk}</span>
+                                  </td>
+                                  <td style={{ padding: '12px 8px', maxWidth: '300px' }}>{item.deskripsi}</td>
+                                  <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                                    <span className="badge badge-yellow" style={{ fontSize: '11px' }}>{(item.bobot * 100).toFixed(2)}</span>
+                                  </td>
+                                  <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                                    <span style={{ fontWeight: '600' }}>{((item.bobot / cplBobot) * 100).toFixed(1)}%</span>
+                                  </td>
+                                  <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                      <button 
+                                        onClick={() => handleEdit(item)}
+                                        className="btn btn-secondary btn-sm"
+                                        style={{ padding: '6px 10px', fontSize: '12px' }}
+                                      >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        </svg>
+                                        Edit
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 
