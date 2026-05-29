@@ -18,7 +18,6 @@ export default function AppNavigator() {
     return (
         <NavigationContainer>
             <Stack.Navigator
-                initialRouteName="SuperAdminMain"
                 screenOptions={{
                     headerShown: false,
                     animation: 'slide_from_right',
