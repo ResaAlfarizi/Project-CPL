@@ -284,8 +284,27 @@ export default function InputNilaiPage() {
 
   const filteredNilai = nilaiList.filter(nilai =>
     (nilai.nim && nilai.nim.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (nilai.nama_mahasiswa && nilai.nama_mahasiswa.toLowerCase().includes(searchTerm.toLowerCase()))
+    (nilai.nama_mahasiswa && nilai.nama_mahasiswa.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (nilai.kode_mk && nilai.kode_mk.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Group by Mata Kuliah
+  const groupedByMK = filteredNilai.reduce((acc, nilai) => {
+    const mkKey = nilai.kode_mk || 'unknown';
+    if (!acc[mkKey]) {
+      acc[mkKey] = {
+        kode_mk: nilai.kode_mk || '-',
+        nama_mk: nilai.nama_mk || 'Tidak diketahui',
+        tahun_akademik: nilai.tahun_akademik || '-',
+        semester_aktif: nilai.semester_aktif || 0,
+        items: []
+      };
+    }
+    acc[mkKey].items.push(nilai);
+    return acc;
+  }, {} as Record<string, { kode_mk: string; nama_mk: string; tahun_akademik: string; semester_aktif: number; items: Nilai[] }>);
+
+  const mkGroups = Object.values(groupedByMK);
 
   return (
     <>
@@ -313,15 +332,15 @@ export default function InputNilaiPage() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="card animate-fade-in stagger-2" style={{ padding: 0, overflow: 'hidden' }}>
+      {/* Grouped by Mata Kuliah */}
+      <div className="animate-fade-in stagger-2" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center' }}>
             <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
             <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
           </div>
-        ) : filteredNilai.length === 0 ? (
-          <div className="empty-state">
+        ) : mkGroups.length === 0 ? (
+          <div className="card empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
@@ -329,75 +348,137 @@ export default function InputNilaiPage() {
             <p>Coba ubah kata kunci pencarian</p>
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>NIM</th>
-                <th>Nama Mahasiswa</th>
-                <th>Mata Kuliah</th>
-                <th>Sub-CPMK</th>
-                <th>Nilai</th>
-                <th>Tanggal Input</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredNilai.map((nilai, index) => (
-                <tr key={nilai.id}>
-                  <td>{index + 1}</td>
-                  <td><span className="badge badge-dark">{nilai.nim || '-'}</span></td>
-                  <td style={{ fontWeight: '600' }}>{nilai.nama_mahasiswa || '-'}</td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span className="badge badge-blue" style={{ fontSize: '11px' }}>{nilai.kode_mk || '-'}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{nilai.nama_mk || '-'}</span>
+          mkGroups.map((group, groupIndex) => {
+            // Calculate statistics
+            const totalNilai = group.items.length;
+            const rataRata = group.items.reduce((sum, item) => sum + item.nilai, 0) / totalNilai;
+            const mahasiswaUnik = new Set(group.items.map(item => item.nim)).size;
+            
+            return (
+              <div key={groupIndex} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                {/* MK Header */}
+                <div style={{ 
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                  padding: '16px 20px',
+                  color: 'white'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', opacity: 0.9, marginBottom: '4px' }}>{group.kode_mk}</div>
+                      <div style={{ fontSize: '18px', fontWeight: '700' }}>{group.nama_mk}</div>
+                      <div style={{ fontSize: '12px', opacity: 0.9, marginTop: '4px' }}>
+                        {group.tahun_akademik} • Semester {group.semester_aktif}
+                      </div>
                     </div>
-                  </td>
-                  <td><span className="badge badge-green">{nilai.kode_sub_cpmk || '-'}</span></td>
-                  <td>
-                    <span className={`badge ${nilai.nilai >= 80 ? 'badge-green' : nilai.nilai >= 70 ? 'badge-yellow' : 'badge-red'}`}>
-                      {nilai.nilai}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {nilai.input_at ? new Date(nilai.input_at).toLocaleDateString('id-ID', { 
-                      day: '2-digit', 
-                      month: '2-digit', 
-                      year: 'numeric' 
-                    }) : new Date().toLocaleDateString('id-ID', { 
-                      day: '2-digit', 
-                      month: '2-digit', 
-                      year: 'numeric' 
-                    })}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '6px' }}>
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', opacity: 0.9 }}>Total Nilai</div>
+                        <div style={{ fontSize: '20px', fontWeight: '700' }}>{totalNilai}</div>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', opacity: 0.9 }}>Mahasiswa</div>
+                        <div style={{ fontSize: '20px', fontWeight: '700' }}>{mahasiswaUnik}</div>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', opacity: 0.9 }}>Rata-rata</div>
+                        <div style={{ fontSize: '20px', fontWeight: '700' }}>{rataRata.toFixed(1)}</div>
+                      </div>
                       <button 
-                        onClick={() => handleEdit(nilai)}
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-primary" 
+                        onClick={() => setShowModal(true)}
+                        style={{ 
+                          background: 'rgba(255,255,255,0.2)', 
+                          border: '1px solid rgba(255,255,255,0.3)',
+                          color: 'white',
+                          whiteSpace: 'nowrap'
+                        }}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                         </svg>
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(nilai.id)}
-                        className="btn btn-sm" 
-                        style={{ backgroundColor: '#fdecea', color: '#e74c3c' }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                        Hapus
+                        Input Nilai
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+
+                {/* Nilai List */}
+                <div style={{ padding: '16px 20px' }}>
+                  <table style={{ width: '100%', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                        <th style={{ padding: '8px', textAlign: 'left', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>NO</th>
+                        <th style={{ padding: '8px', textAlign: 'left', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>NIM</th>
+                        <th style={{ padding: '8px', textAlign: 'left', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>NAMA MAHASISWA</th>
+                        <th style={{ padding: '8px', textAlign: 'left', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>SUB-CPMK</th>
+                        <th style={{ padding: '8px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>CPL</th>
+                        <th style={{ padding: '8px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>NILAI</th>
+                        <th style={{ padding: '8px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>TANGGAL INPUT</th>
+                        <th style={{ padding: '8px', textAlign: 'center', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '12px' }}>AKSI</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.items.map((nilai, itemIndex) => (
+                        <tr key={nilai.id} style={{ borderBottom: itemIndex < group.items.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                          <td style={{ padding: '12px 8px' }}>{itemIndex + 1}</td>
+                          <td style={{ padding: '12px 8px' }}>
+                            <span className="badge badge-dark" style={{ fontSize: '11px' }}>{nilai.nim || '-'}</span>
+                          </td>
+                          <td style={{ padding: '12px 8px', fontWeight: '600' }}>{nilai.nama_mahasiswa || '-'}</td>
+                          <td style={{ padding: '12px 8px' }}>
+                            <span className="badge badge-blue" style={{ fontSize: '11px' }}>{nilai.kode_sub_cpmk || '-'}</span>
+                          </td>
+                          <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                            <span className="badge badge-green" style={{ fontSize: '11px' }}>CPL-01</span>
+                          </td>
+                          <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                            <span className={`badge ${nilai.nilai >= 80 ? 'badge-green' : nilai.nilai >= 70 ? 'badge-yellow' : 'badge-red'}`} style={{ fontSize: '12px', fontWeight: '700' }}>
+                              {Number(nilai.nilai).toFixed(2)}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            {nilai.input_at ? new Date(nilai.input_at).toLocaleDateString('id-ID', { 
+                              day: '2-digit', 
+                              month: '2-digit', 
+                              year: 'numeric' 
+                            }) : new Date().toLocaleDateString('id-ID', { 
+                              day: '2-digit', 
+                              month: '2-digit', 
+                              year: 'numeric' 
+                            })}
+                          </td>
+                          <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                              <button 
+                                onClick={() => handleEdit(nilai)}
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '6px 10px', fontSize: '12px' }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Edit
+                              </button>
+                              <button 
+                                onClick={() => handleDelete(nilai.id)}
+                                className="btn btn-sm"
+                                style={{ padding: '6px 10px', fontSize: '12px', backgroundColor: '#fdecea', color: '#e74c3c' }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Hapus
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 
