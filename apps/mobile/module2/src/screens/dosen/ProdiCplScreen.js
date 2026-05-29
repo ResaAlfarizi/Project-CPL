@@ -57,14 +57,12 @@ export default function ProdiCplScreen() {
                 contentContainerStyle={styles.scrollContent} 
                 showsVerticalScrollIndicator={false}
             >
-                {/* ── Hero Banner: Hijau Polos Melengkung Ke Bawah (Sama seperti Dashboard) ── */}
+                {/* ── Hero Banner ── */}
                 <View style={styles.heroBanner}>
-                    <View style={styles.heroContent}>
-                        <Text style={styles.heroTitle}>Program Studi & CPL</Text>
-                        <Text style={styles.heroSubtitle}>
-                            Daftar program studi dan Capaian Pembelajaran Lulusan
-                        </Text>
-                    </View>
+                    <Text style={styles.heroTitle}>Program Studi & CPL</Text>
+                    <Text style={styles.heroSubtitle}>
+                        Daftar program studi dan Capaian Pembelajaran Lulusan
+                    </Text>
                 </View>
 
                 {prodiList.length === 0 ? (
@@ -168,30 +166,29 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
 
-    /* ── Gaya Hero Banner Hijau Polos ── */
+    /* ── Gaya Hero Banner — warna sesuai card aliceBlue ── */
     heroBanner: { 
-        backgroundColor: '#2E4E3F', // Warna hijau gelap khas dashboard
+        backgroundColor: '#cad4ed',
         borderBottomLeftRadius: 32, 
         borderBottomRightRadius: 32,
-        paddingTop: 40,
+        paddingTop: 24,
         paddingBottom: 28,
+        paddingHorizontal: 24,
         marginBottom: 24,
         width: '100%',
-    },
-    heroContent: { 
-        paddingHorizontal: 24,
+        elevation: 4,
     },
     heroTitle: { 
         fontFamily: 'Urbanist-Bold', 
-        fontSize: 24, 
+        fontSize: 22, 
         fontWeight: '800', 
-        color: '#FFFFFF', 
+        color: '#212121', 
         letterSpacing: -0.5 
     },
     heroSubtitle: { 
         fontFamily: 'Urbanist-Medium', 
         fontSize: 13, 
-        color: 'rgba(255,255,255,0.75)', 
+        color: '#64748B', 
         marginTop: 6,
         lineHeight: 18
     },

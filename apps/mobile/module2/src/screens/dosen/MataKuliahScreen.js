@@ -80,29 +80,19 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
     scrollContent: { paddingBottom: 40 },
 
-    /* Hero Banner — warna solid gelap, foto UINSA ada di belakang screen */
+    /* Hero Banner — warna sesuai card pinky */
     heroBanner: {
-        backgroundColor: 'rgba(15,40,25,0.82)',
-        paddingHorizontal: 20,
+        backgroundColor: '#f4d6d6',
+        paddingHorizontal: 24,
         paddingTop: 24,
-        paddingBottom: 24,
+        paddingBottom: 28,
         marginBottom: 20,
-        borderBottomLeftRadius: 28,
-        borderBottomRightRadius: 28,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
+        elevation: 4,
     },
-    heroIconBadge: {
-        width: 36, height: 36, borderRadius: 10,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        justifyContent: 'center', alignItems: 'center', marginBottom: 10,
-    },
-    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4 },
-    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 4 },
-    heroPill: {
-        flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10,
-        backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'flex-start',
-        borderRadius: 99, paddingHorizontal: 10, paddingVertical: 4,
-    },
-    heroPillText: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: '#EFF0A3', fontWeight: '700' },
+    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#212121', letterSpacing: -0.4 },
+    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B', marginTop: 4 },
 
     /* Cards */
     cardList: { gap: 16, paddingHorizontal: 20 },

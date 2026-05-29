@@ -52,12 +52,10 @@ export default function CapaianScreen({ kelasList = [] }) {
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* Hero Banner UINSA */}
+            {/* Hero Banner */}
             <View style={styles.heroBanner}>
-                <View style={styles.heroContent}>
-                    <Text style={styles.heroTitle}>Capaian CPL Mahasiswa</Text>
-                    <Text style={styles.heroSubtitle}>Lihat capaian CPL mahasiswa untuk kelas yang Anda ampu</Text>
-                </View>
+                <Text style={styles.heroTitle}>Capaian CPL Mahasiswa</Text>
+                <Text style={styles.heroSubtitle}>Lihat capaian CPL mahasiswa untuk kelas yang Anda ampu</Text>
             </View>
 
             {/* 1. Pilih Kelas Dropdown */}
@@ -196,23 +194,20 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(246,245,250,0.82)',
     },
 
-    /* -- Hero Banner -- */
-    heroBanner: { backgroundColor: 'rgba(15,40,25,0.82)', paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24, marginBottom: 20, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
-    
-    heroOverlay: {
-        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(10,40,25,0.58)',
-        borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
+    /* -- Hero Banner — warna sesuai card pinky -- */
+    heroBanner: {
+        backgroundColor: '#f4d6d6',
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        paddingBottom: 28,
+        marginBottom: 20,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
+        elevation: 4,
     },
-    heroContent: { padding: 20, paddingBottom: 22 },
-    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4 },
-    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 4 },
-    heroAddBtn: {
-        flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10,
-        backgroundColor: '#EFF0A3', borderRadius: 99, paddingHorizontal: 12, paddingVertical: 5,
-        alignSelf: 'flex-start',
-    },
-    heroAddBtnText: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: '#212121', fontWeight: '700' },
+    heroContent: { },
+    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#212121', letterSpacing: -0.4 },
+    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B', marginTop: 4 },
     container: {
         flex: 1,
         backgroundColor: 'transparent',

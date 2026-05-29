@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar, Platform } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+    View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
+    StatusBar, Platform, Modal, TouchableWithoutFeedback,
+    ScrollView, ImageBackground,
+} from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -19,13 +23,25 @@ import ScreenBackground from '../../components/ScreenBackground';
 // API
 import { tokenStorage, kelasApi, subCpmkApi, dashboardApi, nilaiApi } from '../../services/api';
 
+const COLORS = {
+    primary: '#212c21',
+    background: '#F6F5FA',
+    surface: '#FFFFFF',
+    textMain: '#212121',
+    textMuted: '#64748B',
+    border: '#E2E8F0',
+    aliceBlue: '#cad4ed',
+    honeydew: '#dcead7',
+    vanilla: '#f2f3cb',
+    pinky: '#f4d6d6',
+};
+
 const navItems = [
-    { key: 'dashboard', icon: 'monitor-dashboard', label: 'Dashboard' },
-    { key: 'prodi_cpl', icon: 'school-outline', label: 'Program Studi & CPL' },
-    { key: 'mata_kuliah', icon: 'book-open-outline', label: 'Mata Kuliah' },
-    { key: 'sub_cpmk', icon: 'clipboard-text-outline', label: 'Sub-CPMK' },
-    { key: 'input_nilai', icon: 'pencil-box-multiple-outline', label: 'Input Nilai' },
-    { key: 'capaian_mhs', icon: 'chart-bell-curve-cumulative', label: 'Capaian Mahasiswa' },
+    { key: 'prodi_cpl',   icon: 'school-outline',               label: 'Program Studi & CPL',  desc: 'Lihat CPL program studi',                    bg: COLORS.aliceBlue },
+    { key: 'mata_kuliah', icon: 'book-open-outline',            label: 'Mata Kuliah',           desc: 'Kelas dan mata kuliah yang Anda ampu',       bg: COLORS.pinky },
+    { key: 'sub_cpmk',    icon: 'clipboard-text-outline',       label: 'Sub-CPMK',             desc: 'Kelola sub capaian pembelajaran MK',         bg: COLORS.aliceBlue },
+    { key: 'input_nilai', icon: 'pencil-box-multiple-outline',  label: 'Input Nilai',          desc: 'Input nilai mahasiswa per Sub-CPMK',         bg: COLORS.vanilla },
+    { key: 'capaian_mhs', icon: 'chart-bell-curve-cumulative',  label: 'Capaian Mahasiswa',    desc: 'Pantau capaian CPL mahasiswa',               bg: COLORS.pinky },
 ];
 
 export default function DosenMainScreen() {
@@ -33,18 +49,17 @@ export default function DosenMainScreen() {
     const route = useRoute();
     const { user } = route.params || {};
 
-    const [currentScreen, setCurrentScreen] = useState('dashboard');
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-    
+    const [currentScreen, setCurrentScreen] = useState(null); // null = home card view
+    const [optionsModalVisible, setOptionsModalVisible] = useState(false);
+    const [logoutModalVisible, setLogoutModalVisible]   = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+
     // Data API
-    const [kelasList, setKelasList] = useState([]);
-    const [subCpmkList, setSubCpmkList] = useState([]);
+    const [kelasList, setKelasList]       = useState([]);
+    const [subCpmkList, setSubCpmkList]   = useState([]);
     const [dashboardData, setDashboardData] = useState({});
 
-    useEffect(() => {
-        loadAllData();
-    }, []);
+    useEffect(() => { loadAllData(); }, []);
 
     const loadAllData = async () => {
         try {
@@ -58,19 +73,21 @@ export default function DosenMainScreen() {
                 setDashboardData(d.statistik ? { ...d.statistik, kelas: d.kelas || [] } : d);
             }
             if (kelasRes.status === 'fulfilled') setKelasList(kelasRes.value?.data || []);
-            if (subRes.status === 'fulfilled') setSubCpmkList(subRes.value?.data || []);
+            if (subRes.status === 'fulfilled')   setSubCpmkList(subRes.value?.data || []);
         } catch {}
     };
 
-    const handleNavigation = (screenKey) => {
-        setCurrentScreen(screenKey);
-        setSidebarOpen(false);
-        setProfileDropdownOpen(false);
-    };
+    const handleNavigation = (screenKey) => setCurrentScreen(screenKey);
 
     const handleLogout = async () => {
+        setLogoutModalVisible(false);
         await tokenStorage.remove();
         navigation.replace('Login');
+    };
+
+    const handleScroll = (event) => {
+        const y = event.nativeEvent.contentOffset.y;
+        setIsScrolled(y > 20);
     };
 
     // CRUD Sub-CPMK
@@ -85,18 +102,14 @@ export default function DosenMainScreen() {
         setSubCpmkList(prev => prev.map(item => item.id === id ? { ...item, ...data } : item));
     };
 
-    const handleDeleteSubCpmk = (id) => {
+    const handleDeleteSubCpmk = async (id) => {
+        await subCpmkApi.delete(id);
         setSubCpmkList(prev => prev.filter(item => item.id !== id));
     };
 
     // CRUD Nilai
-    const handleAddGrade = async (data) => {
-        await nilaiApi.create({ enrollment_id: data.enrollment_id, sub_cpmk_id: data.sub_cpmk_id, nilai: data.nilai });
-    };
-
-    const handleUpdateGrade = async (id, newValue) => {
-        await nilaiApi.update(id, { nilai: newValue });
-    };
+    const handleAddGrade    = async (data) => await nilaiApi.create({ enrollment_id: data.enrollment_id, sub_cpmk_id: data.sub_cpmk_id, nilai: data.nilai });
+    const handleUpdateGrade = async (id, newValue) => await nilaiApi.update(id, { nilai: newValue });
 
     const formattedKelas = kelasList.map(k => ({
         id: k.id,
@@ -110,13 +123,13 @@ export default function DosenMainScreen() {
         mahasiswa: k.mahasiswa || [],
         subCpmk: k.subCpmk || [],
         nilai: k.nilai || [],
-        total_mahasiswa: k.total_mahasiswa ?? k.jumlah_mahasiswa ?? k.count_mahasiswa ?? (k.mahasiswa || []).length ?? 0,
+        total_mahasiswa: k.total_mahasiswa ?? k.jumlah_mahasiswa ?? (k.mahasiswa || []).length ?? 0,
     }));
 
     const stats = [
         { label: 'Kelas Diampu', value: String(dashboardData.total_kelas ?? formattedKelas.length ?? 0), icon: 'monitor-dashboard', bg: 'bg-vanilla' },
-        { label: 'Total Mhs', value: String(dashboardData.total_mahasiswa ?? 0), icon: 'account-group', bg: 'bg-honeydew' },
-        { label: 'Mata Kuliah', value: String(dashboardData.total_mk ?? formattedKelas.length ?? 0), icon: 'book-open-outline', bg: 'bg-alice' },
+        { label: 'Total Mhs',    value: String(dashboardData.total_mahasiswa ?? 0),                       icon: 'account-group',     bg: 'bg-honeydew' },
+        { label: 'Mata Kuliah',  value: String(dashboardData.total_mk ?? formattedKelas.length ?? 0),     icon: 'book-open-outline', bg: 'bg-alice' },
     ];
 
     const enrichedUser = user ? { ...user, stats } : user;
@@ -124,368 +137,435 @@ export default function DosenMainScreen() {
 
     const renderActiveScreen = () => {
         switch (currentScreen) {
-            case 'dashboard':
-                return <DashboardScreen currentRole="dosen" rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
-            case 'prodi_cpl':
-                return <ProdiCplScreen />;
-            case 'mata_kuliah':
-                return <MataKuliahScreen kelasList={formattedKelas} />;
-            case 'sub_cpmk':
-                return <SubCpmkScreen subCpmkList={subCpmkList} onAdd={handleAddSubCpmk} onUpdate={handleUpdateSubCpmk} onDelete={handleDeleteSubCpmk} />;
-            case 'input_nilai':
-                return <InputNilaiScreen kelasList={formattedKelas} subCpmkList={subCpmkList} onAddGrade={handleAddGrade} onUpdateGrade={handleUpdateGrade} />;
-            case 'capaian_mhs':
-                return <CapaianScreen kelasList={formattedKelas} />;
-            case 'profile':
-                return <ProfilDetailScreen user={enrichedUser} />;
-            default:
-                return <DashboardScreen currentRole="dosen" rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
+            case 'dashboard':   return <DashboardScreen currentRole="dosen" rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
+            case 'prodi_cpl':   return <ProdiCplScreen />;
+            case 'mata_kuliah': return <MataKuliahScreen kelasList={formattedKelas} />;
+            case 'sub_cpmk':    return <SubCpmkScreen subCpmkList={subCpmkList} onAdd={handleAddSubCpmk} onUpdate={handleUpdateSubCpmk} onDelete={handleDeleteSubCpmk} />;
+            case 'input_nilai': return <InputNilaiScreen kelasList={formattedKelas} subCpmkList={subCpmkList} onAddGrade={handleAddGrade} onUpdateGrade={handleUpdateGrade} />;
+            case 'capaian_mhs': return <CapaianScreen kelasList={formattedKelas} />;
+            case 'profile':     return <ProfilDetailScreen user={enrichedUser} />;
+            default:            return null;
         }
     };
 
-    return (
-        <SafeAreaView style={styles.appContainer}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F6F5FA" />
-            <ExpoStatusBar style="dark" />
-
-            {/* HEADER */}
-            <View style={styles.header}>
-                <TouchableOpacity activeOpacity={0.8} style={styles.hamburgerBtn} onPress={() => setSidebarOpen(true)}>
-                    <MaterialCommunityIcons name="menu" size={24} color="#212121" />
-                </TouchableOpacity>
-
-                <View style={styles.headerCenter}>
-                    <Text style={styles.headerRole}>Dosen Pengajar</Text>
+    // ── Home card view (mirip admin-prodi dashboard) ──
+    const renderHome = () => (
+        <ImageBackground
+            source={require('../../../assets/uinsa2.jpeg')}
+            style={styles.homeContainer}
+            imageStyle={{ opacity: 0.1 }}
+        >
+            {/* Fixed header */}
+            <View style={styles.fixedHeaderWrap}>
+                <View style={[styles.headerBase, isScrolled ? styles.headerSolid : styles.headerTransparent]}>
+                    <View style={styles.headerTop}>
+                        <View style={{ flex: 1, paddingRight: 15 }}>
+                            <Text style={[styles.greeting, { color: isScrolled ? COLORS.surface : COLORS.primary }]} numberOfLines={1}>
+                                Portal Dosen
+                            </Text>
+                            <Text style={[styles.subtitle, { color: isScrolled ? '#A1A1AA' : COLORS.textMuted }]} numberOfLines={1}>
+                                {user?.name || 'Dosen Pengajar'}
+                            </Text>
+                            {user?.email ? (
+                                <View style={styles.emailWrap}>
+                                    <Ionicons name="mail-outline" size={12} color={isScrolled ? '#A1A1AA' : COLORS.textMuted} style={{ marginRight: 5 }} />
+                                    <Text style={[styles.emailText, { color: isScrolled ? '#A1A1AA' : COLORS.textMuted }]} numberOfLines={1}>
+                                        {user.email}
+                                    </Text>
+                                </View>
+                            ) : null}
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.accountBtn, {
+                                borderColor: isScrolled ? 'rgba(255,255,255,0.2)' : 'rgba(33,44,33,0.1)',
+                                backgroundColor: isScrolled ? 'rgba(255,255,255,0.1)' : 'rgba(33,44,33,0.05)',
+                            }]}
+                            onPress={() => setOptionsModalVisible(true)}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="person-circle-outline" size={24} color={isScrolled ? COLORS.surface : COLORS.primary} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
-                <TouchableOpacity activeOpacity={0.8} style={styles.profileBtn} onPress={() => setProfileDropdownOpen(!profileDropdownOpen)}>
-                    <Text style={styles.avatarText}>{user?.avatar || 'D'}</Text>
-                </TouchableOpacity>
-
-                {/* Profile dropdown */}
-                {profileDropdownOpen && (
-                    <View style={styles.profileDropdown}>
-                        <View style={styles.dropdownProfileRow}>
-                            <View style={styles.dropdownAvatar}>
-                                <Text style={styles.dropdownAvatarText}>{user?.avatar || 'D'}</Text>
+                {/* Info panel */}
+                <View style={styles.infoPanelContainer}>
+                    <View style={styles.infoPanel}>
+                        <View style={styles.infoRow}>
+                            <View style={styles.infoItem}>
+                                <Text style={styles.infoLabel}>Kelas Diampu</Text>
+                                <Text style={styles.infoValue}>{dashboardData.total_kelas ?? formattedKelas.length ?? 0}</Text>
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.dropdownName} numberOfLines={1}>{user?.name || 'Dosen'}</Text>
-                                <Text style={styles.dropdownEmail} numberOfLines={1}>{user?.email || ''}</Text>
-                                <View style={styles.dropdownRolePill}>
-                                    <Text style={styles.dropdownRoleText}>Dosen</Text>
+                            <View style={styles.divider} />
+                            <View style={styles.infoItem}>
+                                <Text style={styles.infoLabel}>Mahasiswa</Text>
+                                <Text style={styles.infoValue}>{dashboardData.total_mahasiswa ?? 0}</Text>
+                            </View>
+                            <View style={styles.divider} />
+                            <View style={styles.infoItem}>
+                                <Text style={styles.infoLabel}>Status</Text>
+                                <View style={styles.badgeActive}>
+                                    <Text style={styles.badgeText}>Aktif</Text>
                                 </View>
                             </View>
                         </View>
-                        <View style={styles.dropdownDivider} />
-                        <TouchableOpacity activeOpacity={0.8} style={styles.dropdownItem} onPress={() => {
-                            setProfileDropdownOpen(false);
-                            setCurrentScreen('profile');
-                        }}>
-                            <MaterialCommunityIcons name="account-outline" size={18} color="#212121" />
-                            <Text style={styles.dropdownItemText}>Profil Saya</Text>
-                        </TouchableOpacity>
-                        <View style={styles.dropdownDivider} />
-                        <TouchableOpacity activeOpacity={0.8} style={styles.dropdownItem} onPress={handleLogout}>
-                            <MaterialCommunityIcons name="logout" size={18} color="#EA5455" />
-                            <Text style={[styles.dropdownItemText, { color: '#EA5455' }]}>Keluar</Text>
-                        </TouchableOpacity>
                     </View>
-                )}
+                </View>
             </View>
 
-            {/* SCREEN VIEWPORT */}
-            <ScreenBackground>
-                <View style={styles.screenViewport}>{renderActiveScreen()}</View>
-            </ScreenBackground>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 40 }}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+            >
+                <View style={{ height: 255 }} />
 
-            {/* SIDEBAR DRAWER */}
-            {sidebarOpen && (
-                <View style={styles.sidebarOverlay}>
-                    <TouchableOpacity style={styles.sidebarBackdrop} activeOpacity={1} onPress={() => setSidebarOpen(false)} />
-                    <View style={styles.sidebarDrawer}>
-                        <View style={styles.sidebarHeader}>
-                            <View style={styles.logoRow}>
-                                <View style={styles.logoIcon}>
-                                    <MaterialCommunityIcons name="school" size={20} color="#EFF0A3" />
+                {/* Menu navigasi */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}>Menu Dosen</Text>
+                    <View style={styles.operationalList}>
+                        {navItems.map((item) => (
+                            <TouchableOpacity
+                                key={item.key}
+                                style={[styles.operationalCard, { backgroundColor: item.bg }]}
+                                onPress={() => handleNavigation(item.key)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.opIconWrap}>
+                                    <MaterialCommunityIcons name={item.icon} size={24} color={COLORS.textMain} />
                                 </View>
-                                <View>
-                                    <Text style={styles.logoText}>Sistem CPL</Text>
-                                    <Text style={styles.logoSubtext}>Portal Dosen</Text>
+                                <View style={styles.opTextWrap}>
+                                    <Text style={styles.opTitle}>{item.label}</Text>
+                                    <Text style={styles.opDesc}>{item.desc}</Text>
                                 </View>
-                            </View>
-                            <TouchableOpacity activeOpacity={0.8} onPress={() => setSidebarOpen(false)}>
-                                <MaterialCommunityIcons name="close" size={20} color="#FFFFFF" opacity={0.6} />
+                                <Ionicons name="arrow-forward" size={20} color={COLORS.textMain} style={{ opacity: 0.4 }} />
                             </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.sidebarMenu}>
-                            <Text style={styles.menuGroupHeader}>MENU UTAMA</Text>
-                            {navItems.map((item) => {
-                                const isActive = currentScreen === item.key;
-                                return (
-                                    <TouchableOpacity
-                                        key={item.key}
-                                        activeOpacity={0.8}
-                                        style={[styles.sidebarItem, isActive && styles.sidebarItemActive]}
-                                        onPress={() => handleNavigation(item.key)}
-                                    >
-                                        {isActive && <View style={styles.activeStrip} />}
-                                        <MaterialCommunityIcons name={item.icon} size={20} color={isActive ? '#EFF0A3' : 'rgba(255,255,255,0.6)'} style={styles.sidebarItemIcon} />
-                                        <Text style={[styles.sidebarItemText, isActive && styles.sidebarItemTextActive]}>{item.label}</Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+                        ))}
                     </View>
                 </View>
-            )}
+            </ScrollView>
+        </ImageBackground>
+    );
+
+    // Jika ada screen aktif, tampilkan screen tersebut dengan header back
+    if (currentScreen) {
+        return (
+            <SafeAreaView style={styles.appContainer}>
+                <StatusBar barStyle="dark-content" backgroundColor="#F6F5FA" />
+                <ExpoStatusBar style="dark" />
+
+                {/* Sub-screen header */}
+                <View style={styles.subHeader}>
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        style={styles.backBtn}
+                        onPress={() => setCurrentScreen(null)}
+                    >
+                        <Ionicons name="arrow-back" size={22} color="#212121" />
+                    </TouchableOpacity>
+                    <Text style={styles.subHeaderTitle}>
+                        {navItems.find(n => n.key === currentScreen)?.label || 'Profil'}
+                    </Text>
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        style={styles.profileBtn}
+                        onPress={() => setOptionsModalVisible(true)}
+                    >
+                        <Text style={styles.avatarText}>{user?.avatar || (user?.name?.[0] || 'D').toUpperCase()}</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <ScreenBackground>
+                    <View style={styles.screenViewport}>{renderActiveScreen()}</View>
+                </ScreenBackground>
+
+                {/* Options modal */}
+                {renderOptionsModal()}
+                {renderLogoutModal()}
+            </SafeAreaView>
+        );
+    }
+
+    // Home view
+    return (
+        <SafeAreaView style={styles.appContainer}>
+            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <ExpoStatusBar style="dark" />
+            {renderHome()}
+            {renderOptionsModal()}
+            {renderLogoutModal()}
         </SafeAreaView>
     );
+
+    function renderOptionsModal() {
+        return (
+            <Modal visible={optionsModalVisible} animationType="fade" transparent onRequestClose={() => setOptionsModalVisible(false)}>
+                <TouchableOpacity style={styles.dropdownOverlay} activeOpacity={1} onPress={() => setOptionsModalVisible(false)}>
+                    <TouchableWithoutFeedback onPress={() => {}}>
+                        <View style={styles.dropdownBox}>
+                            <View style={styles.dropdownProfileWrap}>
+                                <View style={styles.dropdownAvatar}>
+                                    <Text style={styles.dropdownAvatarText}>
+                                        {(user?.name?.[0] || 'D').toUpperCase()}
+                                    </Text>
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.dropdownName} numberOfLines={1}>{user?.name || 'Dosen'}</Text>
+                                    <Text style={styles.dropdownEmail} numberOfLines={1}>{user?.email || ''}</Text>
+                                    <View style={styles.dropdownBadge}>
+                                        <Text style={styles.dropdownBadgeText}>Dosen Pengajar</Text>
+                                    </View>
+                                </View>
+                            </View>
+                            <View style={styles.dropdownDivider} />
+                            <TouchableOpacity style={styles.dropdownMenuBtn} onPress={() => { setOptionsModalVisible(false); setCurrentScreen('profile'); }}>
+                                <Ionicons name="person-outline" size={20} color={COLORS.textMain} />
+                                <Text style={styles.dropdownMenuText}>Profil Saya</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.dropdownMenuBtn, { marginTop: 8 }]} onPress={() => { setOptionsModalVisible(false); setLogoutModalVisible(true); }}>
+                                <Ionicons name="log-out-outline" size={20} color="#c62828" />
+                                <Text style={[styles.dropdownMenuText, { color: '#c62828' }]}>Keluar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </TouchableWithoutFeedback>
+                </TouchableOpacity>
+            </Modal>
+        );
+    }
+
+    function renderLogoutModal() {
+        return (
+            <Modal visible={logoutModalVisible} animationType="fade" transparent onRequestClose={() => setLogoutModalVisible(false)}>
+                <TouchableOpacity style={styles.alertOverlay} activeOpacity={1} onPress={() => setLogoutModalVisible(false)}>
+                    <TouchableWithoutFeedback onPress={() => {}}>
+                        <View style={styles.alertBox}>
+                            <View style={styles.alertIconWrap}>
+                                <Ionicons name="log-out" size={45} color="#c62828" />
+                            </View>
+                            <Text style={styles.alertTitle}>Keluar Akun?</Text>
+                            <Text style={styles.alertMessage}>Sesi Anda akan diakhiri dan Anda harus masuk kembali untuk mengakses portal.</Text>
+                            <View style={styles.buttonRow}>
+                                <TouchableOpacity style={styles.btnCancelFit} onPress={() => setLogoutModalVisible(false)} activeOpacity={0.7}>
+                                    <Text style={styles.btnCancelTextFit}>Batal</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.btnSubmitFit} onPress={handleLogout} activeOpacity={0.7}>
+                                    <Text style={styles.btnSubmitTextFit}>Ya, Keluar</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </TouchableWithoutFeedback>
+                </TouchableOpacity>
+            </Modal>
+        );
+    }
 }
 
 const styles = StyleSheet.create({
     appContainer: {
         flex: 1,
-        backgroundColor: '#F6F5FA',
+        backgroundColor: COLORS.background,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
-    header: {
+
+    // Sub-screen header (when a screen is active)
+    subHeader: {
         height: 64,
-        paddingHorizontal: 24,
+        paddingHorizontal: 20,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#F6F5FA',
+        backgroundColor: COLORS.background,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0,0,0,0.03)',
+        borderBottomColor: 'rgba(0,0,0,0.04)',
         zIndex: 100,
-        position: 'relative',
     },
-    hamburgerBtn: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'flex-start',
+    backBtn: {
+        width: 40, height: 40,
+        justifyContent: 'center', alignItems: 'center',
+        borderRadius: 12,
+        backgroundColor: '#F1F5F9',
     },
-    headerCenter: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    headerRole: {
+    subHeaderTitle: {
         fontFamily: 'Urbanist-Bold',
-        fontSize: 12,
+        fontSize: 15,
         fontWeight: '700',
-        color: '#64748B',
-        letterSpacing: 0.3,
+        color: COLORS.textMain,
+        flex: 1,
+        textAlign: 'center',
     },
     profileBtn: {
-        width: 36,
-        height: 36,
+        width: 36, height: 36,
         borderRadius: 10,
         backgroundColor: '#212121',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
+        justifyContent: 'center', alignItems: 'center',
         elevation: 2,
     },
     avatarText: {
         fontFamily: 'Urbanist-Bold',
-        fontSize: 16,
+        fontSize: 15,
         color: '#FFFFFF',
         fontWeight: '700',
     },
-    profileDropdown: {
-        position: 'absolute',
-        top: 60,
-        right: 24,
-        width: 250,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        padding: 16,
-        shadowColor: '#212121',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 6,
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
-        zIndex: 150,
+    screenViewport: { flex: 1 },
+
+    // Home view
+    homeContainer: { flex: 1, backgroundColor: COLORS.background },
+    fixedHeaderWrap: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100 },
+    headerBase: {
+        paddingHorizontal: 24,
+        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
+        paddingBottom: 70,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
     },
-    dropdownProfileRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    dropdownAvatar: {
-        width: 38,
-        height: 38,
-        borderRadius: 11,
-        backgroundColor: '#6366F1',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexShrink: 0,
-    },
-    dropdownAvatarText: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 16,
-        color: '#FFFFFF',
-        fontWeight: '800',
-    },
-    dropdownName: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 13,
-        fontWeight: '800',
-        color: '#212121',
-    },
-    dropdownEmail: {
-        fontFamily: 'Urbanist-Medium',
-        fontSize: 10,
-        color: '#64748B',
-        marginTop: 1,
-    },
-    dropdownRolePill: {
-        marginTop: 4,
-        backgroundColor: '#F1F5F9',
-        borderRadius: 99,
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        alignSelf: 'flex-start',
-    },
-    dropdownRoleText: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 9,
-        color: '#64748B',
-        fontWeight: '700',
-    },
-    dropdownDivider: {
-        height: 1,
-        backgroundColor: '#F1F5F9',
-        marginVertical: 10,
-    },
-    dropdownItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        gap: 10,
-    },
-    dropdownItemText: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 12,
-        fontWeight: '700',
-        color: '#212121',
-    },
-    screenViewport: {
-        flex: 1,
-    },
-    sidebarOverlay: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        zIndex: 200,
-        flexDirection: 'row',
-    },
-    sidebarBackdrop: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.4)',
-    },
-    sidebarDrawer: {
-        width: 280,
-        height: '100%',
-        backgroundColor: '#212121',
+    headerTransparent: { backgroundColor: 'transparent' },
+    headerSolid: {
+        backgroundColor: COLORS.primary,
+        elevation: 8,
         shadowColor: '#000',
-        shadowOffset: { width: 4, height: 0 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 10,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
     },
-    sidebarHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 24,
-        paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 24 : 24,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.08)',
+    headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    greeting: { fontFamily: 'Urbanist-Bold', fontSize: 24, marginBottom: 2 },
+    subtitle:  { fontFamily: 'Urbanist-Medium', fontSize: 13 },
+    emailWrap: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+    emailText: { fontFamily: 'Urbanist-Medium', fontSize: 11, fontStyle: 'italic' },
+    accountBtn: { padding: 12, borderRadius: 16, borderWidth: 1 },
+
+    infoPanelContainer: { paddingHorizontal: 24, marginTop: -40 },
+    infoPanel: {
+        backgroundColor: COLORS.surface,
+        padding: 20,
+        borderRadius: 24,
+        elevation: 6,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
-    logoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    logoIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: '#212121',
-        borderWidth: 2,
-        borderColor: '#EFF0A3',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    logoText: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 16,
-        fontWeight: '800',
-        color: '#FFFFFF',
-    },
-    logoSubtext: {
+    infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    infoItem: { alignItems: 'center', flex: 1 },
+    divider: { width: 1, height: 30, backgroundColor: COLORS.border },
+    infoLabel: {
         fontFamily: 'Urbanist-Medium',
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.5)',
-        marginTop: 2,
-    },
-    sidebarMenu: {
-        flex: 1,
-        padding: 16,
-    },
-    menuGroupHeader: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 11,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.35)',
+        fontSize: 12,
+        color: COLORS.textMuted,
+        marginBottom: 6,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-        paddingHorizontal: 12,
-        marginBottom: 8,
     },
-    sidebarItem: {
+    infoValue: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: COLORS.textMain },
+    badgeActive: { backgroundColor: COLORS.honeydew, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+    badgeText: { color: '#3B5935', fontFamily: 'Urbanist-Bold', fontSize: 12 },
+
+    sectionContainer: { marginBottom: 24 },
+    sectionTitle: {
+        fontFamily: 'Urbanist-Bold',
+        fontSize: 18,
+        color: COLORS.textMain,
+        marginBottom: 12,
+        paddingHorizontal: 24,
+    },
+    operationalList: { paddingHorizontal: 24 },
+    operationalCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
-        marginBottom: 4,
-        position: 'relative',
+        padding: 16,
+        borderRadius: 20,
+        marginBottom: 12,
     },
-    sidebarItemActive: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
+    opIconWrap: {
+        width: 48, height: 48,
+        borderRadius: 14,
+        backgroundColor: 'rgba(255,255,255,0.6)',
+        justifyContent: 'center', alignItems: 'center',
     },
-    activeStrip: {
-        position: 'absolute',
-        left: 0,
-        top: '50%',
-        transform: [{ translateY: -10 }],
-        width: 3,
-        height: 20,
-        borderRadius: 3,
-        backgroundColor: '#EFF0A3',
+    opTextWrap: { flex: 1, marginLeft: 14 },
+    opTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: COLORS.textMain, marginBottom: 4 },
+    opDesc:  { fontFamily: 'Urbanist-Regular', fontSize: 13, color: COLORS.textMain, opacity: 0.7 },
+
+    // Dropdown options modal
+    dropdownOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.1)',
+        alignItems: 'flex-end',
+        paddingTop: 100,
+        paddingRight: 24,
     },
-    sidebarItemIcon: {
-        marginRight: 12,
+    dropdownBox: {
+        backgroundColor: '#FFF',
+        borderRadius: 24,
+        width: 260,
+        padding: 20,
+        elevation: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 15,
     },
-    sidebarItemText: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 14,
-        fontWeight: '600',
-        color: 'rgba(255,255,255,0.6)',
+    dropdownProfileWrap: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
+    dropdownAvatar: {
+        width: 50, height: 50,
+        borderRadius: 18,
+        backgroundColor: COLORS.honeydew,
+        justifyContent: 'center', alignItems: 'center',
+        marginRight: 15,
     },
-    sidebarItemTextActive: {
-        color: '#FFFFFF',
-        fontWeight: '700',
+    dropdownAvatarText: { fontFamily: 'Urbanist-Bold', fontSize: 24, color: COLORS.primary },
+    dropdownName:  { fontFamily: 'Urbanist-Bold', fontSize: 16, color: COLORS.textMain, marginBottom: 2 },
+    dropdownEmail: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: COLORS.textMuted, marginBottom: 6 },
+    dropdownBadge: {
+        backgroundColor: COLORS.aliceBlue,
+        paddingHorizontal: 10, paddingVertical: 4,
+        borderRadius: 8, alignSelf: 'flex-start',
     },
+    dropdownBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: COLORS.primary },
+    dropdownDivider: { height: 1, backgroundColor: COLORS.border, marginBottom: 15 },
+    dropdownMenuBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
+    dropdownMenuText: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: COLORS.textMain, marginLeft: 15 },
+
+    // Logout alert
+    alertOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(33,44,33,0.5)',
+        justifyContent: 'center', alignItems: 'center',
+    },
+    alertBox: {
+        backgroundColor: '#FFF',
+        borderRadius: 35,
+        padding: 30,
+        width: '85%',
+        alignItems: 'center',
+        elevation: 20,
+    },
+    alertIconWrap: {
+        width: 80, height: 80,
+        borderRadius: 40,
+        backgroundColor: '#ffebee',
+        justifyContent: 'center', alignItems: 'center',
+        marginBottom: 20,
+    },
+    alertTitle:   { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 10, textAlign: 'center' },
+    alertMessage: { fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 25, lineHeight: 22 },
+    buttonRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    btnCancelFit: {
+        flex: 0.48,
+        backgroundColor: '#f1f5f9',
+        borderRadius: 20, paddingVertical: 14,
+        alignItems: 'center',
+        borderWidth: 1, borderColor: '#e2e8f0',
+    },
+    btnCancelTextFit: { color: '#64748B', fontFamily: 'Urbanist-Bold', fontSize: 15 },
+    btnSubmitFit: {
+        flex: 0.48,
+        backgroundColor: '#c62828',
+        borderRadius: 20, paddingVertical: 14,
+        alignItems: 'center', elevation: 3,
+    },
+    btnSubmitTextFit: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 15 },
 });
