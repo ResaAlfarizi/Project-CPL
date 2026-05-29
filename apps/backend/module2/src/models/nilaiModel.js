@@ -21,14 +21,19 @@ const getAllNilai = async () => {
       k.semester_aktif,
       mk.kode_mk,
       mk.nama_mk,
+      mk.sks,
+      mk.semester,
       sc.kode_sub_cpmk,
-      sc.deskripsi as deskripsi_sub_cpmk
+      sc.deskripsi as deskripsi_sub_cpmk,
+      cpl.kode_cpl
     FROM nilai_sub_cpmk n
     JOIN enrollment e ON n.enrollment_id = e.id
     JOIN mahasiswa m ON e.mahasiswa_id = m.id
     JOIN kelas k ON e.kelas_id = k.id
     JOIN mata_kuliah mk ON k.mk_id = mk.id
     JOIN sub_cpmk sc ON n.sub_cpmk_id = sc.id
+    LEFT JOIN mk_cpl mc ON sc.mk_cpl_id = mc.id
+    LEFT JOIN cpl ON mc.cpl_id = cpl.id
     ORDER BY n.input_at DESC
   `;
 
@@ -51,14 +56,19 @@ const getNilaiById = async (id) => {
       k.semester_aktif,
       mk.kode_mk,
       mk.nama_mk,
+      mk.sks,
+      mk.semester,
       sc.kode_sub_cpmk,
-      sc.deskripsi as deskripsi_sub_cpmk
+      sc.deskripsi as deskripsi_sub_cpmk,
+      cpl.kode_cpl
     FROM nilai_sub_cpmk n
     JOIN enrollment e ON n.enrollment_id = e.id
     JOIN mahasiswa m ON e.mahasiswa_id = m.id
     JOIN kelas k ON e.kelas_id = k.id
     JOIN mata_kuliah mk ON k.mk_id = mk.id
     JOIN sub_cpmk sc ON n.sub_cpmk_id = sc.id
+    LEFT JOIN mk_cpl mc ON sc.mk_cpl_id = mc.id
+    LEFT JOIN cpl ON mc.cpl_id = cpl.id
     WHERE n.id = $1
   `;
 
@@ -98,13 +108,18 @@ const getNilaiByMahasiswaId = async (mahasiswaId) => {
       k.semester_aktif,
       mk.kode_mk,
       mk.nama_mk,
+      mk.sks,
+      mk.semester,
       sc.kode_sub_cpmk,
-      sc.deskripsi as deskripsi_sub_cpmk
+      sc.deskripsi as deskripsi_sub_cpmk,
+      cpl.kode_cpl
     FROM nilai_sub_cpmk n
     JOIN enrollment e ON n.enrollment_id = e.id
     JOIN kelas k ON e.kelas_id = k.id
     JOIN mata_kuliah mk ON k.mk_id = mk.id
     JOIN sub_cpmk sc ON n.sub_cpmk_id = sc.id
+    LEFT JOIN mk_cpl mc ON sc.mk_cpl_id = mc.id
+    LEFT JOIN cpl ON mc.cpl_id = cpl.id
     WHERE e.mahasiswa_id = $1
     ORDER BY k.tahun_akademik DESC, k.semester_aktif DESC, sc.kode_sub_cpmk
   `;
@@ -124,11 +139,14 @@ const getNilaiByKelasId = async (kelasId) => {
       m.nim,
       m.nama as nama_mahasiswa,
       sc.kode_sub_cpmk,
-      sc.deskripsi as deskripsi_sub_cpmk
+      sc.deskripsi as deskripsi_sub_cpmk,
+      cpl.kode_cpl
     FROM nilai_sub_cpmk n
     JOIN enrollment e ON n.enrollment_id = e.id
     JOIN mahasiswa m ON e.mahasiswa_id = m.id
     JOIN sub_cpmk sc ON n.sub_cpmk_id = sc.id
+    LEFT JOIN mk_cpl mc ON sc.mk_cpl_id = mc.id
+    LEFT JOIN cpl ON mc.cpl_id = cpl.id
     WHERE e.kelas_id = $1
     ORDER BY m.nim, sc.kode_sub_cpmk
   `;

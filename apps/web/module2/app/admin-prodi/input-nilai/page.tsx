@@ -15,16 +15,26 @@ interface Nilai {
   kode_sub_cpmk?: string;
   kode_mk?: string;
   nama_mk?: string;
+  sks?: number;
+  semester?: number;
+  kode_cpl?: string;
   tahun_akademik?: string;
   semester_aktif?: number;
   input_at?: string;
+}
+
+interface MataKuliahGroup {
+  kode_mk: string;
+  nama_mk: string;
+  sks?: number;
+  semester?: number;
+  nilaiList: Nilai[];
 }
 
 export default function InputNilaiPage() {
   const { user } = useAuth();
   const [nilaiList, setNilaiList] = useState<Nilai[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadNilai();
@@ -34,12 +44,7 @@ export default function InputNilaiPage() {
     try {
       setLoading(true);
       const response = await nilaiApi.getAll();
-      // Filter by prodi if user has prodi_id
       let data = response.data || [];
-      if (user?.prodi_id) {
-        // In production, you should filter by prodi_id from backend
-        // For now, show all data
-      }
       setNilaiList(data);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal memuat data nilai', 'error');
@@ -48,11 +53,26 @@ export default function InputNilaiPage() {
     }
   };
 
-  const filteredNilai = nilaiList.filter(nilai =>
-    (nilai.nim && nilai.nim.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (nilai.nama_mahasiswa && nilai.nama_mahasiswa.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (nilai.kode_mk && nilai.kode_mk.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Group by mata kuliah
+  const mataKuliahGroups: MataKuliahGroup[] = [];
+  const mkMap = new Map<string, MataKuliahGroup>();
+
+  nilaiList.forEach(nilai => {
+    if (nilai.kode_mk) {
+      if (!mkMap.has(nilai.kode_mk)) {
+        mkMap.set(nilai.kode_mk, {
+          kode_mk: nilai.kode_mk,
+          nama_mk: nilai.nama_mk || '',
+          sks: nilai.sks,
+          semester: nilai.semester,
+          nilaiList: [],
+        });
+      }
+      mkMap.get(nilai.kode_mk)!.nilaiList.push(nilai);
+    }
+  });
+
+  mkMap.forEach(group => mataKuliahGroups.push(group));
 
   return (
     <>
@@ -85,86 +105,124 @@ export default function InputNilaiPage() {
         </span>
       </div>
 
-      {/* Search */}
-      <div className="animate-fade-in stagger-2" style={{ marginBottom: '20px' }}>
-        <div style={{ position: 'relative', maxWidth: '400px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input 
-            type="text" 
-            placeholder="Cari mahasiswa atau mata kuliah..." 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
-            className="input-field" 
-            style={{ paddingLeft: '38px' }} 
-          />
+      {loading ? (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div className="skeleton" style={{ width: '200px', height: '20px', margin: '0 auto 12px' }} />
+          <div className="skeleton" style={{ width: '300px', height: '16px', margin: '0 auto' }} />
         </div>
-      </div>
-
-      {/* Table */}
-      <div className="card animate-fade-in stagger-3" style={{ padding: 0, overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
-            <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
-          </div>
-        ) : filteredNilai.length === 0 ? (
-          <div className="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Tidak ada data nilai ditemukan</p>
-            <p>Coba ubah kata kunci pencarian</p>
-          </div>
-        ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>NIM</th>
-                <th>Nama Mahasiswa</th>
-                <th>Mata Kuliah</th>
-                <th>Sub-CPMK</th>
-                <th>Nilai</th>
-                <th>Tanggal Input</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredNilai.map((nilai, index) => (
-                <tr key={nilai.id}>
-                  <td>{index + 1}</td>
-                  <td><span className="badge badge-dark">{nilai.nim || '-'}</span></td>
-                  <td style={{ fontWeight: '600' }}>{nilai.nama_mahasiswa || '-'}</td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span className="badge badge-blue" style={{ fontSize: '11px' }}>{nilai.kode_mk || '-'}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{nilai.nama_mk || '-'}</span>
+      ) : mataKuliahGroups.length === 0 ? (
+        <div className="card animate-fade-in" style={{ padding: '60px 20px', textAlign: 'center' }}>
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.3 }}>
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <p style={{ fontWeight: '600', fontSize: '16px', marginBottom: '8px' }}>Tidak ada data nilai</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Belum ada nilai yang diinput untuk program studi Anda</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {mataKuliahGroups.map((group, index) => {
+            // Calculate statistics
+            const totalNilai = group.nilaiList.length;
+            const avgNilai = totalNilai > 0 
+              ? (group.nilaiList.reduce((sum, n) => sum + n.nilai, 0) / totalNilai).toFixed(1)
+              : '0';
+            const passCount = group.nilaiList.filter(n => n.nilai >= 70).length;
+            const passRate = totalNilai > 0 ? ((passCount / totalNilai) * 100).toFixed(0) : '0';
+            
+            return (
+              <div key={group.kode_mk} className="card animate-fade-in" style={{ padding: 0, overflow: 'hidden', animationDelay: `${index * 0.1}s` }}>
+                {/* Header Mata Kuliah */}
+                <div style={{ 
+                  padding: '20px 24px', 
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: '#fff',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                      <span style={{ 
+                        fontSize: '13px', 
+                        fontWeight: '700', 
+                        padding: '4px 10px', 
+                        background: 'rgba(255,255,255,0.2)', 
+                        borderRadius: '6px' 
+                      }}>
+                        {group.kode_mk}
+                      </span>
+                      {group.sks && (
+                        <span style={{ fontSize: '12px', opacity: 0.9 }}>{group.sks} SKS</span>
+                      )}
+                      {group.semester && (
+                        <span style={{ fontSize: '12px', opacity: 0.9 }}>Sem {group.semester}</span>
+                      )}
                     </div>
-                  </td>
-                  <td><span className="badge badge-green">{nilai.kode_sub_cpmk || '-'}</span></td>
-                  <td>
-                    <span className={`badge ${nilai.nilai >= 80 ? 'badge-green' : nilai.nilai >= 70 ? 'badge-yellow' : 'badge-red'}`}>
-                      {nilai.nilai}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {nilai.input_at ? new Date(nilai.input_at).toLocaleDateString('id-ID', { 
-                      day: '2-digit', 
-                      month: '2-digit', 
-                      year: 'numeric' 
-                    }) : new Date().toLocaleDateString('id-ID', { 
-                      day: '2-digit', 
-                      month: '2-digit', 
-                      year: 'numeric' 
-                    })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>{group.nama_mk}</h3>
+                  </div>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', opacity: 0.8, marginBottom: '2px' }}>Total Nilai</div>
+                      <div style={{ fontSize: '20px', fontWeight: '700' }}>{totalNilai}</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', opacity: 0.8, marginBottom: '2px' }}>Rata-rata</div>
+                      <div style={{ fontSize: '20px', fontWeight: '700' }}>{avgNilai}</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', opacity: 0.8, marginBottom: '2px' }}>Lulus</div>
+                      <div style={{ fontSize: '20px', fontWeight: '700' }}>{passRate}%</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Nilai Table */}
+                <div style={{ padding: '24px' }}>
+                  <table className="data-table" style={{ marginBottom: 0 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: '50px' }}>No</th>
+                        <th style={{ width: '120px' }}>NIM</th>
+                        <th>Nama Mahasiswa</th>
+                        <th style={{ width: '120px' }}>Sub-CPMK</th>
+                        <th style={{ width: '100px' }}>CPL</th>
+                        <th style={{ width: '80px' }}>Nilai</th>
+                        <th style={{ width: '120px' }}>Tanggal Input</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.nilaiList.map((nilai, idx) => (
+                        <tr key={nilai.id}>
+                          <td>{idx + 1}</td>
+                          <td><span className="badge badge-dark">{nilai.nim || '-'}</span></td>
+                          <td style={{ fontWeight: '600', fontSize: '13px' }}>{nilai.nama_mahasiswa || '-'}</td>
+                          <td><span className="badge badge-blue">{nilai.kode_sub_cpmk || '-'}</span></td>
+                          <td><span className="badge badge-green">{nilai.kode_cpl || '-'}</span></td>
+                          <td>
+                            <span className={`badge ${nilai.nilai >= 80 ? 'badge-green' : nilai.nilai >= 70 ? 'badge-yellow' : 'badge-red'}`}>
+                              {nilai.nilai}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            {nilai.input_at ? new Date(nilai.input_at).toLocaleDateString('id-ID', { 
+                              day: '2-digit', 
+                              month: '2-digit', 
+                              year: 'numeric' 
+                            }) : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }

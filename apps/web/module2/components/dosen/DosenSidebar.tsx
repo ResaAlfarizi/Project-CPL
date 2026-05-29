@@ -27,7 +27,6 @@ const menuItems = [
         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
       </svg>
     ),
-    badge: 'R',
   },
   {
     label: 'Mata Kuliah',
@@ -40,7 +39,6 @@ const menuItems = [
         <line x1="8" y1="11" x2="13" y2="11"/>
       </svg>
     ),
-    badge: 'R',
   },
   {
     label: 'Sub-CPMK',
@@ -53,7 +51,6 @@ const menuItems = [
         <line x1="9" y1="15" x2="15" y2="15"/>
       </svg>
     ),
-    badge: 'R/W',
   },
   {
     label: 'Input Nilai',
@@ -64,7 +61,6 @@ const menuItems = [
         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
       </svg>
     ),
-    badge: 'R/W',
   },
   {
     label: 'Capaian Mahasiswa',
@@ -76,7 +72,6 @@ const menuItems = [
         <line x1="6" y1="20" x2="6" y2="14"/>
       </svg>
     ),
-    badge: 'R',
   },
 ];
 
@@ -195,18 +190,6 @@ export default function DosenSidebar({ collapsed, onClose }: DosenSidebarProps) 
                     )}
                     <span style={{ opacity: active ? 1 : 0.7, flexShrink: 0 }}>{item.icon}</span>
                     <span style={{ flex: 1 }}>{item.label}</span>
-                    {item.badge && (
-                      <span style={{
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        padding: '2px 7px',
-                        borderRadius: '6px',
-                        background: item.badge === 'R/W' ? 'rgba(239,253,163,0.15)' : 'rgba(255,255,255,0.08)',
-                        color: item.badge === 'R/W' ? 'var(--vanilla)' : 'rgba(255,255,255,0.4)',
-                      }}>
-                        {item.badge}
-                      </span>
-                    )}
                   </Link>
                 </li>
               );
