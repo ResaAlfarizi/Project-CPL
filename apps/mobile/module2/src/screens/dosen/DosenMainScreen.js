@@ -9,7 +9,6 @@ import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 // Dosen Screens
-import DashboardScreen from './DashboardScreen';
 import ProdiCplScreen from './ProdiCplScreen';
 import MataKuliahScreen from './MataKuliahScreen';
 import SubCpmkScreen from './SubCpmkScreen';
@@ -126,18 +125,10 @@ export default function DosenMainScreen() {
         total_mahasiswa: k.total_mahasiswa ?? k.jumlah_mahasiswa ?? (k.mahasiswa || []).length ?? 0,
     }));
 
-    const stats = [
-        { label: 'Kelas Diampu', value: String(dashboardData.total_kelas ?? formattedKelas.length ?? 0), icon: 'monitor-dashboard', bg: 'bg-vanilla' },
-        { label: 'Total Mhs',    value: String(dashboardData.total_mahasiswa ?? 0),                       icon: 'account-group',     bg: 'bg-honeydew' },
-        { label: 'Mata Kuliah',  value: String(dashboardData.total_mk ?? formattedKelas.length ?? 0),     icon: 'book-open-outline', bg: 'bg-alice' },
-    ];
-
-    const enrichedUser = user ? { ...user, stats } : user;
-    const enrichedScreenData = { dosen: enrichedUser };
+    const enrichedUser = user ? { ...user } : user;
 
     const renderActiveScreen = () => {
         switch (currentScreen) {
-            case 'dashboard':   return <DashboardScreen currentRole="dosen" rolesData={enrichedScreenData} kelasList={formattedKelas} dashboardData={dashboardData} onNavigate={handleNavigation} />;
             case 'prodi_cpl':   return <ProdiCplScreen />;
             case 'mata_kuliah': return <MataKuliahScreen kelasList={formattedKelas} />;
             case 'sub_cpmk':    return <SubCpmkScreen subCpmkList={subCpmkList} onAdd={handleAddSubCpmk} onUpdate={handleUpdateSubCpmk} />;
