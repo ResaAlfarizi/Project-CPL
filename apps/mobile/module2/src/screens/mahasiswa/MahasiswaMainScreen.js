@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
@@ -18,27 +18,16 @@ import ScreenBackground from '../../components/ScreenBackground';
 // API
 import { tokenStorage } from '../../services/api';
 
-const navItems = [
-    { key: 'dashboard', icon: 'monitor-dashboard', label: 'Dashboard' },
-    { key: 'program_studi', icon: 'school-outline', label: 'Program Studi' },
-    { key: 'mata_kuliah', icon: 'book-open-outline', label: 'Mata Kuliah' },
-    { key: 'sub_cpmk', icon: 'clipboard-text-outline', label: 'Sub-CPMK' },
-    { key: 'capaian', icon: 'chart-bell-curve-cumulative', label: 'Capaian Saya' },
-];
-
 export default function MahasiswaMainScreen() {
     const navigation = useNavigation();
     const route = useRoute();
     const { user } = route.params || {};
 
     const [currentScreen, setCurrentScreen] = useState('dashboard');
-    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-    const dropdownRef = useRef(null);
 
     const handleNavigation = (screenKey) => {
         setCurrentScreen(screenKey);
-        setSidebarOpen(false);
         setProfileDropdownOpen(false);
     };
 
@@ -52,7 +41,7 @@ export default function MahasiswaMainScreen() {
             case 'dashboard':
                 return <DashboardScreen user={user} onNavigate={handleNavigation} />;
             case 'program_studi':
-                return <ProgramStudiScreen />;
+                return <ProgramStudiScreen user={user} />;
             case 'mata_kuliah':
                 return <MataKuliahScreen />;
             case 'sub_cpmk':
@@ -69,14 +58,16 @@ export default function MahasiswaMainScreen() {
             <StatusBar barStyle="dark-content" backgroundColor="#F6F5FA" />
             <ExpoStatusBar style="dark" />
 
-            {/* HEADER */}
+            {/* HEADER - Sama seperti Dosen */}
             <View style={styles.header}>
-                <TouchableOpacity activeOpacity={0.8} style={styles.hamburgerBtn} onPress={() => setSidebarOpen(true)}>
-                    <MaterialCommunityIcons name="menu" size={24} color="#212121" />
-                </TouchableOpacity>
-
-                <View style={styles.headerCenter}>
-                    <Text style={styles.headerRole}>Mahasiswa</Text>
+                <View style={styles.headerLeft}>
+                    <View style={styles.logoIcon}>
+                        <MaterialCommunityIcons name="school" size={20} color="#EFF0A3" />
+                    </View>
+                    <View>
+                        <Text style={styles.logoText}>Sistem CPL</Text>
+                        <Text style={styles.logoSubtext}>Portal Mahasiswa</Text>
+                    </View>
                 </View>
 
                 <TouchableOpacity activeOpacity={0.8} style={styles.profileBtn} onPress={() => setProfileDropdownOpen(!profileDropdownOpen)}>
@@ -126,47 +117,68 @@ export default function MahasiswaMainScreen() {
                 </View>
             </ScreenBackground>
 
-            {/* SIDEBAR DRAWER */}
-            {sidebarOpen && (
-                <View style={styles.sidebarOverlay}>
-                    <TouchableOpacity style={styles.sidebarBackdrop} activeOpacity={1} onPress={() => setSidebarOpen(false)} />
-                    <View style={styles.sidebarDrawer}>
-                        <View style={styles.sidebarHeader}>
-                            <View style={styles.logoRow}>
-                                <View style={styles.logoIcon}>
-                                    <MaterialCommunityIcons name="school" size={20} color="#EFF0A3" />
-                                </View>
-                                <View>
-                                    <Text style={styles.logoText}>Sistem CPL</Text>
-                                    <Text style={styles.logoSubtext}>Portal Mahasiswa</Text>
-                                </View>
-                            </View>
-                            <TouchableOpacity activeOpacity={0.8} onPress={() => setSidebarOpen(false)}>
-                                <MaterialCommunityIcons name="close" size={20} color="#FFFFFF" opacity={0.6} />
-                            </TouchableOpacity>
-                        </View>
+            {/* BOTTOM NAVIGATION */}
+            <View style={styles.bottomNav}>
+                <TouchableOpacity 
+                    style={styles.navItem} 
+                    onPress={() => handleNavigation('dashboard')}
+                    activeOpacity={0.7}
+                >
+                    <MaterialCommunityIcons 
+                        name="view-dashboard" 
+                        size={24} 
+                        color={currentScreen === 'dashboard' ? '#212121' : '#94A3B8'} 
+                    />
+                    <Text style={[styles.navLabel, currentScreen === 'dashboard' && styles.navLabelActive]}>
+                        Dashboard
+                    </Text>
+                </TouchableOpacity>
 
-                        <View style={styles.sidebarMenu}>
-                            <Text style={styles.menuGroupHeader}>MENU UTAMA</Text>
-                            {navItems.map((item) => {
-                                const isActive = currentScreen === item.key;
-                                return (
-                                    <TouchableOpacity
-                                        key={item.key}
-                                        activeOpacity={0.8}
-                                        style={[styles.sidebarItem, isActive && styles.sidebarItemActive]}
-                                        onPress={() => handleNavigation(item.key)}
-                                    >
-                                        {isActive && <View style={styles.activeStrip} />}
-                                        <MaterialCommunityIcons name={item.icon} size={20} color={isActive ? '#EFF0A3' : 'rgba(255,255,255,0.6)'} style={styles.sidebarItemIcon} />
-                                        <Text style={[styles.sidebarItemText, isActive && styles.sidebarItemTextActive]}>{item.label}</Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-                    </View>
-                </View>
-            )}
+                <TouchableOpacity 
+                    style={styles.navItem} 
+                    onPress={() => handleNavigation('program_studi')}
+                    activeOpacity={0.7}
+                >
+                    <MaterialCommunityIcons 
+                        name="school-outline" 
+                        size={24} 
+                        color={currentScreen === 'program_studi' ? '#212121' : '#94A3B8'} 
+                    />
+                    <Text style={[styles.navLabel, currentScreen === 'program_studi' && styles.navLabelActive]}>
+                        Prodi
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                    style={styles.navItem} 
+                    onPress={() => handleNavigation('mata_kuliah')}
+                    activeOpacity={0.7}
+                >
+                    <MaterialCommunityIcons 
+                        name="book-open-outline" 
+                        size={24} 
+                        color={currentScreen === 'mata_kuliah' ? '#212121' : '#94A3B8'} 
+                    />
+                    <Text style={[styles.navLabel, currentScreen === 'mata_kuliah' && styles.navLabelActive]}>
+                        Mata Kuliah
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                    style={styles.navItem} 
+                    onPress={() => handleNavigation('capaian')}
+                    activeOpacity={0.7}
+                >
+                    <MaterialCommunityIcons 
+                        name="chart-bell-curve-cumulative" 
+                        size={24} 
+                        color={currentScreen === 'capaian' ? '#212121' : '#94A3B8'} 
+                    />
+                    <Text style={[styles.navLabel, currentScreen === 'capaian' && styles.navLabelActive]}>
+                        Capaian
+                    </Text>
+                </TouchableOpacity>
+            </View>
         </SafeAreaView>
     );
 }
@@ -189,28 +201,39 @@ const styles = StyleSheet.create({
         zIndex: 100,
         position: 'relative',
     },
-    hamburgerBtn: {
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+    },
+    logoIcon: {
         width: 40,
         height: 40,
+        borderRadius: 12,
+        backgroundColor: '#212121',
+        borderWidth: 2,
+        borderColor: '#EFF0A3',
         justifyContent: 'center',
-        alignItems: 'flex-start',
-    },
-    headerCenter: {
-        flex: 1,
         alignItems: 'center',
     },
-    headerRole: {
+    logoText: {
         fontFamily: 'Urbanist-Bold',
-        fontSize: 12,
-        fontWeight: '700',
+        fontSize: 16,
+        fontWeight: '800',
+        color: '#212121',
+    },
+    logoSubtext: {
+        fontFamily: 'Urbanist-Medium',
+        fontSize: 11,
         color: '#64748B',
-        letterSpacing: 0.3,
+        marginTop: 2,
     },
     profileBtn: {
         width: 36,
         height: 36,
         borderRadius: 10,
-        backgroundColor: '#EFF0A3',
+        backgroundColor: '#212121',
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
@@ -222,7 +245,7 @@ const styles = StyleSheet.create({
     avatarText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 16,
-        color: '#212121',
+        color: '#FFFFFF',
         fontWeight: '700',
     },
     profileDropdown: {
@@ -251,7 +274,7 @@ const styles = StyleSheet.create({
         width: 38,
         height: 38,
         borderRadius: 11,
-        backgroundColor: '#EFF0A3',
+        backgroundColor: '#212121',
         justifyContent: 'center',
         alignItems: 'center',
         flexShrink: 0,
@@ -259,7 +282,7 @@ const styles = StyleSheet.create({
     dropdownAvatarText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 16,
-        color: '#212121',
+        color: '#FFFFFF',
         fontWeight: '800',
     },
     dropdownName: {
@@ -309,110 +332,33 @@ const styles = StyleSheet.create({
     screenViewport: {
         flex: 1,
     },
-    sidebarOverlay: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        zIndex: 200,
+    bottomNav: {
         flexDirection: 'row',
-    },
-    sidebarBackdrop: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.4)',
-    },
-    sidebarDrawer: {
-        width: 280,
-        height: '100%',
-        backgroundColor: '#212121',
+        backgroundColor: '#FFFFFF',
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+        paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+        paddingTop: 8,
+        elevation: 8,
         shadowColor: '#000',
-        shadowOffset: { width: 4, height: 0 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 10,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
     },
-    sidebarHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 24,
-        paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 24 : 24,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.08)',
-    },
-    logoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    logoIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: '#212121',
-        borderWidth: 2,
-        borderColor: '#EFF0A3',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    logoText: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 16,
-        fontWeight: '800',
-        color: '#FFFFFF',
-    },
-    logoSubtext: {
-        fontFamily: 'Urbanist-Medium',
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.5)',
-        marginTop: 2,
-    },
-    sidebarMenu: {
+    navItem: {
         flex: 1,
-        padding: 16,
-    },
-    menuGroupHeader: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 11,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.35)',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        paddingHorizontal: 12,
-        marginBottom: 8,
-    },
-    sidebarItem: {
-        flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
-        marginBottom: 4,
-        position: 'relative',
+        justifyContent: 'center',
+        paddingVertical: 8,
     },
-    sidebarItemActive: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
+    navLabel: {
+        fontFamily: 'Urbanist-SemiBold',
+        fontSize: 11,
+        color: '#94A3B8',
+        marginTop: 4,
     },
-    activeStrip: {
-        position: 'absolute',
-        left: 0,
-        top: '50%',
-        transform: [{ translateY: -10 }],
-        width: 3,
-        height: 20,
-        borderRadius: 3,
-        backgroundColor: '#EFF0A3',
-    },
-    sidebarItemIcon: {
-        marginRight: 12,
-    },
-    sidebarItemText: {
-        fontFamily: 'Urbanist-Bold',
-        fontSize: 14,
-        fontWeight: '600',
-        color: 'rgba(255,255,255,0.6)',
-    },
-    sidebarItemTextActive: {
-        color: '#FFFFFF',
+    navLabelActive: {
+        color: '#212121',
         fontWeight: '700',
     },
 });

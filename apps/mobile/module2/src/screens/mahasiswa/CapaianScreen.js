@@ -4,11 +4,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { mahasiswaApi } from '../../services/api';
 
 export default function CapaianScreen({ user }) {
-    const [capaianList, setCapaianList]     = useState([]);
-    const [capaianDetail, setCapaianDetail] = useState([]);
-    const [loading, setLoading]             = useState(true);
-    const [detailLoading, setDetailLoading] = useState(false);
-    const [showDetail, setShowDetail]       = useState(false);
+    const [capaianList, setCapaianList] = useState([]);
+    const [loading, setLoading]         = useState(true);
 
     useEffect(() => {
         mahasiswaApi.getMyCapaian()
@@ -16,14 +13,6 @@ export default function CapaianScreen({ user }) {
             .catch(() => setCapaianList([]))
             .finally(() => setLoading(false));
     }, []);
-
-    const handleShowDetail = async () => {
-        setDetailLoading(true);
-        mahasiswaApi.getMyCapaianDetail()
-            .then(res => setCapaianDetail(res.data || []))
-            .catch(() => setCapaianDetail([]))
-            .finally(() => { setDetailLoading(false); setShowDetail(true); });
-    };
 
     const getStatusColor = (status) => {
         switch ((status || '').toLowerCase()) {
@@ -60,29 +49,6 @@ export default function CapaianScreen({ user }) {
                     <Text style={styles.heroTitle}>Capaian CPL Saya</Text>
                     <Text style={styles.heroSubtitle}>Data capaian pembelajaran untuk {user?.name || 'Mahasiswa'}</Text>
                 </View>
-            </View>
-
-            {/* Header Card with Detail Button */}
-            <View style={styles.headerCard}>
-                <View style={styles.headerLeft}>
-                    <Text style={styles.headerTitle}>Ringkasan Capaian</Text>
-                    <Text style={styles.headerSubtitle}>Progres pembelajaran Anda</Text>
-                </View>
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={[styles.detailBtn, detailLoading && styles.detailBtnDisabled]}
-                    onPress={handleShowDetail}
-                    disabled={detailLoading}
-                >
-                    {detailLoading ? (
-                        <ActivityIndicator size="small" color="#1E40AF" />
-                    ) : (
-                        <>
-                            <MaterialCommunityIcons name="file-document-outline" size={16} color="#1E40AF" />
-                            <Text style={styles.detailBtnText}>Detail</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
             </View>
 
             {/* Capaian CPL Cards */}
@@ -154,53 +120,6 @@ export default function CapaianScreen({ user }) {
                     })
                 )}
             </View>
-
-            {/* Detail Modal/Section */}
-            {showDetail && (
-                <View style={styles.detailSection}>
-                    <View style={styles.detailHeader}>
-                        <View>
-                            <Text style={styles.detailTitle}>Detail Capaian per Mata Kuliah</Text>
-                            <Text style={styles.detailSubtitle}>Rincian nilai dari setiap mata kuliah</Text>
-                        </View>
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            style={styles.closeBtn}
-                            onPress={() => setShowDetail(false)}
-                        >
-                            <MaterialCommunityIcons name="close" size={20} color="#64748B" />
-                        </TouchableOpacity>
-                    </View>
-
-                    {capaianDetail.length === 0 ? (
-                        <View style={styles.emptyCard}>
-                            <Text style={styles.emptyText}>Tidak ada detail capaian</Text>
-                        </View>
-                    ) : (
-                        <View style={styles.detailList}>
-                            {capaianDetail.map((detail, idx) => (
-                                <View key={detail.mk_id || idx} style={styles.detailCard}>
-                                    <View style={styles.detailCardHeader}>
-                                        <View style={styles.mkKodeBadge}>
-                                            <Text style={styles.mkKodeBadgeText}>{detail.kode_mk || '-'}</Text>
-                                        </View>
-                                        <View style={styles.semesterBadge}>
-                                            <Text style={styles.semesterBadgeText}>{detail.semester || '-'}</Text>
-                                        </View>
-                                    </View>
-                                    <Text style={styles.detailMkNama}>{detail.nama_mk || '-'}</Text>
-                                    <View style={styles.detailNilaiRow}>
-                                        <Text style={styles.detailNilaiLabel}>Nilai:</Text>
-                                        <Text style={styles.detailNilaiValue}>
-                                            {detail.nilai !== undefined ? detail.nilai.toFixed(2) : '-'}
-                                        </Text>
-                                    </View>
-                                </View>
-                            ))}
-                        </View>
-                    )}
-                </View>
-            )}
         </ScrollView>
     );
 }
@@ -217,22 +136,6 @@ const styles = StyleSheet.create({
     heroContent: { paddingHorizontal: 4 },
     heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4 },
     heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 4 },
-
-    headerCard: {
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 20, padding: 16,
-        marginHorizontal: 20, marginBottom: 20,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
-    },
-    headerLeft: { flex: 1 },
-    headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, fontWeight: '800', color: '#212121' },
-    headerSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#64748B', marginTop: 2 },
-    detailBtn: {
-        flexDirection: 'row', alignItems: 'center', gap: 6,
-        backgroundColor: '#E8F3FF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
-    },
-    detailBtnDisabled: { opacity: 0.5 },
-    detailBtnText: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: '#1E40AF', fontWeight: '700' },
 
     cardList: { gap: 14, paddingHorizontal: 20 },
     capaianCard: {
@@ -258,28 +161,6 @@ const styles = StyleSheet.create({
     targetMarker: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: '#6B7280' },
     nilaiText: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#64748B' },
     nilaiBold: { fontFamily: 'Urbanist-Bold', fontWeight: '700', color: '#212121' },
-
-    detailSection: {
-        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 20, padding: 16,
-        marginHorizontal: 20, marginTop: 8,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
-    },
-    detailHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
-    detailTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, fontWeight: '800', color: '#212121' },
-    detailSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#64748B', marginTop: 2 },
-    closeBtn: { padding: 4 },
-
-    detailList: { gap: 10 },
-    detailCard: { backgroundColor: '#F8FAFC', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-    detailCardHeader: { flexDirection: 'row', gap: 6, marginBottom: 8 },
-    mkKodeBadge: { backgroundColor: '#212121', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-    mkKodeBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#FFFFFF', fontWeight: '700' },
-    semesterBadge: { backgroundColor: '#E8F3FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-    semesterBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#1E40AF', fontWeight: '700' },
-    detailMkNama: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#212121', fontWeight: '700', marginBottom: 6 },
-    detailNilaiRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    detailNilaiLabel: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#64748B' },
-    detailNilaiValue: { fontFamily: 'Urbanist-Bold', fontSize: 13, fontWeight: '700', color: '#212121' },
 
     emptyCard: {
         backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 20, padding: 32,

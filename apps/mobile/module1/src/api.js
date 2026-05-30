@@ -9,7 +9,7 @@ export async function getAPIUrl() {
   const hostUri = Constants.expoConfig?.hostUri;
   // Jika gagal, akan fallback ke 127.0.0.1 (tapi hampir selalu berhasil jika dari Expo Go)
   const ip = hostUri ? hostUri.split(':')[0] : '127.0.0.1';
-  return `http://${ip}:3000/api/v1/m1`;
+  return `http://192.168.1.29:3000/api/v1/m1`;
 }
 
 async function fetchAPI(endpoint) {

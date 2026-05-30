@@ -1,30 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { prodiApi, cplApi } from '../../services/api';
 
-export default function ProgramStudiScreen() {
+export default function ProgramStudiScreen({ user }) {
     const [prodiList, setProdiList]           = useState([]);
     const [cplList, setCplList]               = useState([]);
     const [selectedProdiId, setSelectedProdiId] = useState(null);
     const [loading, setLoading]               = useState(true);
     const [loadingCpl, setLoadingCpl]         = useState(false);
-    const [search, setSearch]                 = useState('');
 
     useEffect(() => {
         prodiApi.getAll()
-            .then(res => setProdiList(res.data || []))
+            .then(res => {
+                const allProdi = res.data || [];
+                // Filter: hanya tampilkan prodi mahasiswa sendiri
+                const filtered = user?.prodi_id 
+                    ? allProdi.filter(p => p.id === user.prodi_id)
+                    : allProdi;
+                setProdiList(filtered);
+                
+                // Auto-load CPL untuk prodi mahasiswa
+                if (filtered.length > 0 && user?.prodi_id) {
+                    setSelectedProdiId(user.prodi_id);
+                    loadCplForProdi(user.prodi_id);
+                }
+            })
             .catch(() => setProdiList([]))
             .finally(() => setLoading(false));
-    }, []);
+    }, [user]);
 
-    const handleToggleProdi = async (prodiId) => {
-        if (selectedProdiId === prodiId) {
-            setSelectedProdiId(null);
-            setCplList([]);
-            return;
-        }
-        setSelectedProdiId(prodiId);
+    const loadCplForProdi = async (prodiId) => {
         setLoadingCpl(true);
         try {
             const res = await cplApi.getByProdi(prodiId);
@@ -36,13 +42,15 @@ export default function ProgramStudiScreen() {
         }
     };
 
-    const filtered = prodiList.filter(p => {
-        const q = search.toLowerCase();
-        return (
-            (p.nama_prodi || '').toLowerCase().includes(q) ||
-            (p.kode_prodi || '').toLowerCase().includes(q)
-        );
-    });
+    const handleToggleProdi = async (prodiId) => {
+        if (selectedProdiId === prodiId) {
+            setSelectedProdiId(null);
+            setCplList([]);
+            return;
+        }
+        setSelectedProdiId(prodiId);
+        await loadCplForProdi(prodiId);
+    };
 
     if (loading) {
         return (
@@ -59,31 +67,19 @@ export default function ProgramStudiScreen() {
             <View style={styles.heroBanner}>
                 <View style={styles.heroContent}>
                     <Text style={styles.heroTitle}>Program Studi & CPL</Text>
-                    <Text style={styles.heroSubtitle}>Daftar program studi dan Capaian Pembelajaran Lulusan</Text>
+                    <Text style={styles.heroSubtitle}>Informasi program studi dan Capaian Pembelajaran Lulusan Anda</Text>
                 </View>
             </View>
 
-            {/* Search */}
-            <View style={styles.searchContainer}>
-                <MaterialCommunityIcons name="magnify" size={18} color="#64748B" style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Cari program studi..."
-                    value={search}
-                    onChangeText={setSearch}
-                    placeholderTextColor="#94A3B8"
-                />
-            </View>
-
-            {/* Prodi List */}
-            {filtered.length === 0 ? (
+            {/* Prodi List - Hanya Prodi Mahasiswa */}
+            {prodiList.length === 0 ? (
                 <View style={styles.emptyCard}>
                     <MaterialCommunityIcons name="school-off-outline" size={32} color="#CBD5E1" />
                     <Text style={styles.emptyText}>Data program studi tidak ditemukan</Text>
                 </View>
             ) : (
                 <View style={styles.cardList}>
-                    {filtered.map((prodi) => {
+                    {prodiList.map((prodi) => {
                         const isSelected = selectedProdiId === prodi.id;
                         return (
                             <View key={prodi.id} style={styles.prodiCard}>
@@ -138,9 +134,6 @@ export default function ProgramStudiScreen() {
                                                         {cpl.nama_cpl && (
                                                             <Text style={styles.cplNama}>{cpl.nama_cpl}</Text>
                                                         )}
-                                                        {cpl.deskripsi && (
-                                                            <Text style={styles.cplDescription}>{cpl.deskripsi}</Text>
-                                                        )}
                                                     </View>
                                                 ))}
                                             </>
@@ -168,18 +161,6 @@ const styles = StyleSheet.create({
     heroContent: { paddingHorizontal: 4 },
     heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4 },
     heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 4 },
-
-    searchContainer: {
-        flexDirection: 'row', alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 16,
-        marginHorizontal: 20, marginBottom: 20, paddingHorizontal: 16,
-        borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
-    },
-    searchIcon: { marginRight: 10 },
-    searchInput: {
-        flex: 1, height: 44,
-        fontFamily: 'Urbanist-SemiBold', fontSize: 13, color: '#212121',
-    },
 
     cardList: { gap: 16, paddingHorizontal: 20 },
     prodiCard: {
@@ -214,7 +195,6 @@ const styles = StyleSheet.create({
     cplBadge: { backgroundColor: '#D8DFE9', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
     cplBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#212121', fontWeight: '700' },
     cplNama: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#212121', fontWeight: '700', marginBottom: 4 },
-    cplDescription: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#475569', lineHeight: 18 },
 
     emptyCard: {
         backgroundColor: '#FFFFFF', borderRadius: 24, padding: 32, alignItems: 'center', gap: 12,

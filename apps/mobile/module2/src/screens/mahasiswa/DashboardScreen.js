@@ -11,10 +11,17 @@ export default function DashboardScreen({ user, onNavigate }) {
 
     useEffect(() => {
         prodiApi.getAll()
-            .then(res => setProdiList(res.data || []))
+            .then(res => {
+                const allProdi = res.data || [];
+                // Filter: hanya tampilkan prodi mahasiswa sendiri
+                const filtered = user?.prodi_id 
+                    ? allProdi.filter(p => p.id === user.prodi_id)
+                    : allProdi;
+                setProdiList(filtered);
+            })
             .catch(() => setProdiList([]))
             .finally(() => setLoading(false));
-    }, []);
+    }, [user]);
 
     const quickActions = [
         { title: 'Capaian CPL',   desc: 'Progres capaian CPL saya',    icon: 'chart-bell-curve-cumulative', color: '#CFDECA', target: 'capaian'       },
@@ -61,12 +68,12 @@ export default function DashboardScreen({ user, onNavigate }) {
                 </View>
             </View>
 
-            {/* Program Studi List */}
+            {/* Program Studi - Hanya Prodi Mahasiswa */}
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Program Studi</Text>
+                    <Text style={styles.sectionTitle}>Program Studi Saya</Text>
                     <TouchableOpacity onPress={() => onNavigate && onNavigate('program_studi')}>
-                        <Text style={styles.textLink}>Lihat Semua</Text>
+                        <Text style={styles.textLink}>Lihat Detail</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -74,11 +81,11 @@ export default function DashboardScreen({ user, onNavigate }) {
                     <ActivityIndicator size="small" color="#212121" style={{ marginTop: 8 }} />
                 ) : prodiList.length === 0 ? (
                     <View style={styles.emptyCard}>
-                        <Text style={styles.emptyText}>Tidak ada data program studi</Text>
+                        <Text style={styles.emptyText}>Data program studi tidak ditemukan</Text>
                     </View>
                 ) : (
                     <View style={{ gap: 12 }}>
-                        {prodiList.slice(0, 3).map((prodi) => (
+                        {prodiList.map((prodi) => (
                             <View key={prodi.id} style={styles.prodiCard}>
                                 <View style={styles.prodiInfo}>
                                     <Text style={styles.prodiNama}>{prodi.nama_prodi || '-'}</Text>
