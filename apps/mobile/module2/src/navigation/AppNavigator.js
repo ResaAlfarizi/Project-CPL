@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import LandingScreen from '../screens/LandingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 
 import DosenMainScreen from '../screens/dosen/DosenMainScreen';
@@ -18,11 +19,15 @@ export default function AppNavigator() {
     return (
         <NavigationContainer>
             <Stack.Navigator
+                initialRouteName="Landing"
                 screenOptions={{
                     headerShown: false,
                     animation: 'slide_from_right',
                 }}
             >
+                {/* Landing Screen */}
+                <Stack.Screen name="Landing" component={LandingScreen} />
+
                 {/* Auth Stack */}
                 <Stack.Screen name="Login" component={LoginScreen} />
                 
