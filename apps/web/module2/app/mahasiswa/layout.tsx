@@ -18,7 +18,6 @@ const navItems = [
   {
     href: '/mahasiswa/program-studi',
     label: 'Program Studi & CPL',
-    badge: 'R',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -28,7 +27,6 @@ const navItems = [
   {
     href: '/mahasiswa/mata-kuliah',
     label: 'Mata Kuliah',
-    badge: 'R',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -38,7 +36,6 @@ const navItems = [
   {
     href: '/mahasiswa/sub-cpmk',
     label: 'Sub-CPMK',
-    badge: 'R',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -48,7 +45,6 @@ const navItems = [
   {
     href: '/mahasiswa/capaian',
     label: 'Capaian Mahasiswa',
-    badge: 'R',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -62,7 +58,7 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Default: sidebar terbuka penuh
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -105,29 +101,29 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
-      {/* Sidebar overlay mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full z-40 transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        className="sidebar-desktop"
         style={{
-          width: '270px',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          height: '100vh',
+          width: sidebarCollapsed ? '80px' : '270px',
           background: 'var(--eerie-black)',
           display: 'flex',
           flexDirection: 'column',
+          transition: 'width 0.3s ease',
+          zIndex: 40,
         }}
       >
         {/* Logo */}
-        <div style={{ padding: '28px 24px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ 
+          padding: sidebarCollapsed ? '28px 16px 20px' : '28px 24px 20px', 
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          transition: 'padding 0.3s ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
             <div style={{
               width: '40px',
               height: '40px',
@@ -136,24 +132,29 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#212121" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
                 <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
               </svg>
             </div>
-            <div>
-              <h1 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', lineHeight: 1.2 }}>Sistem CPL</h1>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Portal Mahasiswa</p>
-            </div>
+            {!sidebarCollapsed && (
+              <div style={{ overflow: 'hidden' }}>
+                <h1 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', lineHeight: 1.2, whiteSpace: 'nowrap' }}>Sistem CPL</h1>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '2px', whiteSpace: 'nowrap' }}>Portal Mahasiswa</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
-          <p style={{ fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 12px', marginBottom: '8px' }}>
-            Menu Utama
-          </p>
+        <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto', overflowX: 'hidden' }}>
+          {!sidebarCollapsed && (
+            <p style={{ fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 12px', marginBottom: '8px' }}>
+              Menu Utama
+            </p>
+          )}
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {navItems.map((item) => {
               const isActive = pathname === item.href;
@@ -161,7 +162,7 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    onClick={() => setSidebarOpen(false)}
+                    title={sidebarCollapsed ? item.label : undefined}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -175,6 +176,7 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
                       fontWeight: isActive ? '600' : '500',
                       transition: 'all 0.2s',
                       position: 'relative',
+                      justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
@@ -189,7 +191,7 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
                       }
                     }}
                   >
-                    {isActive && (
+                    {isActive && !sidebarCollapsed && (
                       <div style={{
                         position: 'absolute',
                         left: 0,
@@ -202,19 +204,7 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
                       }} />
                     )}
                     <span style={{ opacity: isActive ? 1 : 0.7, flexShrink: 0 }}>{item.icon}</span>
-                    <span style={{ flex: 1 }}>{item.label}</span>
-                    {item.badge && (
-                      <span style={{
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        padding: '2px 7px',
-                        borderRadius: '6px',
-                        background: item.badge === 'R/W' ? 'rgba(239,253,163,0.15)' : 'rgba(255,255,255,0.08)',
-                        color: item.badge === 'R/W' ? 'var(--vanilla)' : 'rgba(255,255,255,0.4)',
-                      }}>
-                        {item.badge}
-                      </span>
-                    )}
+                    {!sidebarCollapsed && <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>}
                   </Link>
                 </li>
               );
@@ -226,7 +216,7 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
       {/* Main content */}
       <div style={{
         flex: 1,
-        marginLeft: sidebarCollapsed ? '0' : '270px',
+        marginLeft: sidebarCollapsed ? '80px' : '270px',
         transition: 'margin-left 0.3s ease',
         display: 'flex',
         flexDirection: 'column',
@@ -245,33 +235,18 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
           borderBottom: '1px solid #e5e7eb',
           flexShrink: 0,
         }}>
-          {/* Hamburger button - Mobile */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden"
-            style={{
-              color: '#6b7280',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-            }}
-          >
-            <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-
-          {/* Hamburger button - Desktop (Toggle collapse) */}
+          {/* Hamburger button - Toggle sidebar */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:block"
             style={{
               color: '#6b7280',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               padding: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -420,7 +395,14 @@ export default function MahasiswaLayout({ children }: { children: React.ReactNod
       </div>
 
       <style jsx>{`
+        .sidebar-desktop {
+          display: block;
+        }
+        
         @media (max-width: 1023px) {
+          .sidebar-desktop {
+            display: none;
+          }
           .main-wrapper {
             margin-left: 0 !important;
           }

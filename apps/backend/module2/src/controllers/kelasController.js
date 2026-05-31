@@ -2,6 +2,7 @@ const {
   getAllKelas,
   getKelasById,
   getKelasByDosenId,
+  getKelasByMahasiswaId,
   createKelas,
   updateKelas,
   deleteKelas,
@@ -51,6 +52,24 @@ const getKelasByDosenHandler = async (req, res) => {
     }
     
     const kelas = await getKelasByDosenId(dosenId);
+
+    return successResponse(res, kelas, "Berhasil mengambil data kelas");
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
+// GET kelas berdasarkan mahasiswa (untuk mahasiswa melihat kelas yang diikuti)
+const getKelasByMahasiswaHandler = async (req, res) => {
+  try {
+    // Ambil mahasiswa_id dari token JWT (req.user.entity_id)
+    const mahasiswaId = req.user.entity_id;
+    
+    if (!mahasiswaId) {
+      return errorResponse(res, "Entity ID mahasiswa tidak ditemukan", 400);
+    }
+    
+    const kelas = await getKelasByMahasiswaId(mahasiswaId);
 
     return successResponse(res, kelas, "Berhasil mengambil data kelas");
   } catch (error) {
@@ -119,6 +138,7 @@ module.exports = {
   getAllKelasHandler,
   getKelasByIdHandler,
   getKelasByDosenHandler,
+  getKelasByMahasiswaHandler,
   createKelasHandler,
   updateKelasHandler,
   deleteKelasHandler,

@@ -84,6 +84,35 @@ const getKelasByDosenId = async (dosenId) => {
   return result.rows;
 };
 
+// Ambil kelas berdasarkan mahasiswa (kelas yang diikuti mahasiswa)
+const getKelasByMahasiswaId = async (mahasiswaId) => {
+  const query = `
+    SELECT 
+      kelas.id,
+      kelas.mk_id,
+      kelas.tahun_akademik,
+      kelas.semester_aktif,
+      kelas.nama_kelas,
+      mk.kode_mk,
+      mk.nama_mk,
+      mk.sks,
+      d.nama as nama_dosen,
+      d.nidn,
+      ps.nama_prodi,
+      e.id as enrollment_id
+    FROM enrollment e
+    JOIN kelas ON e.kelas_id = kelas.id
+    JOIN mata_kuliah mk ON kelas.mk_id = mk.id
+    LEFT JOIN dosen d ON kelas.dosen_id = d.id
+    JOIN program_studi ps ON mk.prodi_id = ps.id
+    WHERE e.mahasiswa_id = $1
+    ORDER BY kelas.tahun_akademik DESC, kelas.semester_aktif DESC
+  `;
+
+  const result = await pool.query(query, [mahasiswaId]);
+  return result.rows;
+};
+
 // Buat kelas baru
 const createKelas = async (mkId, dosenId, tahunAkademik, semesterAktif, namaKelas) => {
   const query = `
@@ -133,6 +162,7 @@ module.exports = {
   getAllKelas,
   getKelasById,
   getKelasByDosenId,
+  getKelasByMahasiswaId,
   createKelas,
   updateKelas,
   deleteKelas,

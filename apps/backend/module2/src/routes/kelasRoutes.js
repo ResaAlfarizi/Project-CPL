@@ -5,6 +5,7 @@ const {
   getAllKelasHandler,
   getKelasByIdHandler,
   getKelasByDosenHandler,
+  getKelasByMahasiswaHandler,
   createKelasHandler,
   updateKelasHandler,
   deleteKelasHandler,
@@ -30,6 +31,14 @@ router.get(
   authMiddleware,
   authorize("Dosen"),
   getKelasByDosenHandler
+);
+
+// GET kelas yang diikuti mahasiswa - MAHASISWA (Read)
+router.get(
+  "/mahasiswa/my-classes",
+  authMiddleware,
+  authorize("Mahasiswa"),
+  getKelasByMahasiswaHandler
 );
 
 // GET semua kelas - SUPERADMIN, ADMIN PRODI, DOSEN, MAHASISWA (Read)

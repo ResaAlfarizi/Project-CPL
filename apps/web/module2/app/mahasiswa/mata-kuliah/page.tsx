@@ -5,14 +5,15 @@ import { mahasiswaApi } from '@/lib/api';
 
 interface Kelas {
   id: number;
-  kode_mk?: string;
-  nama_mk?: string;
+  kode_mk: string;
+  nama_mk: string;
   nama_kelas?: string;
-  semester?: string;
-  tahun_ajaran?: string;
-  sks?: number;
-  dosen_pengampu?: string;
-  [key: string]: unknown;
+  tahun_akademik: string;
+  semester_aktif: number;
+  sks: number;
+  nama_dosen?: string;
+  nidn?: string;
+  nama_prodi?: string;
 }
 
 export default function MataKuliahPage() {
@@ -24,11 +25,12 @@ export default function MataKuliahPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await mahasiswaApi.getAllKelas();
+        const res = await mahasiswaApi.getMyKelas();
         const data = Array.isArray(res) ? res : res.data || [];
         setKelasList(data);
       } catch (error) {
         console.error('Error fetching kelas:', error);
+        setKelasList([]);
       } finally {
         setIsLoading(false);
       }
@@ -39,16 +41,19 @@ export default function MataKuliahPage() {
   const filtered = kelasList.filter((k) => {
     const q = search.toLowerCase();
     const matchSearch = 
-      (k.nama_mk || '').toLowerCase().includes(q) ||
-      (k.kode_mk || '').toLowerCase().includes(q) ||
+      k.nama_mk.toLowerCase().includes(q) ||
+      k.kode_mk.toLowerCase().includes(q) ||
       (k.nama_kelas || '').toLowerCase().includes(q);
     
-    const matchSemester = selectedSemester === 'all' || k.semester === selectedSemester;
+    const semester = `${k.semester_aktif % 2 === 1 ? 'Ganjil' : 'Genap'} ${k.tahun_akademik}`;
+    const matchSemester = selectedSemester === 'all' || semester === selectedSemester;
     
     return matchSearch && matchSemester;
   });
 
-  const semesters = Array.from(new Set(kelasList.map(k => k.semester).filter(Boolean)));
+  const semesters = Array.from(new Set(kelasList.map(k => {
+    return `${k.semester_aktif % 2 === 1 ? 'Ganjil' : 'Genap'} ${k.tahun_akademik}`;
+  })));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -105,23 +110,27 @@ export default function MataKuliahPage() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((kelas, idx) => (
-                  <tr key={kelas.id}>
-                    <td style={{ fontWeight: '500' }}>{idx + 1}</td>
-                    <td>
-                      <span className="badge badge-dark">{kelas.kode_mk || '-'}</span>
-                    </td>
-                    <td style={{ fontWeight: '600' }}>{kelas.nama_mk || '-'}</td>
-                    <td>
-                      <span className="badge badge-green">{kelas.nama_kelas || '-'}</span>
-                    </td>
-                    <td style={{ fontWeight: '600' }}>{kelas.sks || '-'}</td>
-                    <td>
-                      <span className="badge badge-blue">{kelas.semester || '-'}</span>
-                    </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{kelas.dosen_pengampu || '-'}</td>
-                  </tr>
-                ))
+                filtered.map((kelas, idx) => {
+                  const semester = `${kelas.semester_aktif % 2 === 1 ? 'Ganjil' : 'Genap'} ${kelas.tahun_akademik}`;
+                  
+                  return (
+                    <tr key={kelas.id}>
+                      <td style={{ fontWeight: '500' }}>{idx + 1}</td>
+                      <td>
+                        <span className="badge badge-dark">{kelas.kode_mk}</span>
+                      </td>
+                      <td style={{ fontWeight: '600' }}>{kelas.nama_mk}</td>
+                      <td>
+                        <span className="badge badge-green">{kelas.nama_kelas || 'TL-A'}</span>
+                      </td>
+                      <td style={{ fontWeight: '600' }}>{kelas.sks}</td>
+                      <td>
+                        <span className="badge badge-blue">{semester}</span>
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }}>{kelas.nama_dosen || '-'}</td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -136,7 +145,7 @@ export default function MataKuliahPage() {
           </p>
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
             Total SKS: <span style={{ fontWeight: '600', color: 'var(--eerie-black)' }}>
-              {filtered.reduce((sum, k) => sum + (k.sks || 0), 0)}
+              {filtered.reduce((sum, k) => sum + k.sks, 0)}
             </span>
           </p>
         </div>

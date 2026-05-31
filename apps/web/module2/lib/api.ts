@@ -242,6 +242,7 @@ export const mahasiswaApi = {
 
   // Mata Kuliah / Kelas (Read only)
   getAllKelas: () => apiFetch('/kelas'),
+  getMyKelas: () => apiFetch('/kelas/mahasiswa/my-classes'),
   getKelasById: (id: number) => apiFetch(`/kelas/${id}`),
 
   // Sub-CPMK (Read only)
