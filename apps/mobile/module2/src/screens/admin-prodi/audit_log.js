@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,52 +7,127 @@ import {
   StatusBar, 
   ImageBackground, 
   TouchableOpacity,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+// ✅ MENGGUNAKAN AUDITLOGAPI DARI API.JS TERSENTRALISASI
+import { auditLogApi } from '../../services/api'; 
 
 const THEME_COLOR = '#cad4ed'; 
 const PRIMARY_BLUE = '#577590';
 const INACTIVE_BG = '#f8fafc';
 
-const DUMMY_DATA = [
-  { id: '1', user: 'admin.si@prodi.ac.id', role: 'Admin', action: 'INSERT_USER', desc: 'Menambahkan akun dosen.budi@prodi.ac.id', time: '10 menit yang lalu', waktu: 'Hari Ini' },
-  { id: '2', user: 'dosen.budi@prodi.ac.id', role: 'Dosen', action: 'UPDATE_NILAI', desc: 'Mengubah nilai SCPL-01 Ahmad Fauzi', time: '2 jam yang lalu', waktu: 'Hari Ini' },
-  { id: '3', user: 'admin.si@prodi.ac.id', role: 'Admin', action: 'DELETE_MK', desc: 'Menghapus mata kuliah lama (SI999)', time: 'Kemarin, 14:30', waktu: 'Kemarin' },
-  { id: '4', user: '09010624010@mhs.ac.id', role: 'Mahasiswa', action: 'LOGIN', desc: 'Mahasiswa berhasil login ke sistem', time: 'Kemarin, 08:15', waktu: 'Kemarin' },
-  { id: '5', user: 'admin.si@prodi.ac.id', role: 'Admin', action: 'UPDATE_CPL', desc: 'Memperbarui deskripsi CPL-02', time: '3 hari yang lalu', waktu: '7 Hari Terakhir' },
-  { id: '6', user: 'dosen.siti@prodi.ac.id', role: 'Dosen', action: 'INSERT_NILAI', desc: 'Input nilai kelas Arsitektur Enterprise', time: '5 hari yang lalu', waktu: '7 Hari Terakhir' },
-  { id: '7', user: '09010624011@mhs.ac.id', role: 'Mahasiswa', action: 'DOWNLOAD_KHS', desc: 'Mengunduh Laporan Nilai Mahasiswa', time: '6 hari yang lalu', waktu: '7 Hari Terakhir' },
-];
-
 export default function AuditLogScreen({ navigation }) {
+  const [logData, setLogData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [filterWaktu, setFilterWaktu] = useState('Semua');
   const [filterRole, setFilterRole] = useState('Semua');
   
   const waktuOptions = ['Semua', 'Hari Ini', 'Kemarin', '7 Hari Terakhir'];
   const roleOptions = ['Semua', 'Admin', 'Dosen', 'Mahasiswa'];
 
-  const filteredData = DUMMY_DATA.filter(item => {
-    const matchWaktu = filterWaktu === 'Semua' || item.waktu === filterWaktu;
-    const matchRole = filterRole === 'Semua' || item.role === filterRole;
+  // ✅ MEMANGGIL DATA DARI BACKEND
+  useEffect(() => {
+    setIsLoading(true);
+    auditLogApi.getAll()
+      .then(res => {
+        const extractedData = res && res.data ? res.data : (Array.isArray(res) ? res : []);
+        setLogData(extractedData);
+      })
+      .catch(err => {
+        console.error("Gagal menarik data audit log melalui api.js:", err);
+        setLogData([]); 
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
+  // ✅ LOGIKA FILTER DATA
+  const filteredData = logData.filter(item => {
+    // 1. Filter Berdasarkan Waktu
+    const matchWaktu = filterWaktu === 'Semua' || (() => {
+      const rawDate = item.time || item.waktu || item.created_at || item.timestamp;
+      if (!rawDate) return false;
+      if (rawDate === filterWaktu) return true; 
+
+      try {
+        const recordDate = new Date(rawDate);
+        if (isNaN(recordDate.getTime())) return false;
+
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+
+        if (filterWaktu === 'Hari Ini') return recordDate.toDateString() === today.toDateString();
+        if (filterWaktu === 'Kemarin') return recordDate.toDateString() === yesterday.toDateString();
+        if (filterWaktu === '7 Hari Terakhir') {
+          const diffTime = Math.abs(today - recordDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays <= 7;
+        }
+      } catch (e) { return false; }
+      return false;
+    })();
+
+    // 2. Filter Berdasarkan Role (Sudah diperbaiki agar singkron jika data BE kosong)
+    const rawRole = item.role || item.User?.role || item.role_name || item.user_role || '';
+    const itemRole = rawRole ? rawRole.toLowerCase().trim() : 'admin'; // <-- Jika BE kosong, otomatis dianggap 'admin' agar bisa disaring tombol filter
+    
+    const targetRole = filterRole.toLowerCase();
+    const matchRole = filterRole === 'Semua' || itemRole === targetRole;
+
     return matchWaktu && matchRole;
   });
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardAvatar}>
-        <Ionicons name="time-outline" size={24} color={PRIMARY_BLUE} />
-      </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.action} • {item.user}</Text>
-        <Text style={styles.cardSubtitle}>{item.desc}</Text>
-        <View style={styles.timeWrap}>
-          <Ionicons name="calendar-outline" size={12} color="#A1A1AA" style={{marginRight: 4}} />
-          <Text style={styles.timeText}>{item.time} ({item.role})</Text>
+  // ✅ LOGIKA RENDER KARTU (CARD) LOG
+  const renderItem = ({ item }) => {
+    // 1. Aktivitas default diubah menjadi 'Login'
+    const actionText = item.action || item.activity || 'Login';
+    
+    // 2. Tampilan Role (Jika kosong dari BE, otomatis dicetak 'Admin')
+    const rawRole = item.role || item.User?.role || item.role_name || item.user_role || '';
+    const cleanRole = rawRole ? rawRole.toLowerCase().trim() : 'admin';
+    const displayRole = cleanRole.charAt(0).toUpperCase() + cleanRole.slice(1);
+    
+    // 3. Menampilkan Nama Pengguna Asli (Bukan tulisan kata "user" statis lagi)
+    const userText = item.user || item.username || item.User?.nama || item.User?.email || item.nama || 'User';
+    
+    // 4. Deteksi Deskripsi Aktivitas
+    const descText = item.desc || item.description || item.details;
+    
+    // Format Waktu
+    let timeText = item.time || item.waktu || item.created_at || item.timestamp || '-';
+    if (timeText !== '-' && typeof timeText === 'string' && timeText.includes('T')) {
+      try {
+        timeText = new Date(timeText).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+      } catch (e) {}
+    }
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardAvatar}>
+          <Ionicons name="log-in-outline" size={24} color={PRIMARY_BLUE} />
+        </View>
+        <View style={styles.cardContent}>
+          {/* Judul: Login • Admin / Dosen / Mahasiswa */}
+          <Text style={styles.cardTitle}>{actionText} • {displayRole}</Text>
+          
+          {/* Jika deskripsi kosong/tidak ada dari backend, komponen ini langsung dihapus (tidak dirender) */}
+          {descText ? <Text style={styles.cardSubtitle}>{descText}</Text> : null}
+          
+          <View style={styles.timeWrap}>
+            <Ionicons name="calendar-outline" size={12} color="#A1A1AA" style={{marginRight: 4}} />
+            {/* Memunculkan Nama User asli */}
+            <Text style={styles.timeText}>{timeText} ({userText})</Text>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <ImageBackground 
@@ -68,11 +143,13 @@ export default function AuditLogScreen({ navigation }) {
         </TouchableOpacity>
         <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Audit Log</Text>
-          <Text style={styles.headerSubtitle}>Riwayat Sistem Program Studi Sistem Informasi</Text>
+          <Text style={styles.headerSubtitle}>Log Aktivitas Masuk Pengguna Sistem</Text>
         </View>
       </View>
 
+      {/* SECTION FILTER */}
       <View style={styles.filterSection}>
+        {/* Filter Waktu */}
         <View style={styles.filterRow}>
           <Ionicons name="filter-outline" size={16} color="#64748B" style={styles.filterIcon} />
           <Text style={styles.filterLabel}>Filter Waktu</Text>
@@ -91,6 +168,7 @@ export default function AuditLogScreen({ navigation }) {
           <View style={{ width: 24 }} />
         </ScrollView>
 
+        {/* Filter Role */}
         <View style={[styles.filterRow, { marginTop: 12 }]}>
           <Ionicons name="people-outline" size={16} color="#64748B" style={styles.filterIcon} />
           <Text style={styles.filterLabel}>Filter Role</Text>
@@ -110,19 +188,27 @@ export default function AuditLogScreen({ navigation }) {
         </ScrollView>
       </View>
 
-      <FlatList 
-        data={filteredData} 
-        keyExtractor={item => item.id} 
-        renderItem={renderItem} 
-        contentContainerStyle={styles.listContainer} 
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={48} color="#cbd5e1" />
-            <Text style={styles.emptyText}>Tidak ada log aktivitas yang sesuai filter.</Text>
-          </View>
-        }
-      />
+      {/* AREA UTAMA / LIST DATA */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={PRIMARY_BLUE} />
+          <Text style={styles.loadingText}>Memuat riwayat login...</Text>
+        </View>
+      ) : (
+        <FlatList 
+          data={filteredData} 
+          keyExtractor={item => item.id ? item.id.toString() : (item.audit_id ? item.audit_id.toString() : Math.random().toString())} 
+          renderItem={renderItem} 
+          contentContainerStyle={styles.listContainer} 
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="search-outline" size={48} color="#cbd5e1" />
+              <Text style={styles.emptyText}>Tidak ada log aktivitas yang sesuai filter.</Text>
+            </View>
+          }
+        />
+      )}
     </ImageBackground>
   );
 }
@@ -169,5 +255,8 @@ const styles = StyleSheet.create({
   timeText: { fontFamily: 'Urbanist-Regular', fontSize: 11, color: '#A1A1AA', fontStyle: 'italic' },
   
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50 },
-  emptyText: { fontFamily: 'Urbanist-Regular', marginTop: 10, color: '#94A3B8', fontSize: 14 }
+  emptyText: { fontFamily: 'Urbanist-Regular', marginTop: 10, color: '#94A3B8', fontSize: 14 },
+
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
+  loadingText: { marginTop: 12, fontFamily: 'Urbanist-Medium', fontSize: 14, color: '#64748B' }
 });

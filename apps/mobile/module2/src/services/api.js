@@ -1,10 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // PENTING: Ganti dengan IP komputer Anda yang menjalankan backend
-// Cara cek IP:
-// Windows: ipconfig (lihat IPv4 Address)
-// Mac/Linux: ifconfig (lihat inet)
-const API_BASE = 'http://192.168.46.189:3000/api/v1/m2'; // GANTI IP INI!
+const API_BASE = 'http://192.168.18.81:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
 
 const TOKEN_KEY = 'auth_token';
 
@@ -98,7 +95,7 @@ export const authApi = {
             }
             
             console.log('✅ Login success:', data.user?.nama || data.user?.name);
-            return data; // { token, user, message }
+            return data;
         } catch (error) {
             console.error('❌ Login error:', error.message);
             throw error;
@@ -110,12 +107,15 @@ export const authApi = {
 
 export const dashboardApi = {
     getDosen: () => apiFetch('/dashboard/dosen'),
+    // Tambahkan baris di bawah ini:
+    getAdmin: (prodiId) => apiFetch(`/dashboard/admin/${prodiId}`),
 };
 
 // ─── PROFILE ──────────────────────────────────────────────────────────────────
 
 export const profileApi = {
     getMyProfile:    ()       => apiFetch('/profile/me'),
+    getAdmin:        ()       => apiFetch('/profile/me'), 
     updateProfile:   (body)   => apiFetch('/profile/me', { method: 'PUT', body: JSON.stringify(body) }),
     changePassword:  (body)   => apiFetch('/profile/change-password', { method: 'PUT', body: JSON.stringify(body) }),
 };
@@ -132,10 +132,15 @@ export const prodiApi = {
     getAll: () => apiFetch('/prodi'),
 };
 
-// ─── CPL ──────────────────────────────────────────────────────────────────────
+// ─── ✅ CPL (SUDAH DIPERBAIKI SECARA LENGKAP SESUAI BACKEND) ──────────────────
 
 export const cplApi = {
-    getByProdi: (prodiId) => apiFetch(`/cpl/prodi/${prodiId}`),
+    getAll:      ()         => apiFetch('/cpl'),
+    getById:     (id)       => apiFetch(`/cpl/${id}`),
+    getByProdi:  (prodiId)  => apiFetch(`/cpl/prodi/${prodiId}`),
+    create:      (body)     => apiFetch('/cpl', { method: 'POST', body: JSON.stringify(body) }),
+    update:      (id, body) => apiFetch(`/cpl/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:      (id)       => apiFetch(`/cpl/${id}`, { method: 'DELETE' }),
 };
 
 // ─── SUB-CPMK ─────────────────────────────────────────────────────────────────
@@ -147,7 +152,7 @@ export const subCpmkApi = {
     update: (id, body)  => apiFetch(`/sub-cpmk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
 };
 
-// ─── MK-CPL (untuk dropdown di SubCpmk form) ─────────────────────────────────
+// ─── MK-CPL ───────────────────────────────────────────────────────────────────
 export const mkCplApi = {
     getAll: () => apiFetch('/mk-cpl'),
 };
@@ -155,6 +160,7 @@ export const mkCplApi = {
 // ─── NILAI ────────────────────────────────────────────────────────────────────
 
 export const nilaiApi = {
+    getAll:          ()             => apiFetch('/nilai'), 
     getByKelas:      (kelasId)      => apiFetch(`/nilai/kelas/${kelasId}`),
     create:          (body)         => apiFetch('/nilai', { method: 'POST', body: JSON.stringify(body) }),
     update:          (id, body)     => apiFetch(`/nilai/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
@@ -172,10 +178,55 @@ export const capaianApi = {
     getByKelas: (kelasId) => apiFetch(`/capaian/kelas/${kelasId}`),
 };
 
+// ─── USER API (KELOLA USER ADMIN) ─────────────────────────────────────────────
+
+export const userApi = {
+    getAll:       ()             => apiFetch('/users'),
+    getById:      (id)           => apiFetch(`/users/${id}`),
+    getByEmail:   (email)        => apiFetch(`/users/email/${email}`),
+    create:       (body)         => apiFetch('/users', { method: 'POST', body: JSON.stringify(body) }),
+    update:       (id, body)     => apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:       (id)           => apiFetch(`/users/${id}`, { method: 'DELETE' }),
+};
+
+// ─── AUDIT LOG API ────────────────────────────────────────────────────────────
+
+export const auditLogApi = {
+    getAll: async () => {
+        const token = await tokenStorage.get();
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const variations = [
+            '/auth-audit-log',
+            '/auth-audit-logs',
+            '/audit-log',
+            '/audit-logs',
+            '/audit'
+        ];
+
+        for (const path of variations) {
+            try {
+                const url = `${API_BASE}${path}`;
+                const res = await fetch(url, { method: 'GET', headers });
+                if (res.ok) {
+                    return await res.json();
+                }
+                if (res.status === 403 || res.status === 401) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.message || `Akses log ditolak role Anda (Status: ${res.status})`);
+                }
+            } catch (e) {
+                if (e.message.includes('ditolak')) throw e;
+            }
+        }
+        throw new Error("Endpoint Audit log tidak ditemukan di server (404).");
+    }
+};
+
 // ─── MAHASISWA API ────────────────────────────────────────────────────────────
 
 export const mahasiswaApi = {
-    // Profile - Gunakan endpoint profile/mahasiswa/me (sesuai dengan routing backend)
     getMyProfile: async () => {
         try {
             console.log('📡 Calling: /profile/mahasiswa/me');
@@ -184,7 +235,6 @@ export const mahasiswaApi = {
             return result;
         } catch (error) {
             console.error('❌ API Error:', error.message);
-            // Fallback dummy data jika endpoint belum ada
             return {
                 success: true,
                 data: {
@@ -204,68 +254,28 @@ export const mahasiswaApi = {
         }
     },
     
-    // Prodi & CPL - Gunakan endpoint yang sudah ada
     getAllProdi:         ()       => apiFetch('/prodi'),
     getAllCPL:           ()       => apiFetch('/cpl'),
     getCPLByProdi:       (prodiId) => apiFetch(`/cpl/prodi/${prodiId}`),
-    
-    // Kelas & Mata Kuliah - Gunakan endpoint /kelas (bisa diakses mahasiswa)
     getAllKelas:         ()       => apiFetch('/kelas'),
-    getMyKelas:          ()       => apiFetch('/kelas'), // Mahasiswa akses endpoint /kelas langsung
-    
-    // Sub-CPMK - Gunakan endpoint yang sudah ada
+    getMyKelas:          ()       => apiFetch('/kelas'),
     getAllSubCpmk:       ()       => apiFetch('/sub-cpmk'),
     getSubCpmkByMk:      (mkId)   => apiFetch(`/sub-cpmk/mk/${mkId}`),
     
-    // Capaian - Dummy data karena endpoint belum ada
     getMyCapaian: async () => {
-        // Simulasi delay API
         await new Promise(resolve => setTimeout(resolve, 500));
         return {
             success: true,
             data: [
-                { 
-                    id: 1, 
-                    kode_cpl: 'CPL-01', 
-                    nama_cpl: 'Mampu menerapkan pemikiran logis, kritis, sistematis, dan inovatif dalam konteks pengembangan atau implementasi ilmu pengetahuan dan teknologi', 
-                    nilai: 85.5, 
-                    persentase: 85.5, 
-                    status: 'Tercapai', 
-                    target: 75 
-                },
-                { 
-                    id: 2, 
-                    kode_cpl: 'CPL-02', 
-                    nama_cpl: 'Mampu menunjukkan kinerja mandiri, bermutu, dan terukur', 
-                    nilai: 72.3, 
-                    persentase: 72.3, 
-                    status: 'Belum Tercapai', 
-                    target: 75 
-                },
-                { 
-                    id: 3, 
-                    kode_cpl: 'CPL-03', 
-                    nama_cpl: 'Mampu mengkaji implikasi pengembangan atau implementasi ilmu pengetahuan dan teknologi', 
-                    nilai: 88.7, 
-                    persentase: 88.7, 
-                    status: 'Tercapai', 
-                    target: 75 
-                },
-                { 
-                    id: 4, 
-                    kode_cpl: 'CPL-04', 
-                    nama_cpl: 'Mampu menyusun deskripsi saintifik hasil kajian dalam bentuk skripsi atau laporan tugas akhir', 
-                    nilai: 79.2, 
-                    persentase: 79.2, 
-                    status: 'Tercapai', 
-                    target: 75 
-                },
+                { id: 1, kode_cpl: 'CPL-01', nama_cpl: 'Mampu menerapkan pemikiran logis...', nilai: 85.5, persentase: 85.5, status: 'Tercapai', target: 75 },
+                { id: 2, kode_cpl: 'CPL-02', nama_cpl: 'Mampu menunjukkan kinerja mandiri...', nilai: 72.3, persentase: 72.3, status: 'Belum Tercapai', target: 75 },
+                { id: 3, kode_cpl: 'CPL-03', nama_cpl: 'Mampu mengkaji implikasi...', nilai: 88.7, persentase: 88.7, status: 'Tercapai', target: 75 },
+                { id: 4, kode_cpl: 'CPL-04', nama_cpl: 'Mampu menyusun deskripsi saintifik...', nilai: 79.2, persentase: 79.2, status: 'Tercapai', target: 75 },
             ]
         };
     },
     
     getMyCapaianDetail: async () => {
-        // Simulasi delay API
         await new Promise(resolve => setTimeout(resolve, 500));
         return {
             success: true,

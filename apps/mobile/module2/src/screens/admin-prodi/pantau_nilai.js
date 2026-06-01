@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,65 +7,109 @@ import {
   StatusBar, 
   ImageBackground, 
   TouchableOpacity,
-  ScrollView 
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
-// ❌ Hapus import useNavigation
 import { Ionicons } from '@expo/vector-icons';
+
+// ✅ IMPORT FUNGSI API TERSENTRALISASI
+import { nilaiApi } from '../../services/api';
 
 const THEME_COLOR = '#cad4ed'; 
 const PRIMARY_BLUE = '#577590';
 const INACTIVE_BG = '#f8fafc';
 
-const DUMMY_DATA = [
-  { id: '1', nama: 'Ahmad Fauzi', mk: 'Analisis & Perancangan Sistem', subcpmk: 'SCPL-01', nilai: 85 },
-  { id: '2', nama: 'Ahmad Fauzi', mk: 'Analisis & Perancangan Sistem', subcpmk: 'SCPL-02', nilai: 90 },
-  { id: '3', nama: 'Dewi Lestari', mk: 'Analisis & Perancangan Sistem', subcpmk: 'SCPL-01', nilai: 78 },
-  { id: '4', nama: 'Dewi Lestari', mk: 'Analisis & Perancangan Sistem', subcpmk: 'SCPL-03', nilai: 88 },
-  { id: '5', nama: 'Budi Santoso', mk: 'Analisis & Perancangan Sistem', subcpmk: 'SCPL-02', nilai: 92 },
-
-  // MK: Manajemen Basis Data Bisnis
-  { id: '6', nama: 'Budi Santoso', mk: 'Manajemen Basis Data Bisnis', subcpmk: 'SCPL-01', nilai: 88 },
-  { id: '7', nama: 'Budi Santoso', mk: 'Manajemen Basis Data Bisnis', subcpmk: 'SCPL-02', nilai: 95 },
-  { id: '8', nama: 'Siti Rahma', mk: 'Manajemen Basis Data Bisnis', subcpmk: 'SCPL-01', nilai: 80 },
-  { id: '9', nama: 'Reza Rahadian', mk: 'Manajemen Basis Data Bisnis', subcpmk: 'SCPL-02', nilai: 75 },
-
-  // MK: Arsitektur Enterprise
-  { id: '10', nama: 'Siti Rahma', mk: 'Arsitektur Enterprise', subcpmk: 'SCPL-01', nilai: 85 },
-  { id: '11', nama: 'Reza Rahadian', mk: 'Arsitektur Enterprise', subcpmk: 'SCPL-01', nilai: 82 },
-  { id: '12', nama: 'Putri Marino', mk: 'Arsitektur Enterprise', subcpmk: 'SCPL-02', nilai: 90 },
-
-  // MK: Audit & Keamanan SI
-  { id: '13', nama: 'Ahmad Fauzi', mk: 'Audit & Keamanan SI', subcpmk: 'SCPL-01', nilai: 91 },
-  { id: '14', nama: 'Dewi Lestari', mk: 'Audit & Keamanan SI', subcpmk: 'SCPL-03', nilai: 87 },
-  { id: '15', nama: 'Putri Marino', mk: 'Audit & Keamanan SI', subcpmk: 'SCPL-04', nilai: 89 },
-];
-
 export default function PantauNilaiScreen({ navigation }) {
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   // State Filter
   const [filterMk, setFilterMk] = useState('Semua');
   const [filterSub, setFilterSub] = useState('Semua');
 
-  // Mengambil daftar unik untuk Pilihan Filter MK
-  const mkOptions = ['Semua', ...new Set(DUMMY_DATA.map(item => item.mk))];
+  // 🛠️ Fungsi Helper untuk Merapikan Tanggal super panjang dari PostgreSQL (input_at)
+  const formatTanggal = (rawDate) => {
+    if (!rawDate || rawDate === '-') return '-';
+    try {
+      const d = new Date(rawDate);
+      // Jika format tanggal bawaan javascript tidak valid, kembalikan teks aslinya
+      if (isNaN(d.getTime())) return rawDate; 
+      
+      const tgl = String(d.getDate()).padStart(2, '0');
+      const bln = String(d.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari angka 0
+      const thn = d.getFullYear();
+      
+      return `${tgl}-${bln}-${thn}`; // Hasil tampilan di aplikasi: 30-05-2026
+    } catch (error) {
+      return rawDate;
+    }
+  };
+
+  // ✅ Fungsi menarik data nilai mahasiswa
+  const fetchNilaiMahasiswa = () => {
+    setIsLoading(true);
+    nilaiApi.getAll()
+      .then(result => {
+        const fetchedData = result && result.data && Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : []);
+        
+        // 🌟 NORMALISASI DATA: Memetakan kolom database agar sesuai radar UI aplikasi
+        const normalizedData = fetchedData.map(item => {
+          // Ambil nilai tanggal mentah dari kolom input_at atau created_at database kamu
+          const tanggalMentah = item.input_at || item.created_at || item.tanggal_input || item.tanggal || '-';
+
+          return {
+            ...item,
+            id: item.id || item.nilai_id || Math.random().toString(),
+            nama: item.nama || item.nama_mahasiswa || item.mahasiswa_nama || 'Mahasiswa',
+            nim: item.nim || item.mahasiswa_nim || '-',
+            nilai: item.nilai !== undefined ? item.nilai : (item.score || 0),
+            
+            // Penyelaras database mata kuliah
+            mk: item.nama_mk || item.mk || item.mata_kuliah || item.matakuliah || 'Mata Kuliah',
+            
+            // Penyelaras database sub-cpmk (kode_sub_cpmk)
+            subcpmk: item.kode_sub_cpmk || item.subcpmk || item.kode_subcpmk || item.sub_cpmk || item.kode || '-',
+            
+            // 🔥 Tanggal mentah dikirim ke fungsi helper agar terformat rapi
+            tanggal_input: formatTanggal(tanggalMentah)
+          };
+        });
+
+        setData(normalizedData);
+      })
+      .catch(error => {
+        console.error("Gagal menarik data nilai:", error);
+        setData([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchNilaiMahasiswa();
+  }, []);
+
+  // Pilihan Filter MK dari state data yang sudah dinormalisasi
+  const mkOptions = ['Semua', ...new Set(data.map(item => item.mk))].filter(Boolean);
   
-  // Mengambil daftar unik untuk Pilihan Filter Sub-CPMK (Menyesuaikan MK yang dipilih)
+  // Pilihan Filter Sub-CPMK (Menyesuaikan MK yang dipilih)
   const subOptions = ['Semua', ...new Set(
-    DUMMY_DATA
+    data
       .filter(item => filterMk === 'Semua' || item.mk === filterMk)
       .map(item => item.subcpmk)
-  )].sort(); // Ditambah sort agar urut dari SCPL-01 sampai 04
+  )].filter(Boolean).sort(); 
 
   // Logika Filter Data
-  const filteredData = DUMMY_DATA.filter(item => {
+  const filteredData = data.filter(item => {
     const matchMk = filterMk === 'Semua' || item.mk === filterMk;
     const matchSub = filterSub === 'Semua' || item.subcpmk === filterSub;
     return matchMk && matchSub;
   });
 
-  // Fungsi ganti filter MK (otomatis mereset Sub-CPMK)
   const handleSelectMk = (mk) => {
     setFilterMk(mk);
-    setFilterSub('Semua');
+    setFilterSub('Semua'); // Reset filter Sub-CPMK saat ganti Matkul
   };
 
   const renderItem = ({ item }) => (
@@ -74,8 +118,13 @@ export default function PantauNilaiScreen({ navigation }) {
         <Ionicons name="document-text" size={24} color={PRIMARY_BLUE} />
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.nama} • {item.subcpmk}</Text>
-        <Text style={styles.cardSubtitle}>MK: {item.mk}</Text>
+        <Text style={styles.cardTitle}>{item.nama} <Text style={styles.nimText}>• {item.nim}</Text></Text>
+        <Text style={styles.cardSubtitle} numberOfLines={1}>{item.mk} • {item.subcpmk}</Text>
+        
+        <View style={styles.dateRow}>
+          <Ionicons name="calendar-clear-outline" size={12} color="#94A3B8" />
+          <Text style={styles.dateText}>Diinput: {item.tanggal_input}</Text>
+        </View>
       </View>
       <View style={styles.badgeWrap}>
         <Text style={styles.badgeText}>{item.nilai}</Text>
@@ -84,87 +133,69 @@ export default function PantauNilaiScreen({ navigation }) {
   );
 
   return (
-    <ImageBackground 
-      source={require('../../../assets/uinsa2.jpeg')} 
-      style={styles.container} 
-      imageStyle={{ opacity: 0.15 }} 
-    >
+    <ImageBackground source={require('../../../assets/uinsa2.jpeg')} style={styles.container} imageStyle={{ opacity: 0.15 }} >
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
       
-      {/* HEADER */}
+      {/* HEADER BANNER BIRU MELENGKUNG */}
       <View style={styles.header}>
-        {/* ✅ Tombol kembali diarahkan ke dashboard */}
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#212121" />
         </TouchableOpacity>
         <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Monitoring Nilai</Text>
-          <Text style={styles.headerSubtitle}>Monitoring nilai Mahasiswa Program Studi Sistem Informasi</Text>
+          <Text style={styles.headerSubtitle}>Monitoring nilai Mahasiswa Program Studi</Text>
         </View>
       </View>
 
-      {/* FILTER SECTION LUCU (CHUBBY PILLS) */}
+      {/* FILTER SECTION */}
       <View style={styles.filterSection}>
-        
-        {/* Filter Mata Kuliah */}
-        <View style={styles.filterRow}>
-          <Ionicons name="library-outline" size={16} color="#64748B" style={styles.filterIcon} />
-          <Text style={styles.filterLabel}>Mata Kuliah</Text>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollWrapper}>
-          {mkOptions.map((mk, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={[styles.pill, filterMk === mk && styles.pillActive]}
-              onPress={() => handleSelectMk(mk)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, filterMk === mk && styles.pillTextActive]}>{mk}</Text>
+        <Text style={styles.filterLabel}>Mata Kuliah:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          {mkOptions.map(mk => (
+            <TouchableOpacity key={mk} style={[styles.filterChip, filterMk === mk && styles.filterChipActive]} onPress={() => handleSelectMk(mk)}>
+              <Text style={[styles.chipText, filterMk === mk && styles.chipTextActive]}>{mk}</Text>
             </TouchableOpacity>
           ))}
-          <View style={{ width: 24 }} />
         </ScrollView>
 
-        {/* Filter Sub-CPMK */}
-        <View style={[styles.filterRow, { marginTop: 12 }]}>
-          <Ionicons name="pie-chart-outline" size={16} color="#64748B" style={styles.filterIcon} />
-          <Text style={styles.filterLabel}>Sub-CPMK</Text>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollWrapper}>
-          {subOptions.map((sub, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={[styles.pill, filterSub === sub && styles.pillActive]}
-              onPress={() => setFilterSub(sub)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, filterSub === sub && styles.pillTextActive]}>{sub}</Text>
+        <Text style={[styles.filterLabel, { marginTop: 10 }]}>Sub-CPMK:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          {subOptions.map(sub => (
+            <TouchableOpacity key={sub} style={[styles.filterChip, filterSub === sub && styles.filterChipActive]} onPress={() => setFilterSub(sub)}>
+              <Text style={[styles.chipText, filterSub === sub && styles.chipTextActive]}>{sub}</Text>
             </TouchableOpacity>
           ))}
-          <View style={{ width: 24 }} />
         </ScrollView>
       </View>
 
-      {/* LIST DATA */}
-      <FlatList 
-        data={filteredData} 
-        keyExtractor={item => item.id} 
-        renderItem={renderItem} 
-        contentContainerStyle={styles.listContainer} 
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="folder-open-outline" size={48} color="#cbd5e1" />
-            <Text style={styles.emptyText}>Tidak ada data nilai yang sesuai filter.</Text>
-          </View>
-        }
-      />
+      {/* LIST DATA / LOADING BAR */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={PRIMARY_BLUE} />
+          <Text style={styles.loadingText}>Memuat data nilai...</Text>
+        </View>
+      ) : (
+        <FlatList 
+          data={filteredData} 
+          keyExtractor={(item, index) => index.toString()} 
+          renderItem={renderItem} 
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="sad-outline" size={48} color="#94A3B8" />
+              <Text style={styles.emptyText}>Tidak ada data nilai ditemukan</Text>
+            </View>
+          }
+        />
+      )}
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F6F5FA' },
+  
   header: { 
     backgroundColor: THEME_COLOR, 
     paddingTop: 50, 
@@ -173,74 +204,30 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 32, 
     borderBottomRightRadius: 32, 
     flexDirection: 'row', 
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5
+    elevation: 4 
   },
   backBtn: { padding: 8, marginRight: 12, marginTop: -2 },
   headerTextWrap: { flex: 1 },
   headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 4 },
-  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B' },
+  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#577590' },
   
-  filterSection: {
-    paddingTop: 20,
-    paddingBottom: 5,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    marginBottom: 8,
-  },
-  filterIcon: {
-    marginRight: 6,
-  },
-  filterLabel: {
-    fontFamily: 'Urbanist-Bold',
-    fontSize: 14,
-    color: '#64748B',
-  },
-  scrollWrapper: {
-    paddingLeft: 24,
-  },
-  pill: {
-    backgroundColor: INACTIVE_BG,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20, 
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  pillActive: {
-    backgroundColor: PRIMARY_BLUE,
-    borderColor: PRIMARY_BLUE,
-    elevation: 2,
-    shadowColor: PRIMARY_BLUE,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-  },
-  pillText: {
-    fontFamily: 'Urbanist-Medium',
-    fontSize: 13,
-    color: '#64748B',
-  },
-  pillTextActive: {
-    color: '#FFFFFF', 
-    fontWeight: '800',
-  },
-
-  listContainer: { padding: 24, paddingBottom: 40 },
+  filterSection: { paddingTop: 20, paddingBottom: 5 },
+  filterLabel: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#212121', marginBottom: 8, paddingHorizontal: 24 },
+  filterScroll: { paddingHorizontal: 24, gap: 8, paddingBottom: 4 },
+  
+  filterChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E2E8F0' },
+  filterChipActive: { backgroundColor: PRIMARY_BLUE, borderColor: PRIMARY_BLUE, elevation: 2 },
+  chipText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B' },
+  chipTextActive: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontWeight: '800' },
+  
+  listContainer: { padding: 24, paddingBottom: 30, paddingTop: 10 },
   card: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    backgroundColor: '#FFFFFF', 
-    padding: 16, 
+    backgroundColor: '#FFF', 
     borderRadius: 24, 
-    marginBottom: 12, 
+    padding: 16, 
+    marginBottom: 12,
     borderWidth: 1, 
     borderColor: '#E2E8F0', 
     elevation: 2,
@@ -258,21 +245,16 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     marginRight: 16 
   },
-  cardContent: { flex: 1 },
-  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: '#212121', marginBottom: 4 },
-  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#64748B' },
+  cardContent: { flex: 1, paddingRight: 8 },
+  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121', marginBottom: 4 },
+  nimText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#94A3B8' }, 
+  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B', marginBottom: 6 },
+  dateRow: { flexDirection: 'row', alignItems: 'center' },
+  dateText: { fontFamily: 'Urbanist-Medium', fontSize: 11, color: '#94A3B8', marginLeft: 4 },
   badgeWrap: { backgroundColor: PRIMARY_BLUE, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
-  badgeText: { fontFamily: 'Urbanist-Bold', color: '#FFF', fontSize: 14 },
-  
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 50,
-  },
-  emptyText: {
-    fontFamily: 'Urbanist-Regular',
-    marginTop: 10,
-    color: '#94A3B8',
-    fontSize: 14,
-  }
+  badgeText: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 14 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { fontFamily: 'Urbanist-Medium', fontSize: 14, color: '#64748B', marginTop: 10 },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50 },
+  emptyText: { fontFamily: 'Urbanist-Regular', fontSize: 14, color: '#94A3B8', marginTop: 10 }
 });

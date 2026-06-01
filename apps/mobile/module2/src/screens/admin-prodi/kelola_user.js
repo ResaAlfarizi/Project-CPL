@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { 
   View, 
   Text, 
@@ -11,9 +11,13 @@ import {
   TextInput, 
   TouchableWithoutFeedback, 
   Keyboard,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+// ✅ SEKARANG MENGGIATKAN BERDUA: userApi dan prodiApi DARI FILE api.js ANDA
+import { userApi, prodiApi } from '../../services/api';
 
 const THEME_PINK = '#f4d6d6'; 
 const DARK_PINK = '#c98a8a'; 
@@ -21,79 +25,159 @@ const SUBMIT_PINK = '#b35c5c';
 const CANCEL_PINK = '#ffebee';
 const CANCEL_TEXT = '#c62828'; 
 
-// DUMMY DATA - Ditambah angkatan untuk Mahasiswa
-const INITIAL_DATA = [
-  { id: '1', email: 'budi.santoso@uinsa.ac.id', nama: 'Budi Santoso', role: 'Dosen', entityId: '198001012005011001' },
-  { id: '2', email: 'siti.rahma@uinsa.ac.id', nama: 'Siti Rahma', role: 'Dosen', entityId: '198502022010012002' },
-  { id: '3', email: '09010624010@mhs.ac.id', nama: 'Ahmad Fauzi', role: 'Mahasiswa', entityId: '09010624010', angkatan: '2024' },
-  { id: '4', email: '09010624011@mhs.ac.id', nama: 'Dewi Lestari', role: 'Mahasiswa', entityId: '09010624011', angkatan: '2024' },
-];
-
 export default function KelolaUserScreen({ navigation }) {
-  const [users, setUsers] = useState(INITIAL_DATA);
+  const [users, setUsers] = useState([]); 
+  const [loading, setLoading] = useState(true); 
   const [modalVisible, setModalVisible] = useState(false);
   
-  // --- STATE UNTUK POP-UP DETAIL USER ---
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   
-  // State Filter
   const [filterRole, setFilterRole] = useState('Semua');
   const roleOptions = ['Semua', 'Dosen', 'Mahasiswa'];
 
-  // Form State
   const [nama, setNama] = useState(''); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [entityId, setEntityId] = useState('');
   const [roleMode, setRoleMode] = useState('Mahasiswa');
-  const [angkatan, setAngkatan] = useState(''); // 👈 TAMBAHAN STATE ANGKATAN
+  const [angkatan, setAngkatan] = useState(''); 
+
+  // ✅ STATE BARU UNTUK MENAMPUNG UUID PRODI YANG VALID DARI BACKEND
+  const [selectedProdiId, setSelectedProdiId] = useState('');
 
   const [alertConfig, setAlertConfig] = useState({ visible: false, type: '', title: '', message: '' });
 
+  // ✅ 1. PROSES GET DATA DENGAN MENYESUAIKAN VARIABEL 'identifier' DARI BE
+  const fetchUsersData = () => {
+    setLoading(true);
+    userApi.getAll()
+      .then(result => {
+        const rawData = result && result.data && Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : []);
+
+        console.log("=== DATA USER DARI BE ===", JSON.stringify(rawData, null, 2));
+
+        const normalizedData = rawData.map(item => {
+          const roleRaw = item.role || item.tipe || '';
+          let roleClean = roleRaw;
+          if (roleRaw.toLowerCase() === 'dosen') roleClean = 'Dosen';
+          if (roleRaw.toLowerCase() === 'mahasiswa') roleClean = 'Mahasiswa';
+
+          let idIdentitas = item.identifier || item.nim || item.nidn || item.nip || item.entityId;
+          
+          if (!idIdentitas || idIdentitas === '-') {
+            if (item.mahasiswa && typeof item.mahasiswa === 'object') {
+              idIdentitas = item.mahasiswa.nim || item.mahasiswa.identifier;
+            } else if (item.dosen && typeof item.dosen === 'object') {
+              idIdentitas = item.dosen.nidn || item.dosen.nip || item.dosen.identifier;
+            }
+          }
+
+          let tahunAngkatan = item.angkatan || item.tahun_masuk;
+          if (!tahunAngkatan || tahunAngkatan === '-') {
+            if (item.mahasiswa && typeof item.mahasiswa === 'object') {
+              tahunAngkatan = item.mahasiswa.angkatan || item.mahasiswa.tahun_masuk;
+            }
+          }
+
+          return {
+            ...item,
+            id: item.id || Math.random().toString(),
+            nama: item.nama || item.name || 'Pengguna',
+            email: item.email || '-',
+            role: roleClean,
+            entityId: idIdentitas || '-',
+            angkatan: tahunAngkatan || '-'
+          };
+        });
+
+        const filteredDB = normalizedData.filter(user => user.role === 'Dosen' || user.role === 'Mahasiswa');
+        setUsers(filteredDB);
+      })
+      .catch(error => {
+        console.error("Gagal menarik data user:", error);
+        setUsers([]); 
+      })
+      .finally(() => {
+        setLoading(true);
+        setTimeout(() => setLoading(false), 300);
+      });
+  };
+
+  useEffect(() => {
+    fetchUsersData();
+
+    // ✅ OTOMATIS MENGAMBIL UUID PRODI YANG REAL SAAT HALAMAN DIBUKA
+    if (prodiApi && typeof prodiApi.getAll === 'function') {
+      prodiApi.getAll()
+        .then(result => {
+          const dataProdi = result && result.data ? result.data : result;
+          if (Array.isArray(dataProdi) && dataProdi.length > 0) {
+            // Ambil id (UUID) prodi pertama sebagai default prodi_id mahasiswa/dosen baru
+            setSelectedProdiId(dataProdi[0].id);
+            console.log("Berhasil mendapatkan UUID Prodi asli dari database:", dataProdi[0].id);
+          }
+        })
+        .catch(err => {
+          console.error("❌ Gagal mendapatkan UUID Prodi dari backend:", err);
+        });
+    }
+  }, []);
+
   const filteredUsers = users.filter(user => filterRole === 'Semua' || user.role === filterRole);
 
+  // ✅ 2. PROSES POST DATA SESUAI REQUEST BODY CONTROLLER BE (MENGGUNAKAN UUID REAL)
   const handleAddUser = () => {
-    // 👈 VALIDASI DIPERBARUI: Angkatan wajib diisi JIKA role-nya Mahasiswa
     if (!nama || !email || !password || !entityId || (roleMode === 'Mahasiswa' && !angkatan)) {
       setAlertConfig({ 
-        visible: true, 
-        type: 'error', 
-        title: 'Lengkapi Data! 🚨', 
-        message: 'Pastikan semua data lengkap sebelum menambahkan akun baru.' 
+        visible: true, type: 'error', title: 'Lengkapi Data!', 
+        message: 'Pastikan semua data lengkap sebelum menyimpan Akun Baru.' 
       });
       return;
     }
 
-    const newUser = { 
-        id: Date.now().toString(), 
-        email: email, 
-        nama: nama, 
-        role: roleMode,
-        entityId: entityId,
-        angkatan: roleMode === 'Mahasiswa' ? angkatan : null // Hanya simpan angkatan kalau Mahasiswa
-    };
-    setUsers([newUser, ...users]);
-    closeModal();
-
-    setTimeout(() => {
-      setAlertConfig({ 
-        visible: true, 
-        type: 'success', 
-        title: 'Berhasil!', 
-        message: `Akun ${roleMode} baru berhasil ditambahkan ke sistem.` 
+    // Antisipasi jika UUID prodi belum selesai di-load dari server saat klik simpan
+    if (!selectedProdiId) {
+      setAlertConfig({
+        visible: true, type: 'error', title: 'Mohon Tunggu',
+        message: 'Sistem sedang menghubungkan ke database Program Studi. Silakan coba simpan kembali dalam 2 detik.'
       });
-    }, 300);
+      return;
+    }
+
+    // 🌟 SEKARANG PAYLOAD MENGGUNAKAN 'selectedProdiId' (UUID ASLI), BUKAN "1" LAGI
+    const payload = { 
+      email: email, 
+      password: password,
+      role: roleMode,
+      nama: nama, 
+      identifier: entityId,  
+      prodi_id: selectedProdiId, // 🧠 Mengatasi error 500 invalid input syntax for type uuid
+      angkatan: angkatan     
+    };
+
+    closeModal();
+    setLoading(true);
+
+    userApi.create(payload)
+      .then(res => {
+        console.log("=== BERHASIL SIMPAN KE BE ===", res);
+        return fetchUsersData();
+      }) 
+      .then(() => {
+        setTimeout(() => setAlertConfig({ visible: true, type: 'success', title: 'Berhasil!', message: `Akun ${roleMode} berhasil disimpan ke database.` }), 300);
+      })
+      .catch(err => {
+        console.error("=== GAGAL SIMPAN API ===", err);
+        setLoading(false);
+        setTimeout(() => setAlertConfig({ visible: true, type: 'error', title: 'Gagal', message: err.message || 'Gagal menambahkan akun ke database.' }), 300);
+      });
   };
 
   const closeModal = () => {
     setModalVisible(false);
-    setNama(''); 
-    setEmail(''); 
-    setPassword(''); 
-    setEntityId('');
-    setAngkatan(''); // 👈 RESET ANGKATAN
-    setRoleMode('Mahasiswa');
+    setNama(''); setEmail(''); setPassword(''); 
+    setEntityId(''); setAngkatan(''); setRoleMode('Mahasiswa');
   };
 
   const renderItem = ({ item }) => (
@@ -106,7 +190,7 @@ export default function KelolaUserScreen({ navigation }) {
       }}
     >
       <View style={styles.cardAvatar}>
-        <Text style={styles.avatarText}>{item.nama.charAt(0).toUpperCase()}</Text>
+        <Text style={styles.avatarText}>{item.nama?.charAt(0).toUpperCase() || 'U'}</Text>
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.nama}</Text>
@@ -126,7 +210,7 @@ export default function KelolaUserScreen({ navigation }) {
         </TouchableOpacity>
         <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Manajemen User</Text>
-          <Text style={styles.headerSubtitle}>Kelola Akun Pengguna Program Studi Sistem Informasi</Text>
+          <Text style={styles.headerSubtitle}>Kelola Akun Pengguna Program Studi</Text>
         </View>
       </View>
       
@@ -145,19 +229,26 @@ export default function KelolaUserScreen({ navigation }) {
         </ScrollView>
       </View>
 
-      <FlatList 
-        data={filteredUsers} 
-        keyExtractor={item => item.id} 
-        renderItem={renderItem} 
-        contentContainerStyle={styles.listContainer} 
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="people-outline" size={48} color="#cbd5e1" />
-            <Text style={styles.emptyText}>Belum ada pengguna di role ini.</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={SUBMIT_PINK} />
+          <Text style={{ marginTop: 10, fontFamily: 'Urbanist-Medium', color: '#64748B' }}>Memuat pengguna...</Text>
+        </View>
+      ) : (
+        <FlatList 
+          data={filteredUsers} 
+          keyExtractor={item => item.id.toString()} 
+          renderItem={renderItem} 
+          contentContainerStyle={styles.listContainer} 
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="people-outline" size={48} color="#cbd5e1" />
+              <Text style={styles.emptyText}>Belum ada pengguna di role ini.</Text>
+            </View>
+          }
+        />
+      )}
       
       <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)} activeOpacity={0.8}>
         <Ionicons name="person-add" size={24} color="#212121" />
@@ -171,7 +262,7 @@ export default function KelolaUserScreen({ navigation }) {
               <View style={styles.modalHandle} />
               <Text style={styles.modalTitleLucu}>Tambah Akun Baru</Text>
 
-              {/* PILIHAN ROLE (Dipindah ke atas agar jelas dari awal sedang mengisi form apa) */}
+              {/* PILIHAN ROLE */}
               <View style={styles.roleWrap}>
                 {['Dosen', 'Mahasiswa'].map((r) => (
                   <TouchableOpacity 
@@ -179,7 +270,7 @@ export default function KelolaUserScreen({ navigation }) {
                     style={[styles.roleBtn, roleMode === r ? styles.roleActive : styles.roleInactive]} 
                     onPress={() => {
                       setRoleMode(r);
-                      if (r === 'Dosen') setAngkatan(''); // Bersihkan angkatan jika ganti ke Dosen
+                      if (r === 'Dosen') setAngkatan(''); 
                     }}
                     activeOpacity={0.7}
                   >
@@ -205,10 +296,9 @@ export default function KelolaUserScreen({ navigation }) {
 
               <View style={styles.inputContainer}>
                 <Ionicons name="finger-print-outline" size={20} color={DARK_PINK} style={styles.inputIcon} />
-                <TextInput style={styles.inputLucu} placeholder={roleMode === 'Dosen' ? "NIP *" : "NIM *"} placeholderTextColor="#94A3B8" value={entityId} onChangeText={setEntityId} keyboardType="number-pad" />
+                <TextInput style={styles.inputLucu} placeholder={roleMode === 'Dosen' ? "NIDN / NIP *" : "NIM *"} placeholderTextColor="#94A3B8" value={entityId} onChangeText={setEntityId} keyboardType="number-pad" />
               </View>
 
-              {/* 👈 INPUT ANGKATAN: MUNCUL HANYA JIKA ROLE = MAHASISWA */}
               {roleMode === 'Mahasiswa' && (
                 <View style={styles.inputContainer}>
                   <Ionicons name="calendar-outline" size={20} color={DARK_PINK} style={styles.inputIcon} />
@@ -248,7 +338,7 @@ export default function KelolaUserScreen({ navigation }) {
                 <>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
                     <View style={[styles.cardAvatar, { marginRight: 15, width: 64, height: 64, borderRadius: 20 }]}>
-                      <Text style={[styles.avatarText, { fontSize: 26 }]}>{selectedUser.nama.charAt(0).toUpperCase()}</Text>
+                      <Text style={[styles.avatarText, { fontSize: 26 }]}>{selectedUser.nama?.charAt(0).toUpperCase() || 'U'}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.cardTitle, { fontSize: 18, marginBottom: 4 }]}>{selectedUser.nama}</Text>
@@ -260,21 +350,19 @@ export default function KelolaUserScreen({ navigation }) {
                     </View>
                   </View>
                   
-                  {/* Info Pribadi */}
                   <View style={styles.detailRow}>
                     <Ionicons name="finger-print-outline" size={18} color="#64748B" />
-                    <Text style={styles.detailLabel}>{selectedUser.role === 'Dosen' ? 'NIP' : 'NIM'}</Text>
+                    <Text style={styles.detailLabel}>{selectedUser.role === 'Dosen' ? 'NIDN / NIP' : 'NIM'}</Text>
                   </View>
-                  <Text style={styles.detailValue}>{selectedUser.entityId || '-'}</Text>
+                  <Text style={styles.detailValue}>{selectedUser.entityId}</Text>
 
-                  {/* 👈 TAMPILKAN ANGKATAN DI POP-UP JIKA MAHASISWA */}
                   {selectedUser.role === 'Mahasiswa' && (
                     <>
                       <View style={styles.detailRow}>
                         <Ionicons name="calendar-outline" size={18} color="#64748B" />
                         <Text style={styles.detailLabel}>Angkatan</Text>
                       </View>
-                      <Text style={styles.detailValue}>{selectedUser.angkatan || '-'}</Text>
+                      <Text style={styles.detailValue}>{selectedUser.angkatan}</Text>
                     </>
                   )}
 
@@ -289,15 +377,6 @@ export default function KelolaUserScreen({ navigation }) {
                     <Text style={styles.detailLabel}>Status Akun</Text>
                   </View>
                   <Text style={[styles.detailValue, { color: '#00796b' }]}>Aktif Terverifikasi</Text>
-
-                  {/* Tombol Tutup */}
-                  <TouchableOpacity 
-                    style={[styles.btnSubmitFit, { width: '100%', backgroundColor: SUBMIT_PINK, marginTop: 25 }]} 
-                    onPress={() => setDetailVisible(false)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.btnSubmitTextFit}>Tutup</Text>
-                  </TouchableOpacity>
                 </>
               )}
 
