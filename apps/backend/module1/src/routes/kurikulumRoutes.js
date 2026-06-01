@@ -20,6 +20,9 @@ router.post('/mapping', kurikulumController.saveMappingMKCPL);
 
 // Sub-CPMK
 router.get('/sub-cpmk', kurikulumController.getAllSubCpmk);
-router.post('/sub-cpmk', kurikulumController.saveSubCpmks);
+router.post('/sub-cpmk', kurikulumController.createSubCpmk);
+router.put('/sub-cpmk/:id', kurikulumController.updateSubCpmk);
+router.delete('/sub-cpmk/:id', kurikulumController.deleteSubCpmk);
+router.post('/sub-cpmk/batch', kurikulumController.saveSubCpmks);
 
 module.exports = router;

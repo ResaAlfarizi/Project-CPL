@@ -19,6 +19,7 @@ const getAllKelas = async () => {
       mk.kode_mk,
       mk.nama_mk,
       mk.sks,
+      mk.semester as semester_mk,
       d.nama as nama_dosen,
       ps.nama_prodi
     FROM kelas

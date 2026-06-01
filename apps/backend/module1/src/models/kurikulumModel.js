@@ -89,6 +89,27 @@ const Kurikulum = {
     return res.rows;
   },
 
+  createSubCpmk: async ({ mk_cpl_id, kode_sub_cpmk, deskripsi, bobot }) => {
+    const res = await pool.query(
+      'INSERT INTO sub_cpmk (mk_cpl_id, kode_sub_cpmk, deskripsi, bobot) VALUES ($1, $2, $3, $4) RETURNING *',
+      [mk_cpl_id, kode_sub_cpmk, deskripsi, bobot]
+    );
+    return res.rows[0];
+  },
+
+  updateSubCpmk: async (id, { mk_cpl_id, kode_sub_cpmk, deskripsi, bobot }) => {
+    const res = await pool.query(
+      'UPDATE sub_cpmk SET mk_cpl_id = $1, kode_sub_cpmk = $2, deskripsi = $3, bobot = $4 WHERE id = $5 RETURNING *',
+      [mk_cpl_id, kode_sub_cpmk, deskripsi, bobot, id]
+    );
+    return res.rows[0];
+  },
+
+  deleteSubCpmk: async (id) => {
+    const res = await pool.query('DELETE FROM sub_cpmk WHERE id = $1 RETURNING *', [id]);
+    return res.rows[0];
+  },
+
   saveSubCpmks: async (mk_cpl_id, subCpmks) => {
     const client = await pool.connect();
     try {

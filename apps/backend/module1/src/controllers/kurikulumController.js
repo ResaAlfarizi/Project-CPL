@@ -164,6 +164,45 @@ exports.getAllSubCpmk = async (req, res) => {
   }
 };
 
+exports.createSubCpmk = async (req, res) => {
+  const { mk_cpl_id, kode_sub_cpmk, deskripsi, bobot } = req.body;
+  if (!mk_cpl_id || !kode_sub_cpmk || !deskripsi || bobot === undefined) {
+    return res.status(400).json({ status: "Error", message: "Data Sub-CPMK tidak lengkap!" });
+  }
+  try {
+    const data = await Kurikulum.createSubCpmk({ mk_cpl_id, kode_sub_cpmk, deskripsi, bobot: parseFloat(bobot) });
+    return res.status(201).json({ status: "Success", data });
+  } catch (error) {
+    return res.status(500).json({ status: "Error", message: error.message });
+  }
+};
+
+exports.updateSubCpmk = async (req, res) => {
+  const { id } = req.params;
+  const { mk_cpl_id, kode_sub_cpmk, deskripsi, bobot } = req.body;
+  if (!mk_cpl_id || !kode_sub_cpmk || !deskripsi || bobot === undefined) {
+    return res.status(400).json({ status: "Error", message: "Data pembaruan Sub-CPMK tidak lengkap!" });
+  }
+  try {
+    const data = await Kurikulum.updateSubCpmk(id, { mk_cpl_id, kode_sub_cpmk, deskripsi, bobot: parseFloat(bobot) });
+    if (!data) return res.status(404).json({ status: "Error", message: "Sub-CPMK tidak ditemukan!" });
+    return res.status(200).json({ status: "Success", data });
+  } catch (error) {
+    return res.status(500).json({ status: "Error", message: error.message });
+  }
+};
+
+exports.deleteSubCpmk = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const data = await Kurikulum.deleteSubCpmk(id);
+    if (!data) return res.status(404).json({ status: "Error", message: "Sub-CPMK tidak ditemukan!" });
+    return res.status(200).json({ status: "Success", message: "Sub-CPMK berhasil dihapus", data });
+  } catch (error) {
+    return res.status(500).json({ status: "Error", message: error.message });
+  }
+};
+
 exports.saveSubCpmks = async (req, res) => {
   const { mk_cpl_id, subCpmks } = req.body;
   if (!mk_cpl_id || !subCpmks || !Array.isArray(subCpmks)) {

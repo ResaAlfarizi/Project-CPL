@@ -116,25 +116,36 @@ export default function MatakuliahPage() {
         ) : (
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>#</th><th>Kode MK</th><th>Nama Mata Kuliah</th><th>Prodi</th><th>SKS</th><th>Semester</th><th>CPL Terpetakan</th><th>Aksi</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style={{ width: 60 }}>#</th>
+                  <th style={{ width: 110 }}>Kode MK</th>
+                  <th style={{ minWidth: 200 }}>Nama Mata Kuliah</th>
+                  <th style={{ width: 100 }}>Prodi</th>
+                  <th style={{ width: 80 }}>SKS</th>
+                  <th style={{ width: 100 }}>Semester</th>
+                  <th style={{ width: 130 }}>CPL Terpetakan</th>
+                  <th style={{ width: 140, textAlign: 'center' }}>Aksi</th>
+                </tr>
+              </thead>
               <tbody>
                 {filtered.map((row, i) => (
                   <tr key={row.id}>
                     <td style={{ color: '#9ca3af' }}>{i + 1}</td>
-                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace' }}>{row.kode_mk}</span></td>
-                    <td style={{ fontWeight: 600 }}>{row.nama_mk}</td>
-                    <td style={{ fontSize: 13 }}>{getProdiCode(row.prodi_id)}</td>
-                    <td><span className="badge badge-gray">{row.sks} SKS</span></td>
-                    <td><span className={`badge ${semColor(row.semester)}`}>Sem {row.semester}</span></td>
+                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace', fontSize: 11, padding: '4px 8px' }}>{row.kode_mk}</span></td>
+                    <td style={{ fontWeight: 600, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.nama_mk}>{row.nama_mk}</td>
+                    <td style={{ fontSize: 12 }}>{getProdiCode(row.prodi_id)}</td>
+                    <td><span className="badge badge-gray" style={{ fontSize: 11, padding: '4px 8px' }}>{row.sks} SKS</span></td>
+                    <td><span className={`badge ${semColor(row.semester)}`} style={{ fontSize: 11, padding: '4px 8px' }}>Sem {row.semester}</span></td>
                     <td>
                       {getMkCplCount(row.id) > 0
-                        ? <span className="badge badge-green">{getMkCplCount(row.id)} CPL</span>
-                        : <span className="badge badge-red">Belum dipetakan</span>}
+                        ? <span className="badge badge-green" style={{ fontSize: 11, padding: '4px 8px' }}>{getMkCplCount(row.id)} CPL</span>
+                        : <span className="badge badge-red" style={{ fontSize: 11, padding: '4px 8px' }}>Belum dipetakan</span>}
                     </td>
                     <td>
-                      <div className="table-actions">
-                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)}>✏️ Edit</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)}>🗑️</button>
+                      <div className="table-actions" style={{ justifyContent: 'center' }}>
+                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)} style={{ fontSize: 11, padding: '4px 8px' }}>✏️ Edit</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)} style={{ fontSize: 11, padding: '4px 8px' }}>🗑️</button>
                       </div>
                     </td>
                   </tr>

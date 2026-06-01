@@ -102,23 +102,32 @@ export default function CPLPage() {
         ) : (
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>#</th><th>Kode CPL</th><th>Deskripsi</th><th>Program Studi</th><th>Status</th><th>Aksi</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style={{ width: 60 }}>#</th>
+                  <th style={{ width: 120 }}>Kode CPL</th>
+                  <th style={{ minWidth: 250 }}>Deskripsi</th>
+                  <th style={{ width: 180 }}>Program Studi</th>
+                  <th style={{ width: 100 }}>Status</th>
+                  <th style={{ width: 140, textAlign: 'center' }}>Aksi</th>
+                </tr>
+              </thead>
               <tbody>
                 {filtered.map((row, i) => (
                   <tr key={row.id}>
                     <td style={{ color: '#9ca3af' }}>{i + 1}</td>
-                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace', fontWeight: 700 }}>{row.kode_cpl}</span></td>
-                    <td style={{ maxWidth: 360, fontSize: 13 }}>{row.deskripsi}</td>
-                    <td><span style={{ fontSize: 13, color: '#4b5563' }}>{getProdiName(row.prodi_id)}</span></td>
+                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 11, padding: '4px 8px' }}>{row.kode_cpl}</span></td>
+                    <td style={{ maxWidth: 250, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.deskripsi}>{row.deskripsi}</td>
+                    <td style={{ fontSize: 12, color: '#4b5563', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={getProdiName(row.prodi_id)}>{getProdiName(row.prodi_id)}</td>
                     <td>
-                      <button onClick={() => toggleActive(row)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: row.is_active ? '#27ae60' : '#9ca3af' }}>
+                      <button onClick={() => toggleActive(row)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: row.is_active ? '#27ae60' : '#9ca3af' }}>
                         {row.is_active ? '✅ Aktif' : '⭕ Nonaktif'}
                       </button>
                     </td>
                     <td>
-                      <div className="table-actions">
-                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)}>✏️ Edit</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)}>🗑️</button>
+                      <div className="table-actions" style={{ justifyContent: 'center' }}>
+                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)} style={{ fontSize: 11, padding: '4px 8px' }}>✏️ Edit</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)} style={{ fontSize: 11, padding: '4px 8px' }}>🗑️</button>
                       </div>
                     </td>
                   </tr>

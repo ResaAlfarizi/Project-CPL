@@ -107,22 +107,31 @@ export default function MahasiswaPage() {
         ) : (
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>#</th><th>NIM</th><th>Nama</th><th>Program Studi</th><th>Angkatan</th><th>Aksi</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style={{ width: 60 }}>#</th>
+                  <th style={{ width: 130 }}>NIM</th>
+                  <th style={{ minWidth: 200 }}>Nama</th>
+                  <th style={{ width: 180 }}>Program Studi</th>
+                  <th style={{ width: 100 }}>Angkatan</th>
+                  <th style={{ width: 140, textAlign: 'center' }}>Aksi</th>
+                </tr>
+              </thead>
               <tbody>
                 {filtered.map((row, i) => (
                   <tr key={row.id}>
                     <td style={{ color: '#9ca3af' }}>{i + 1}</td>
-                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace' }}>{row.nim}</span></td>
-                    <td style={{ fontWeight: 600 }}>{row.nama}</td>
+                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace', fontSize: 11, padding: '4px 8px' }}>{row.nim}</span></td>
+                    <td style={{ fontWeight: 600, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.nama}>{row.nama}</td>
                     <td>
-                      <div style={{ fontSize: 13 }}>{getProdiName(row.prodi_id)}</div>
-                      <div style={{ fontSize: 11, color: '#9ca3af' }}>{getProdiCode(row.prodi_id)}</div>
+                      <div style={{ fontSize: 12, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={getProdiName(row.prodi_id)}>{getProdiName(row.prodi_id)}</div>
+                      <div style={{ fontSize: 10, color: '#9ca3af' }}>{getProdiCode(row.prodi_id)}</div>
                     </td>
-                    <td><span className={`badge ${angkatanColors(row.angkatan)}`}>{row.angkatan}</span></td>
+                    <td><span className={`badge ${angkatanColors(row.angkatan)}`} style={{ fontSize: 11, padding: '4px 8px' }}>{row.angkatan}</span></td>
                     <td>
-                      <div className="table-actions">
-                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)}>✏️ Edit</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)}>🗑️</button>
+                      <div className="table-actions" style={{ justifyContent: 'center' }}>
+                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)} style={{ fontSize: 11, padding: '4px 8px' }}>✏️ Edit</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)} style={{ fontSize: 11, padding: '4px 8px' }}>🗑️</button>
                       </div>
                     </td>
                   </tr>

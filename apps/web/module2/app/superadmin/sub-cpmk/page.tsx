@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { subCpmkApi, mkCplApi } from '@/lib/api';
 import ToastContainer, { showToast } from '@/components/Toast';
 
 interface SubCPMK {
@@ -13,6 +12,7 @@ interface SubCPMK {
   kode_cpl?: string;
   kode_mk?: string;
   nama_mk?: string;
+  prodi_id?: string;
   created_at?: string;
 }
 
@@ -20,17 +20,35 @@ interface MKCPL {
   id: number;
   mk_id: string;
   cpl_id: string;
+  bobot: number;
+}
+
+interface MataKuliah {
+  id: string;
   kode_mk: string;
   nama_mk: string;
+  prodi_id: string;
+  semester: number;
+  sks: number;
+}
+
+interface CPL {
+  id: string;
   kode_cpl: string;
-  deskripsi_cpl: string;
+  deskripsi: string;
+  prodi_id: string;
 }
 
 export default function SubCPMKPage() {
   const [items, setItems] = useState<SubCPMK[]>([]);
+  const [enrichedItems, setEnrichedItems] = useState<SubCPMK[]>([]);
   const [mkCplList, setMkCplList] = useState<MKCPL[]>([]);
+  const [mkList, setMkList] = useState<MataKuliah[]>([]);
+  const [cplList, setCplList] = useState<CPL[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterProdi, setFilterProdi] = useState('');
+  const [filterMK, setFilterMK] = useState('');
+  const [prodiList, setProdiList] = useState<Array<{id: string; nama_prodi: string; kode_prodi: string}>>([]);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedItem, setSelectedItem] = useState<SubCPMK | null>(null);
@@ -47,13 +65,47 @@ export default function SubCPMKPage() {
   useEffect(() => {
     loadSubCpmk();
     loadMKCPL();
+    loadMK();
+    loadCPL();
+    loadProdi();
   }, []);
+
+  // Enrich Sub-CPMK data when all data is loaded
+  useEffect(() => {
+    if (items.length > 0 && mkCplList.length > 0 && mkList.length > 0 && cplList.length > 0) {
+      const enriched = items.map(item => {
+        // Find MK-CPL mapping
+        const mkCpl = mkCplList.find(mc => mc.id === item.mk_cpl_id);
+        if (!mkCpl) return item;
+
+        // Find MK data
+        const mk = mkList.find(m => m.id === mkCpl.mk_id);
+        
+        // Find CPL data
+        const cpl = cplList.find(c => c.id === mkCpl.cpl_id);
+
+        return {
+          ...item,
+          kode_mk: mk?.kode_mk,
+          nama_mk: mk?.nama_mk,
+          prodi_id: mk?.prodi_id,
+          kode_cpl: cpl?.kode_cpl,
+        };
+      });
+      setEnrichedItems(enriched);
+    }
+  }, [items, mkCplList, mkList, cplList]);
 
   const loadSubCpmk = async () => {
     try {
       setLoading(true);
-      const response = await subCpmkApi.getAll();
-      setItems(response.data || []);
+      const response = await fetch('http://localhost:3000/api/v1/m1/kurikulum/sub-cpmk', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setItems(data.data || []);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal memuat data sub-CPMK', 'error');
     } finally {
@@ -63,10 +115,57 @@ export default function SubCPMKPage() {
 
   const loadMKCPL = async () => {
     try {
-      const response = await mkCplApi.getAll();
-      setMkCplList(response.data || []);
+      const response = await fetch('http://localhost:3000/api/v1/m1/kurikulum/mapping', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setMkCplList(data.data || []);
     } catch (error) {
       console.error('Error loading MK-CPL:', error);
+    }
+  };
+
+  const loadMK = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/m1/kurikulum/mk', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setMkList(data.data || []);
+    } catch (error) {
+      console.error('Error loading MK:', error);
+    }
+  };
+
+  const loadCPL = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/m1/kurikulum/cpl', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setCplList(data.data || []);
+    } catch (error) {
+      console.error('Error loading CPL:', error);
+    }
+  };
+
+  const loadProdi = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/m1/prodi', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setProdiList(data.data || []);
+    } catch (error) {
+      console.error('Error loading prodi:', error);
     }
   };
 
@@ -74,7 +173,15 @@ export default function SubCPMKPage() {
     if (!confirm('Apakah Anda yakin ingin menghapus sub-CPMK ini?')) return;
     
     try {
-      await subCpmkApi.delete(String(id));
+      const response = await fetch(`http://localhost:3000/api/v1/m1/kurikulum/sub-cpmk/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error('Gagal menghapus sub-CPMK');
+      
       showToast('Sub-CPMK berhasil dihapus', 'success');
       loadSubCpmk();
     } catch (error) {
@@ -113,23 +220,40 @@ export default function SubCPMKPage() {
       setFormLoading(true);
       const bobotDecimal = bobotNum / 100; // Convert 0-100 to 0-1 for backend
       
+      const payload = {
+        kode_sub_cpmk: formData.kode_sub_cpmk,
+        deskripsi: formData.deskripsi,
+        mk_cpl_id: formData.mk_cpl_id,
+        bobot: bobotDecimal,
+      };
+      
       if (editMode && selectedItem) {
-        // Update - sekarang bisa update mk_cpl_id juga
-        await subCpmkApi.update(String(selectedItem.id), {
-          kode_sub_cpmk: formData.kode_sub_cpmk,
-          deskripsi: formData.deskripsi,
-          mk_cpl_id: formData.mk_cpl_id,
-          bobot: bobotDecimal,
+        // Update
+        const response = await fetch(`http://localhost:3000/api/v1/m1/kurikulum/sub-cpmk/${selectedItem.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          },
+          body: JSON.stringify(payload),
         });
+        
+        if (!response.ok) throw new Error('Gagal mengupdate sub-CPMK');
+        
         showToast('Sub-CPMK berhasil diupdate', 'success');
       } else {
         // Create
-        await subCpmkApi.create({
-          kode_sub_cpmk: formData.kode_sub_cpmk,
-          deskripsi: formData.deskripsi,
-          mk_cpl_id: formData.mk_cpl_id,
-          bobot: bobotDecimal,
+        const response = await fetch('http://localhost:3000/api/v1/m1/kurikulum/sub-cpmk', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          },
+          body: JSON.stringify(payload),
         });
+        
+        if (!response.ok) throw new Error('Gagal menambahkan sub-CPMK');
+        
         showToast('Sub-CPMK berhasil ditambahkan', 'success');
       }
       setShowModal(false);
@@ -158,11 +282,32 @@ export default function SubCPMKPage() {
     resetForm();
   };
 
-  const filteredItems = items.filter(item =>
-    item.kode_sub_cpmk.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.deskripsi.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.nama_mk && item.nama_mk.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Get unique MK list from enriched items for filter dropdown
+  // Filter by selected prodi first
+  const uniqueMKList = Array.from(new Set(enrichedItems.map(item => item.kode_mk)))
+    .filter(Boolean)
+    .map(kode_mk => {
+      const item = enrichedItems.find(i => i.kode_mk === kode_mk);
+      return {
+        kode_mk: kode_mk!,
+        nama_mk: item?.nama_mk || '',
+        prodi_id: item?.prodi_id || ''
+      };
+    })
+    .filter(mk => !filterProdi || mk.prodi_id === filterProdi); // Filter by selected prodi
+
+  // Filter items based on prodi and MK
+  const filteredItems = enrichedItems.filter(item => {
+    if (!item.kode_mk) return false;
+    
+    // Match prodi: compare selected prodi_id with item's prodi_id
+    const matchProdi = !filterProdi || item.prodi_id === filterProdi;
+    
+    // Match MK: compare selected kode_mk with item's kode_mk
+    const matchMK = !filterMK || item.kode_mk === filterMK;
+    
+    return matchProdi && matchMK;
+  });
 
   // Group by Mata Kuliah
   const groupedByMK = filteredItems.reduce((acc, item) => {
@@ -191,19 +336,49 @@ export default function SubCPMKPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="animate-fade-in stagger-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input type="text" placeholder="Cari sub-CPMK..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
+      <div className="animate-fade-in stagger-1" style={{ marginBottom: '20px' }}>
+        {/* Filter and Button Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: '1' }}>
+            <select
+              value={filterProdi}
+              onChange={(e) => {
+                setFilterProdi(e.target.value);
+                setFilterMK(''); // Reset MK filter when prodi changes
+              }}
+              className="select-field"
+              style={{ minWidth: '200px' }}
+            >
+              <option value="">Semua Prodi</option>
+              {prodiList.map((prodi) => (
+                <option key={prodi.id} value={prodi.id}>
+                  {prodi.kode_prodi} - {prodi.nama_prodi}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterMK}
+              onChange={(e) => setFilterMK(e.target.value)}
+              className="select-field"
+              style={{ minWidth: '300px', flex: '1' }}
+            >
+              <option value="">Semua Mata Kuliah</option>
+              {uniqueMKList.map((mk) => (
+                <option key={mk.kode_mk} value={mk.kode_mk}>
+                  {mk.kode_mk} - {mk.nama_mk}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Tambah Sub-CPMK
+          </button>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Tambah Sub-CPMK
-        </button>
       </div>
 
       {/* Grouped by Mata Kuliah */}
@@ -357,6 +532,16 @@ export default function SubCPMKPage() {
                                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                         </svg>
                                         Edit
+                                      </button>
+                                      <button 
+                                        onClick={() => handleDelete(item.id)}
+                                        className="btn btn-sm"
+                                        style={{ padding: '6px 10px', fontSize: '12px', backgroundColor: '#fdecea', color: '#e74c3c' }}
+                                      >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                        </svg>
+                                        Hapus
                                       </button>
                                     </div>
                                   </td>

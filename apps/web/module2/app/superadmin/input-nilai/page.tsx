@@ -16,6 +16,8 @@ interface Nilai {
   nama_mk?: string;
   tahun_akademik?: string;
   semester_aktif?: number;
+  semester?: number; // Semester dari mata_kuliah (yang benar)
+  prodi_id?: string;
   input_at?: string;
 }
 
@@ -58,13 +60,17 @@ interface Kelas {
 
 export default function InputNilaiPage() {
   const [nilaiList, setNilaiList] = useState<Nilai[]>([]);
+  const [enrichedNilaiList, setEnrichedNilaiList] = useState<Nilai[]>([]);
   const [mahasiswaList, setMahasiswaList] = useState<Mahasiswa[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  const [mkList, setMkList] = useState<Array<{id: string; kode_mk: string; nama_mk: string; prodi_id: string}>>([]);
   const [subCpmkList, setSubCpmkList] = useState<SubCPMK[]>([]);
   const [filteredKelasList, setFilteredKelasList] = useState<Kelas[]>([]);
   const [filteredSubCpmkList, setFilteredSubCpmkList] = useState<SubCPMK[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterProdi, setFilterProdi] = useState('');
+  const [filterSemester, setFilterSemester] = useState('');
+  const [prodiList, setProdiList] = useState<Array<{id: string; nama_prodi: string; kode_prodi: string}>>([]);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedNilai, setSelectedNilai] = useState<Nilai | null>(null);
@@ -83,7 +89,59 @@ export default function InputNilaiPage() {
     loadMahasiswa();
     loadKelas();
     loadSubCpmk();
+    loadProdi();
+    loadMK();
   }, []);
+
+  // Enrich nilai data with prodi_id from MK
+  useEffect(() => {
+    if (nilaiList.length > 0 && kelasList.length > 0 && mkList.length > 0) {
+      const enriched = nilaiList.map(nilai => {
+        // Find kelas to get mk_id
+        const kelas = kelasList.find(k => k.kode_mk === nilai.kode_mk);
+        if (!kelas) return nilai;
+
+        // Find MK to get prodi_id
+        const mk = mkList.find(m => m.id === kelas.mk_id);
+        
+        return {
+          ...nilai,
+          prodi_id: mk?.prodi_id,
+        };
+      });
+      setEnrichedNilaiList(enriched);
+    } else {
+      setEnrichedNilaiList(nilaiList);
+    }
+  }, [nilaiList, kelasList, mkList]);
+
+  const loadProdi = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/m1/prodi', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setProdiList(data.data || []);
+    } catch (error) {
+      console.error('Error loading prodi:', error);
+    }
+  };
+
+  const loadMK = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/m1/kurikulum/mk', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setMkList(data.data || []);
+    } catch (error) {
+      console.error('Error loading MK:', error);
+    }
+  };
 
   // Filter kelas when mahasiswa is selected
   useEffect(() => {
@@ -282,11 +340,15 @@ export default function InputNilaiPage() {
     resetForm();
   };
 
-  const filteredNilai = nilaiList.filter(nilai =>
-    (nilai.nim && nilai.nim.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (nilai.nama_mahasiswa && nilai.nama_mahasiswa.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (nilai.kode_mk && nilai.kode_mk.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredNilai = enrichedNilaiList.filter(nilai => {
+    // Match prodi: compare selected prodi_id with nilai's prodi_id
+    const matchProdi = !filterProdi || nilai.prodi_id === filterProdi;
+    
+    // Match semester: use semester from mata_kuliah, not semester_aktif from kelas
+    const matchSemester = !filterSemester || (nilai.semester && String(nilai.semester) === filterSemester);
+    
+    return matchProdi && matchSemester;
+  });
 
   // Group by Mata Kuliah
   const groupedByMK = filteredNilai.reduce((acc, nilai) => {
@@ -296,13 +358,13 @@ export default function InputNilaiPage() {
         kode_mk: nilai.kode_mk || '-',
         nama_mk: nilai.nama_mk || 'Tidak diketahui',
         tahun_akademik: nilai.tahun_akademik || '-',
-        semester_aktif: nilai.semester_aktif || 0,
+        semester: nilai.semester || 0, // Use semester from mata_kuliah
         items: []
       };
     }
     acc[mkKey].items.push(nilai);
     return acc;
-  }, {} as Record<string, { kode_mk: string; nama_mk: string; tahun_akademik: string; semester_aktif: number; items: Nilai[] }>);
+  }, {} as Record<string, { kode_mk: string; nama_mk: string; tahun_akademik: string; semester: number; items: Nilai[] }>);
 
   const mkGroups = Object.values(groupedByMK);
 
@@ -317,19 +379,44 @@ export default function InputNilaiPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="animate-fade-in stagger-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input type="text" placeholder="Cari mahasiswa..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
+      <div className="animate-fade-in stagger-1" style={{ marginBottom: '20px' }}>
+        {/* Filter and Button Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: '1' }}>
+            <select
+              value={filterProdi}
+              onChange={(e) => setFilterProdi(e.target.value)}
+              className="select-field"
+              style={{ minWidth: '200px' }}
+            >
+              <option value="">Semua Prodi</option>
+              {prodiList.map((prodi) => (
+                <option key={prodi.id} value={prodi.id}>
+                  {prodi.kode_prodi} - {prodi.nama_prodi}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterSemester}
+              onChange={(e) => setFilterSemester(e.target.value)}
+              className="select-field"
+              style={{ minWidth: '150px' }}
+            >
+              <option value="">Semua Semester</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                <option key={sem} value={sem}>Semester {sem}</option>
+              ))}
+            </select>
+          </div>
+          
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Input Nilai
+          </button>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Input Nilai
-        </button>
       </div>
 
       {/* Grouped by Mata Kuliah */}
@@ -367,7 +454,7 @@ export default function InputNilaiPage() {
                       <div style={{ fontSize: '12px', opacity: 0.9, marginBottom: '4px' }}>{group.kode_mk}</div>
                       <div style={{ fontSize: '18px', fontWeight: '700' }}>{group.nama_mk}</div>
                       <div style={{ fontSize: '12px', opacity: 0.9, marginTop: '4px' }}>
-                        {group.tahun_akademik} • Semester {group.semester_aktif}
+                        {group.tahun_akademik} • Semester {group.semester}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>

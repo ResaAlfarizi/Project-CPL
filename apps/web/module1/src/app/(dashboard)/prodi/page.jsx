@@ -99,21 +99,26 @@ export default function ProdiPage() {
             <table>
               <thead>
                 <tr>
-                  <th>#</th><th>Kode</th><th>Nama Program Studi</th><th>Jenjang</th><th>Dibuat</th><th>Aksi</th>
+                  <th style={{ width: 60 }}>#</th>
+                  <th style={{ width: 120 }}>Kode</th>
+                  <th style={{ minWidth: 200 }}>Nama Program Studi</th>
+                  <th style={{ width: 100 }}>Jenjang</th>
+                  <th style={{ width: 120 }}>Dibuat</th>
+                  <th style={{ width: 140, textAlign: 'center' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((row, i) => (
                   <tr key={row.id}>
                     <td style={{ color: '#9ca3af' }}>{i + 1}</td>
-                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace' }}>{row.kode_prodi}</span></td>
-                    <td style={{ fontWeight: 600 }}>{row.nama_prodi}</td>
-                    <td><span className={`badge ${JENJANG_COLOR[row.jenjang] || 'badge-gray'}`}>{row.jenjang}</span></td>
-                    <td style={{ color: '#9ca3af', fontSize: 12 }}>{row.created_at ? new Date(row.created_at).toLocaleDateString('id-ID') : '—'}</td>
+                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace', fontSize: 11, padding: '4px 8px' }}>{row.kode_prodi}</span></td>
+                    <td style={{ fontWeight: 600, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.nama_prodi}>{row.nama_prodi}</td>
+                    <td><span className={`badge ${JENJANG_COLOR[row.jenjang] || 'badge-gray'}`} style={{ fontSize: 11, padding: '4px 8px' }}>{row.jenjang}</span></td>
+                    <td style={{ color: '#9ca3af', fontSize: 11 }}>{row.created_at ? new Date(row.created_at).toLocaleDateString('id-ID') : '—'}</td>
                     <td>
-                      <div className="table-actions">
-                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)}>✏️ Edit</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)}>🗑️</button>
+                      <div className="table-actions" style={{ justifyContent: 'center' }}>
+                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)} style={{ fontSize: 11, padding: '4px 8px' }}>✏️ Edit</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)} style={{ fontSize: 11, padding: '4px 8px' }}>🗑️</button>
                       </div>
                     </td>
                   </tr>

@@ -88,17 +88,24 @@ export default function DosenPage() {
         ) : (
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>#</th><th>NIDN</th><th>Nama Lengkap</th><th>Aksi</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style={{ width: 60 }}>#</th>
+                  <th style={{ width: 140 }}>NIDN</th>
+                  <th style={{ minWidth: 250 }}>Nama Lengkap</th>
+                  <th style={{ width: 140, textAlign: 'center' }}>Aksi</th>
+                </tr>
+              </thead>
               <tbody>
                 {filtered.map((row, i) => (
                   <tr key={row.id}>
                     <td style={{ color: '#9ca3af' }}>{i + 1}</td>
-                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{row.nidn}</span></td>
-                    <td style={{ fontWeight: 600 }}>{row.nama}</td>
+                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace', letterSpacing: 1, fontSize: 11, padding: '4px 8px' }}>{row.nidn}</span></td>
+                    <td style={{ fontWeight: 600, maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.nama}>{row.nama}</td>
                     <td>
-                      <div className="table-actions">
-                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)}>✏️ Edit</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)}>🗑️</button>
+                      <div className="table-actions" style={{ justifyContent: 'center' }}>
+                        <button className="btn btn-sm btn-secondary" onClick={() => openEdit(row)} style={{ fontSize: 11, padding: '4px 8px' }}>✏️ Edit</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => setDel(row)} style={{ fontSize: 11, padding: '4px 8px' }}>🗑️</button>
                       </div>
                     </td>
                   </tr>

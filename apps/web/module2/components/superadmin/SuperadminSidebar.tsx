@@ -13,6 +13,11 @@ import {
   Users,
   FileText,
   Settings,
+  Target,
+  UserCheck,
+  UsersRound,
+  Link as LinkIcon,
+  Gauge,
   X
 } from 'lucide-react';
 
@@ -28,14 +33,37 @@ const menuItems = [
     href: '/superadmin',
   },
   {
+    section: 'MASTER DATA',
+  },
+  {
     icon: GraduationCap,
-    label: 'Program Studi & CPL',
-    href: '/superadmin/prodi-cpl',
+    label: 'Program Studi',
+    href: '/superadmin/prodi',
+  },
+  {
+    icon: Target,
+    label: 'CPL',
+    href: '/superadmin/cpl',
+  },
+  {
+    icon: UserCheck,
+    label: 'Dosen',
+    href: '/superadmin/dosen',
+  },
+  {
+    icon: UsersRound,
+    label: 'Mahasiswa',
+    href: '/superadmin/mahasiswa',
   },
   {
     icon: BookOpen,
-    label: 'Mata Kuliah & Pemetaan',
-    href: '/superadmin/mata-kuliah',
+    label: 'Mata Kuliah',
+    href: '/superadmin/mata-kuliah-master',
+  },
+  {
+    icon: LinkIcon,
+    label: 'Pemetaan MK-CPL',
+    href: '/superadmin/mapping',
   },
   {
     icon: FileCheck,
@@ -43,14 +71,12 @@ const menuItems = [
     href: '/superadmin/sub-cpmk',
   },
   {
-    icon: ClipboardList,
-    label: 'Input Nilai Sub-CPMK',
-    href: '/superadmin/input-nilai',
+    icon: Gauge,
+    label: 'Threshold',
+    href: '/superadmin/threshold',
   },
   {
-    icon: TrendingUp,
-    label: 'Capaian CPL Mahasiswa',
-    href: '/superadmin/capaian',
+    section: 'OPERASIONAL',
   },
   {
     icon: Users,
@@ -58,13 +84,26 @@ const menuItems = [
     href: '/superadmin/users',
   },
   {
+    icon: ClipboardList,
+    label: 'Input Nilai',
+    href: '/superadmin/input-nilai',
+  },
+  {
+    icon: TrendingUp,
+    label: 'Monitoring CPL',
+    href: '/superadmin/capaian',
+  },
+  {
     icon: FileText,
     label: 'Audit Log',
     href: '/superadmin/audit-log',
   },
   {
+    section: 'PENGATURAN',
+  },
+  {
     icon: Settings,
-    label: 'Threshold',
+    label: 'Settings',
     href: '/superadmin/settings',
   },
 ];
@@ -145,14 +184,33 @@ export default function SuperadminSidebar({ collapsed, onClose }: SuperadminSide
         {/* Menu Items */}
         <nav style={{ flex: 1, padding: '16px', overflowY: 'auto' }}>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {menuItems.map((item) => {
+            {menuItems.map((item, index) => {
+              // Section header
+              if ('section' in item) {
+                return (
+                  <li key={`section-${index}`} style={{ marginTop: index === 0 ? '0' : '20px', marginBottom: '8px' }}>
+                    <div style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#D8DFE9',
+                      opacity: 0.5,
+                      padding: '0 16px',
+                      letterSpacing: '0.5px',
+                    }}>
+                      {item.section}
+                    </div>
+                  </li>
+                );
+              }
+
+              // Menu item
               const Icon = item.icon;
               const isActive = pathname === item.href;
 
               return (
                 <li key={item.href} style={{ marginBottom: '4px' }}>
                   <Link
-                    href={item.href}
+                    href={item.href!}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

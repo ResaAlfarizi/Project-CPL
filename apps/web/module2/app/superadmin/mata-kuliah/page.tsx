@@ -13,6 +13,7 @@ interface Kelas {
   kode_mk: string;
   nama_mk: string;
   sks: number;
+  semester_mk: number;
   nama_dosen: string | null;
   nama_prodi: string;
 }
@@ -35,7 +36,9 @@ interface Dosen {
 export default function MataKuliahPage() {
   const [items, setItems] = useState<Kelas[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterProdi, setFilterProdi] = useState('');
+  const [filterSemester, setFilterSemester] = useState('');
+  const [prodiList, setProdiList] = useState<Array<{id: string; nama_prodi: string}>>([]);
   const [showModal, setShowModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -61,7 +64,22 @@ export default function MataKuliahPage() {
   // Fetch data dari backend
   useEffect(() => {
     fetchKelas();
+    loadProdi();
   }, []);
+
+  const loadProdi = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/m1/prodi', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await response.json();
+      setProdiList(data.data || []);
+    } catch (error) {
+      console.error('Error loading prodi:', error);
+    }
+  };
 
   const fetchKelas = async () => {
     try {
@@ -203,11 +221,13 @@ export default function MataKuliahPage() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  const filteredItems = items.filter(item =>
-    item.nama_mk.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.kode_mk.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.nama_prodi.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredItems = items.filter(item => {
+    // Get prodi_id from kelas through mata_kuliah
+    const matchProdi = !filterProdi || (item.nama_prodi && prodiList.find(p => p.id === filterProdi)?.nama_prodi === item.nama_prodi);
+    const matchSemester = !filterSemester || String(item.semester_aktif) === filterSemester;
+    
+    return matchProdi && matchSemester;
+  });
 
   return (
     <>
@@ -218,22 +238,47 @@ export default function MataKuliahPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="animate-fade-in stagger-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input type="text" placeholder="Cari mata kuliah..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
+      <div className="animate-fade-in stagger-1" style={{ marginBottom: '20px' }}>
+        {/* Filter and Button Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: '1' }}>
+            <select
+              value={filterProdi}
+              onChange={(e) => setFilterProdi(e.target.value)}
+              className="select-field"
+              style={{ minWidth: '200px' }}
+            >
+              <option value="">Semua Prodi</option>
+              {prodiList.map((prodi) => (
+                <option key={prodi.id} value={prodi.id}>
+                  {prodi.nama_prodi}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterSemester}
+              onChange={(e) => setFilterSemester(e.target.value)}
+              className="select-field"
+              style={{ minWidth: '150px' }}
+            >
+              <option value="">Semua Semester</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                <option key={sem} value={sem}>Semester {sem}</option>
+              ))}
+            </select>
+          </div>
+          
+          <button className="btn btn-primary" onClick={() => {
+            setShowModal(true);
+            fetchDropdownData();
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Tambah Mata Kuliah
+          </button>
         </div>
-        <button className="btn btn-primary" onClick={() => {
-          setShowModal(true);
-          fetchDropdownData();
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Tambah Mata Kuliah
-        </button>
       </div>
 
       {/* Table - Compact Card Layout */}
@@ -261,7 +306,7 @@ export default function MataKuliahPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <span className="badge badge-dark">{item.kode_mk}</span>
                     <span className="badge badge-blue">{item.sks} SKS</span>
-                    <span className="badge badge-yellow">Sem {item.semester_aktif}</span>
+                    <span className="badge badge-yellow">Sem {item.semester_mk || item.semester_aktif}</span>
                   </div>
                   <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-primary)' }}>
                     {item.nama_mk}
