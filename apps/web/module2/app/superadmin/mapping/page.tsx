@@ -227,57 +227,55 @@ export default function MappingPage() {
   });
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
 
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Pemetaan MK-CPL</h1>
-        <p className="page-subtitle">Petakan mata kuliah ke capaian pembelajaran lulusan</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">Pemetaan MK-CPL</h1>
+        <p className="sa-page-subtitle">Petakan mata kuliah ke capaian pembelajaran lulusan</p>
       </div>
 
-      <div className="animate-fade-in stagger-1" style={{ background: '#f0f7ee', border: '1px solid #CFDECA', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', fontSize: '13px', lineHeight: '1.6' }}>
+      <div className="sa-alert" style={{ background: '#f0f7ee', border: '1px solid #CFDECA', marginBottom: '20px' }}>
         💡 <strong>Aturan:</strong> Total bobot semua CPL yang dipetakan ke satu MK harus = <strong>1.0</strong>. Tambahkan pemetaan, lalu klik <strong>Simpan ke Database</strong>.
       </div>
 
-      <div className="animate-fade-in stagger-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <select className="select-field" value={filterProdi} onChange={e => { setFilterProdi(e.target.value); setFilterMk(''); }}>
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <select className="sa-form-control" value={filterProdi} onChange={e => { setFilterProdi(e.target.value); setFilterMk(''); }}>
             <option value="">Semua Prodi</option>
             {prodi.map(p => <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>)}
           </select>
-          <select className="select-field" value={filterMk} onChange={e => setFilterMk(e.target.value)}>
+          <select className="sa-form-control" value={filterMk} onChange={e => setFilterMk(e.target.value)}>
             <option value="">Semua MK</option>
             {filteredMk.map(m => <option key={m.id} value={m.id}>{m.kode_mk} – {m.nama_mk}</option>)}
           </select>
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div style={{ display: 'flex', background: '#f0f4f9', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-alice-blue)' }}>
+        <div className="sa-toolbar-right">
+          <div style={{ display: 'flex', background: '#f0f4f9', padding: '4px', borderRadius: '8px', border: '1px solid #D8DFE9' }}>
             <button
-              className={`btn btn-sm ${viewMode === 'matrix' ? 'btn-primary' : 'btn-ghost'}`}
+              className={`sa-btn sa-btn-sm ${viewMode === 'matrix' ? 'sa-btn-primary' : 'sa-btn-ghost'}`}
               onClick={() => setViewMode('matrix')}
               style={{ border: 'none' }}
             >
               Matrix
             </button>
             <button
-              className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-ghost'}`}
+              className={`sa-btn sa-btn-sm ${viewMode === 'table' ? 'sa-btn-primary' : 'sa-btn-ghost'}`}
               onClick={() => setViewMode('table')}
               style={{ border: 'none' }}
             >
               Table
             </button>
           </div>
-          <button className="btn btn-primary" onClick={() => openAdd(filterMk)} disabled={mk.length === 0}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Tambah Pemetaan
+          <button className="sa-btn sa-btn-primary" onClick={() => openAdd(filterMk)} disabled={mk.length === 0}>
+            <span>➕</span>
+            <span>Tambah Pemetaan</span>
           </button>
         </div>
       </div>
 
       {overMk.length > 0 && (
-        <div className="animate-fade-in stagger-3" style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 16px', marginBottom: '20px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', color: '#b91c1c' }}>
+        <div className="sa-alert sa-alert-warning" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c' }}>
           <span style={{ fontSize: '16px' }}>⚠️</span>
           <span style={{ fontWeight: '600', fontSize: '13px', lineHeight: '1.5' }}>
             Peringatan: Total bobot melebihi 1.00 pada MK: {overMk.map(m => m.kode_mk).join(', ')}
@@ -286,24 +284,23 @@ export default function MappingPage() {
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
+        <div className="sa-empty">
+          <p>⏳ Memuat data...</p>
+        </div>
       ) : displayMk.length === 0 ? (
-        <div className="card animate-fade-in stagger-4">
-          <div className="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Belum ada Mata Kuliah</p>
-            <p>Tambahkan mata kuliah terlebih dahulu</p>
+        <div className="sa-card">
+          <div className="sa-empty">
+            <p className="sa-empty-title">🔗 Belum ada Mata Kuliah</p>
+            <p className="sa-empty-subtitle">Tambahkan mata kuliah terlebih dahulu</p>
           </div>
         </div>
       ) : viewMode === 'matrix' ? (
-        <div className="card animate-fade-in stagger-4">
-          <div className="card-header">
-            <div className="card-title">Matrix Pemetaan MK–CPL</div>
+        <div className="sa-card">
+          <div className="sa-card-header">
+            <div className="sa-card-title">Matrix Pemetaan MK–CPL</div>
           </div>
-          <div className="table-wrapper" style={{ maxHeight: '70vh', overflow: 'auto' }}>
-            <table style={{ minWidth: 'max-content' }}>
+          <div className="sa-table-wrapper" style={{ maxHeight: '70vh', overflow: 'auto' }}>
+            <table className="sa-table" style={{ minWidth: 'max-content' }}>
               <thead>
                 <tr>
                   <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 10, background: 'var(--color-ghost-white)', boxShadow: 'inset -1px -1px 0 var(--color-alice-blue)' }}>Mata Kuliah</th>
@@ -345,8 +342,8 @@ export default function MappingPage() {
         displayMk.map((m, idx) => {
           const mappings = draftMkcpl[m.id] || [];
           return (
-            <div key={m.id} className="card animate-fade-in" style={{ marginBottom: '16px', animationDelay: `${idx * 0.05}s` }}>
-              <div className="card-header" style={{ padding: '16px 20px' }}>
+            <div key={m.id} className="sa-card" style={{ marginBottom: '16px' }}>
+              <div className="sa-card-header" style={{ padding: '16px 20px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                     <span className="badge badge-blue" style={{ fontFamily: 'monospace', fontSize: '11px', padding: '4px 8px' }}>{m.kode_mk}</span>
@@ -357,14 +354,13 @@ export default function MappingPage() {
                   <WeightBar mkId={m.id} />
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                  <button className="btn btn-sm btn-secondary" onClick={() => openAdd(m.id)} style={{ whiteSpace: 'nowrap' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    CPL
+                  <button className="sa-btn sa-btn-sm sa-btn-secondary" onClick={() => openAdd(m.id)} style={{ whiteSpace: 'nowrap' }}>
+                    <span>➕</span>
+                    <span>CPL</span>
                   </button>
-                  <button className="btn btn-sm btn-primary" onClick={() => handleSaveToServer(m.id)} disabled={savingMkId === m.id} style={{ whiteSpace: 'nowrap' }}>
-                    {savingMkId === m.id ? '⏳ Menyimpan...' : '💾 Simpan'}
+                  <button className="sa-btn sa-btn-sm sa-btn-primary" onClick={() => handleSaveToServer(m.id)} disabled={savingMkId === m.id} style={{ whiteSpace: 'nowrap' }}>
+                    <span>{savingMkId === m.id ? '⏳' : '💾'}</span>
+                    <span>{savingMkId === m.id ? 'Menyimpan...' : 'Simpan'}</span>
                   </button>
                 </div>
               </div>
@@ -374,8 +370,8 @@ export default function MappingPage() {
                   Belum ada CPL dipetakan ke MK ini
                 </div>
               ) : (
-                <div className="table-wrapper" style={{ margin: '0', borderRadius: '0', border: 'none', borderTop: '1px solid #f3f4f6' }}>
-                  <table>
+                <div className="sa-table-wrapper" style={{ margin: '0', borderRadius: '0', border: 'none', borderTop: '1px solid #f3f4f6' }}>
+                  <table className="sa-table">
                     <thead>
                       <tr>
                         <th style={{ padding: '10px 12px', fontSize: '12px' }}>Kode CPL</th>
@@ -405,19 +401,13 @@ export default function MappingPage() {
                           </td>
                           <td style={{ padding: '10px 12px' }}>
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                              <button className="btn btn-sm btn-secondary" onClick={() => openEdit(m.id, index)} style={{ padding: '6px 10px' }}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                                Edit
+                              <button className="sa-btn sa-btn-sm sa-btn-secondary" onClick={() => openEdit(m.id, index)} style={{ padding: '6px 10px' }}>
+                                <span>✏️</span>
+                                <span>Edit</span>
                               </button>
-                              <button className="btn btn-sm" style={{ backgroundColor: '#fdecea', color: '#e74c3c', padding: '6px 10px' }} onClick={() => handleDeleteLocal(m.id, index)}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                </svg>
-                                Hapus
+                              <button className="sa-btn sa-btn-sm sa-btn-danger" style={{ padding: '6px 10px' }} onClick={() => handleDeleteLocal(m.id, index)}>
+                                <span>🗑️</span>
+                                <span>Hapus</span>
                               </button>
                             </div>
                           </td>
@@ -433,83 +423,77 @@ export default function MappingPage() {
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              {editData ? 'Edit Pemetaan' : 'Tambah Pemetaan'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              {editData ? 'Ubah bobot pemetaan' : 'Petakan CPL ke mata kuliah'}
-            </p>
+        <div className="sa-modal-overlay" onClick={closeModal}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <h2 className="sa-modal-title">{editData ? 'Edit Pemetaan' : 'Tambah Pemetaan'}</h2>
+              <p className="sa-modal-subtitle">{editData ? 'Ubah bobot pemetaan' : 'Petakan CPL ke mata kuliah'}</p>
+            </div>
 
             <form onSubmit={handleSaveLocal}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  Mata Kuliah <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <select
-                  className="select-field"
-                  value={formData.mk_id}
-                  onChange={e => setFormData({ ...formData, mk_id: e.target.value, cpl_id: '' })}
-                  required
-                  disabled={!!editData}
-                >
-                  <option value="">— Pilih MK —</option>
-                  {mk.map(m => <option key={m.id} value={m.id}>{m.kode_mk} – {m.nama_mk}</option>)}
-                </select>
-                {formData.mk_id && !editData && (
-                  <div style={{ marginTop: '6px' }}>
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '3px' }}>
-                      Sisa bobot tersedia: <strong style={{ color: '#27ae60' }}>{(1 - getMkTotal(formData.mk_id)).toFixed(4)}</strong>
-                    </div>
-                    <WeightBar mkId={formData.mk_id} />
-                  </div>
-                )}
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  CPL <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                {editData ? (
-                  <input className="input-field" value={getCplCode(formData.cpl_id)} disabled />
-                ) : (
+              <div className="sa-modal-body">
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Mata Kuliah <span style={{ color: '#e74c3c' }}>*</span></label>
                   <select
-                    className="select-field"
-                    value={formData.cpl_id}
-                    onChange={e => setFormData({ ...formData, cpl_id: e.target.value })}
+                    className="sa-form-control"
+                    value={formData.mk_id}
+                    onChange={e => setFormData({ ...formData, mk_id: e.target.value, cpl_id: '' })}
                     required
+                    disabled={!!editData}
                   >
-                    <option value="">— Pilih CPL —</option>
-                    {availableCpl(formData.mk_id, formData.cpl_id).map(c => (
-                      <option key={c.id} value={c.id}>{c.kode_cpl} – {c.deskripsi.slice(0, 60)}</option>
-                    ))}
+                    <option value="">— Pilih MK —</option>
+                    {mk.map(m => <option key={m.id} value={m.id}>{m.kode_mk} – {m.nama_mk}</option>)}
                   </select>
-                )}
+                  {formData.mk_id && !editData && (
+                    <div style={{ marginTop: '6px' }}>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '3px' }}>
+                        Sisa bobot tersedia: <strong style={{ color: '#27ae60' }}>{(1 - getMkTotal(formData.mk_id)).toFixed(4)}</strong>
+                      </div>
+                      <WeightBar mkId={formData.mk_id} />
+                    </div>
+                  )}
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">CPL <span style={{ color: '#e74c3c' }}>*</span></label>
+                  {editData ? (
+                    <input className="sa-form-control" value={getCplCode(formData.cpl_id)} disabled />
+                  ) : (
+                    <select
+                      className="sa-form-control"
+                      value={formData.cpl_id}
+                      onChange={e => setFormData({ ...formData, cpl_id: e.target.value })}
+                      required
+                    >
+                      <option value="">— Pilih CPL —</option>
+                      {availableCpl(formData.mk_id, formData.cpl_id).map(c => (
+                        <option key={c.id} value={c.id}>{c.kode_cpl} – {c.deskripsi.slice(0, 60)}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Bobot Kontribusi <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    min="0.0001"
+                    max="1"
+                    className="sa-form-control"
+                    placeholder="Contoh: 0.6"
+                    value={formData.bobot}
+                    onChange={e => setFormData({ ...formData, bobot: e.target.value })}
+                    required
+                  />
+                </div>
               </div>
 
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  Bobot Kontribusi <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  min="0.0001"
-                  max="1"
-                  className="input-field"
-                  placeholder="Contoh: 0.6"
-                  value={formData.bobot}
-                  onChange={e => setFormData({ ...formData, bobot: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>
+              <div className="sa-modal-footer">
+                <button type="button" className="sa-btn sa-btn-ghost" onClick={closeModal}>
                   Batal
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="sa-btn sa-btn-primary">
                   Masukkan Draft
                 </button>
               </div>
@@ -517,6 +501,6 @@ export default function MappingPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

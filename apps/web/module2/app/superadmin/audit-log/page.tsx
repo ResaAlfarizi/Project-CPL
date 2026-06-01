@@ -98,25 +98,33 @@ export default function AuditLogPage() {
   });
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
       
       {/* Header */}
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Audit Log</h1>
-        <p className="page-subtitle">Pantau dan audit aktivitas sistem</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">Audit Log</h1>
+        <p className="sa-page-subtitle">Pantau dan audit aktivitas sistem</p>
       </div>
 
       {/* Toolbar */}
-      <div className="animate-fade-in stagger-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', gap: '12px', flex: 1, flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: '1', maxWidth: '300px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input type="text" placeholder="Cari log..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <div className="sa-search">
+            <span className="sa-search-icon">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Cari log..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              className="sa-search-input"
+            />
           </div>
-          <select className="select-field" value={filterAction} onChange={(e) => setFilterAction(e.target.value)} style={{ minWidth: '150px' }}>
+          <select 
+            className="sa-select" 
+            value={filterAction} 
+            onChange={(e) => setFilterAction(e.target.value)}
+          >
             <option value="all">Semua Event</option>
             <option value="login_success">Login Success</option>
             <option value="login_failed">Login Failed</option>
@@ -127,103 +135,107 @@ export default function AuditLogPage() {
             <option value="password_changed">Password Changed</option>
           </select>
         </div>
-        <button className="btn btn-secondary" onClick={handleExport} disabled={filteredLogs.length === 0}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Export
-        </button>
+        <div className="sa-toolbar-right">
+          <button 
+            className="sa-btn sa-btn-secondary" 
+            onClick={handleExport} 
+            disabled={filteredLogs.length === 0}
+          >
+            <span>📥</span>
+            <span>Export</span>
+          </button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="card animate-fade-in stagger-2" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="sa-card">
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
-            <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
+          <div className="sa-card-body" style={{ textAlign: 'center' }}>
+            <div style={{ height: '20px', width: '200px', margin: '0 auto 12px', background: '#e5e7eb', borderRadius: '4px' }} />
+            <div style={{ height: '16px', width: '300px', margin: '0 auto', background: '#e5e7eb', borderRadius: '4px' }} />
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Tidak ada log ditemukan</p>
-            <p>Coba ubah filter atau kata kunci pencarian</p>
+          <div className="sa-empty">
+            <div className="sa-empty-icon">📋</div>
+            <div className="sa-empty-title">Tidak ada log ditemukan</div>
+            <div className="sa-empty-text">Coba ubah filter atau kata kunci pencarian</div>
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Timestamp</th>
-                <th>User</th>
-                <th>Event</th>
-                <th>IP Address</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLogs.map((log, index) => (
-                <tr key={log.id}>
-                  <td>{index + 1}</td>
-                  <td style={{ fontSize: '13px', whiteSpace: 'nowrap' }}>
-                    {new Date(log.created_at).toLocaleString('id-ID', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    })}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontWeight: '600', fontSize: '13px' }}>
-                        {log.user_name || 'Unknown'}
-                      </span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        {log.user_email || `User ID: ${log.user_id}`}
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${
-                      log.event_type === 'login_success' ? 'badge-green' :
-                      log.event_type === 'login_failed' ? 'badge-red' :
-                      log.event_type === 'logout' ? 'badge-blue' :
-                      log.event_type === 'token_refresh' ? 'badge-yellow' :
-                      log.event_type === 'account_locked' ? 'badge-red' :
-                      log.event_type === 'password_reset_req' ? 'badge-yellow' :
-                      log.event_type === 'password_changed' ? 'badge-green' :
-                      'badge-dark'
-                    }`}>
-                      {log.event_type}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: '13px', fontFamily: 'monospace' }}>
-                    {log.ip_address || '-'}
-                  </td>
-                  <td>
-                    <span className={`badge ${
-                      log.event_type.includes('success') || log.event_type === 'logout' || log.event_type === 'password_changed' 
-                        ? 'badge-green' 
-                        : log.event_type.includes('failed') || log.event_type === 'account_locked'
-                        ? 'badge-red'
-                        : 'badge-yellow'
-                    }`}>
-                      {log.event_type.includes('success') || log.event_type === 'logout' || log.event_type === 'password_changed' 
-                        ? 'success' 
-                        : log.event_type.includes('failed') || log.event_type === 'account_locked'
-                        ? 'failed'
-                        : 'pending'}
-                    </span>
-                  </td>
+          <div className="sa-table-wrapper">
+            <table className="sa-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Event</th>
+                  <th>IP Address</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredLogs.map((log, index) => (
+                  <tr key={log.id}>
+                    <td>{index + 1}</td>
+                    <td style={{ fontSize: '13px', whiteSpace: 'nowrap' }}>
+                      {new Date(log.created_at).toLocaleString('id-ID', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span className="sa-font-semibold" style={{ fontSize: '13px' }}>
+                          {log.user_name || 'Unknown'}
+                        </span>
+                        <span className="sa-text-muted" style={{ fontSize: '12px' }}>
+                          {log.user_email || `User ID: ${log.user_id}`}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`sa-badge ${
+                        log.event_type === 'login_success' ? 'sa-badge-success' :
+                        log.event_type === 'login_failed' ? 'sa-badge-danger' :
+                        log.event_type === 'logout' ? 'sa-badge-secondary' :
+                        log.event_type === 'token_refresh' ? 'sa-badge-warning' :
+                        log.event_type === 'account_locked' ? 'sa-badge-danger' :
+                        log.event_type === 'password_reset_req' ? 'sa-badge-warning' :
+                        log.event_type === 'password_changed' ? 'sa-badge-success' :
+                        'sa-badge-primary'
+                      }`}>
+                        {log.event_type}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '13px', fontFamily: 'monospace' }}>
+                      {log.ip_address || '-'}
+                    </td>
+                    <td>
+                      <span className={`sa-badge ${
+                        log.event_type.includes('success') || log.event_type === 'logout' || log.event_type === 'password_changed' 
+                          ? 'sa-badge-success' 
+                          : log.event_type.includes('failed') || log.event_type === 'account_locked'
+                          ? 'sa-badge-danger'
+                          : 'sa-badge-warning'
+                      }`}>
+                        {log.event_type.includes('success') || log.event_type === 'logout' || log.event_type === 'password_changed' 
+                          ? 'success' 
+                          : log.event_type.includes('failed') || log.event_type === 'account_locked'
+                          ? 'failed'
+                          : 'pending'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

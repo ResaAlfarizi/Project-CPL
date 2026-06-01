@@ -171,103 +171,60 @@ export default function SuperadminDashboard() {
   ];
 
   return (
-    <>
+    <div className="sa-page">
       {/* Greeting */}
-      <div className="animate-fade-in" style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: '700', color: 'var(--eerie-black)', marginBottom: '6px' }}>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">
           Selamat Datang, {user?.nama || 'Superadmin'}! 👋
         </h1>
-        <p style={{ fontSize: '16px', color: 'var(--text-secondary)' }}>
+        <p className="sa-page-subtitle">
           Berikut ringkasan aktivitas Anda hari ini
         </p>
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+      <div className="sa-stats-grid">
         {systemStats.map((stat, index) => (
           <Link
             key={index}
             href={stat.href}
-            className={`card animate-fade-in stagger-${index + 1}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              padding: '20px',
-              textDecoration: 'none',
-              cursor: 'pointer',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px)';
-              e.currentTarget.style.boxShadow = '0 8px 20px rgba(33,33,33,0.12)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = '';
-              e.currentTarget.style.boxShadow = '';
-            }}
+            className="sa-stat-card"
+            style={{ textDecoration: 'none' }}
           >
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: 'var(--radius-md)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 
-                  stat.color === 'blue' ? 'var(--alice-blue)' :
-                  stat.color === 'green' ? 'var(--honeydew)' :
-                  stat.color === 'yellow' ? 'var(--vanilla)' :
-                  stat.color === 'purple' ? '#e8e4f7' :
-                  stat.color === 'orange' ? '#fde8cc' :
-                  stat.color === 'cyan' ? '#cceeff' :
-                  stat.color === 'red' ? '#ffe0e0' :
-                  'var(--alice-blue)',
-                color: 'var(--eerie-black)',
-                flexShrink: 0,
-              }}
-            >
+            <div className="sa-stat-icon">
               {stat.icon}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                {stat.label}
-              </p>
-              <span style={{ fontSize: '28px', fontWeight: '700', color: 'var(--eerie-black)' }}>
-                {stat.value}
-              </span>
+            <div className="sa-stat-content">
+              <div className="sa-stat-label">{stat.label}</div>
+              <div className="sa-stat-value">{loading ? '...' : stat.value}</div>
             </div>
           </Link>
         ))}
       </div>
 
       {/* Quick Links */}
-      <div style={{ marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--eerie-black)', marginBottom: '16px' }}>
-          Mulai Cepat
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+      <div className="sa-mb-24">
+        <h2 className="sa-card-title sa-mb-16">Mulai Cepat</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
           {quickLinks.map((link, i) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`card animate-fade-in stagger-${i + 1}`}
+              className="sa-card"
               style={{
                 textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                cursor: 'pointer',
                 padding: '16px',
               }}
             >
-              <div style={{ color: 'var(--eerie-black)' }}>{link.icon}</div>
+              <div style={{ color: 'var(--sa-text)' }}>{link.icon}</div>
               <div>
-                <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--eerie-black)', marginBottom: '2px' }}>
+                <div className="sa-font-bold" style={{ fontSize: '14px', marginBottom: '2px' }}>
                   {link.label}
                 </div>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>{link.desc}</p>
+                <p className="sa-text-muted" style={{ fontSize: '12px', margin: 0 }}>{link.desc}</p>
               </div>
             </Link>
           ))}
@@ -275,83 +232,71 @@ export default function SuperadminDashboard() {
       </div>
 
       {/* Recent Activities */}
-      <div className="animate-fade-in">
-        <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--eerie-black)', marginBottom: '16px' }}>
-          Aktivitas Terbaru
-        </h2>
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div>
+        <h2 className="sa-card-title sa-mb-16">Aktivitas Terbaru</h2>
+        <div className="sa-card">
           {loading ? (
-            <div style={{ padding: '40px', textAlign: 'center' }}>
-              <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
-              <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
+            <div className="sa-card-body" style={{ textAlign: 'center' }}>
+              <div style={{ height: '20px', width: '200px', margin: '0 auto 12px', background: '#e5e7eb', borderRadius: '4px' }} />
+              <div style={{ height: '16px', width: '300px', margin: '0 auto', background: '#e5e7eb', borderRadius: '4px' }} />
             </div>
           ) : recentActivities.length === 0 ? (
-            <div className="empty-state">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <p style={{ fontWeight: '600', fontSize: '16px' }}>Belum ada aktivitas</p>
-              <p>Aktivitas sistem akan muncul di sini</p>
+            <div className="sa-empty">
+              <div className="sa-empty-icon">📋</div>
+              <div className="sa-empty-title">Belum ada aktivitas</div>
+              <div className="sa-empty-text">Aktivitas sistem akan muncul di sini</div>
             </div>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Aksi</th>
-                  <th>Resource</th>
-                  <th>Waktu</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentActivities.map((activity, index) => (
-                  <tr key={index}>
-                    <td style={{ fontWeight: '600' }}>{activity.user}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span
-                          className="badge"
-                          style={{
-                            backgroundColor:
-                              activity.type === 'create'
-                                ? 'var(--honeydew)'
-                                : activity.type === 'update'
-                                ? 'var(--vanilla)'
-                                : activity.type === 'delete'
-                                ? '#fde8e8'
-                                : 'var(--alice-blue)',
-                            color:
-                              activity.type === 'create'
-                                ? '#2d5a2d'
-                                : activity.type === 'update'
-                                ? '#5a5a00'
-                                : activity.type === 'delete'
-                                ? '#9b1c1c'
-                                : '#2d3a5a',
-                          }}
-                        >
-                          {activity.type === 'create'
-                            ? 'SUCCESS'
-                            : activity.type === 'update'
-                            ? 'UPDATE'
-                            : activity.type === 'delete'
-                            ? 'FAILED'
-                            : 'INFO'}
-                        </span>
-                        <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                          {activity.action}
-                        </span>
-                      </div>
-                    </td>
-                    <td>{activity.resource}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{activity.time}</td>
+            <div className="sa-table-wrapper">
+              <table className="sa-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Aksi</th>
+                    <th>Resource</th>
+                    <th>Waktu</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {recentActivities.map((activity, index) => (
+                    <tr key={index}>
+                      <td className="sa-font-semibold">{activity.user}</td>
+                      <td>
+                        <div className="sa-flex sa-gap-8">
+                          <span
+                            className={`sa-badge ${
+                              activity.type === 'create'
+                                ? 'sa-badge-success'
+                                : activity.type === 'update'
+                                ? 'sa-badge-warning'
+                                : activity.type === 'delete'
+                                ? 'sa-badge-danger'
+                                : 'sa-badge-secondary'
+                            }`}
+                          >
+                            {activity.type === 'create'
+                              ? 'SUCCESS'
+                              : activity.type === 'update'
+                              ? 'UPDATE'
+                              : activity.type === 'delete'
+                              ? 'FAILED'
+                              : 'INFO'}
+                          </span>
+                          <span className="sa-text-muted" style={{ fontSize: '14px' }}>
+                            {activity.action}
+                          </span>
+                        </div>
+                      </td>
+                      <td>{activity.resource}</td>
+                      <td className="sa-text-muted">{activity.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -326,75 +326,68 @@ export default function SubCPMKPage() {
   const mkGroups = Object.values(groupedByMK);
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
       
       {/* Header */}
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Sub-CPMK</h1>
-        <p className="page-subtitle">Kelola sub capaian pembelajaran mata kuliah</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">Sub-CPMK</h1>
+        <p className="sa-page-subtitle">Kelola sub capaian pembelajaran mata kuliah</p>
       </div>
 
       {/* Toolbar */}
-      <div className="animate-fade-in stagger-1" style={{ marginBottom: '20px' }}>
-        {/* Filter and Button Row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: '1' }}>
-            <select
-              value={filterProdi}
-              onChange={(e) => {
-                setFilterProdi(e.target.value);
-                setFilterMK(''); // Reset MK filter when prodi changes
-              }}
-              className="select-field"
-              style={{ minWidth: '200px' }}
-            >
-              <option value="">Semua Prodi</option>
-              {prodiList.map((prodi) => (
-                <option key={prodi.id} value={prodi.id}>
-                  {prodi.kode_prodi} - {prodi.nama_prodi}
-                </option>
-              ))}
-            </select>
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <select
+            value={filterProdi}
+            onChange={(e) => {
+              setFilterProdi(e.target.value);
+              setFilterMK('');
+            }}
+            className="sa-form-control"
+            style={{ minWidth: '200px' }}
+          >
+            <option value="">Semua Prodi</option>
+            {prodiList.map((prodi) => (
+              <option key={prodi.id} value={prodi.id}>
+                {prodi.kode_prodi} - {prodi.nama_prodi}
+              </option>
+            ))}
+          </select>
 
-            <select
-              value={filterMK}
-              onChange={(e) => setFilterMK(e.target.value)}
-              className="select-field"
-              style={{ minWidth: '300px', flex: '1' }}
-            >
-              <option value="">Semua Mata Kuliah</option>
-              {uniqueMKList.map((mk) => (
-                <option key={mk.kode_mk} value={mk.kode_mk}>
-                  {mk.kode_mk} - {mk.nama_mk}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Tambah Sub-CPMK
+          <select
+            value={filterMK}
+            onChange={(e) => setFilterMK(e.target.value)}
+            className="sa-form-control"
+            style={{ minWidth: '300px', flex: '1' }}
+          >
+            <option value="">Semua Mata Kuliah</option>
+            {uniqueMKList.map((mk) => (
+              <option key={mk.kode_mk} value={mk.kode_mk}>
+                {mk.kode_mk} - {mk.nama_mk}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="sa-toolbar-right">
+          <button className="sa-btn sa-btn-primary" onClick={() => setShowModal(true)}>
+            <span>➕</span>
+            <span>Tambah Sub-CPMK</span>
           </button>
         </div>
       </div>
 
       {/* Grouped by Mata Kuliah */}
-      <div className="animate-fade-in stagger-2" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
-            <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
+          <div className="sa-empty">
+            <p>⏳ Memuat data...</p>
           </div>
         ) : mkGroups.length === 0 ? (
-          <div className="card empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/>
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Tidak ada sub-CPMK ditemukan</p>
-            <p>Coba ubah kata kunci pencarian</p>
+          <div className="sa-empty">
+            <p className="sa-empty-title">📋 Tidak ada sub-CPMK ditemukan</p>
+            <p className="sa-empty-subtitle">Coba ubah kata kunci pencarian</p>
           </div>
         ) : (
           mkGroups.map((group, groupIndex) => {
@@ -421,7 +414,7 @@ export default function SubCPMKPage() {
                         <div style={{ fontSize: '20px', fontWeight: '700' }}>{totalBobot.toFixed(1)}%</div>
                       </div>
                       <button 
-                        className="btn btn-primary" 
+                        className="sa-btn sa-btn-sm" 
                         onClick={() => setShowModal(true)}
                         style={{ 
                           background: 'rgba(255,255,255,0.2)', 
@@ -430,10 +423,8 @@ export default function SubCPMKPage() {
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        Tambah Sub-CPMK
+                        <span>➕</span>
+                        <span>Tambah Sub-CPMK</span>
                       </button>
                     </div>
                   </div>
@@ -512,11 +503,11 @@ export default function SubCPMKPage() {
                               {cplGroup.items.map((item, itemIndex) => (
                                 <tr key={item.id} style={{ borderBottom: itemIndex < cplGroup.items.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
                                   <td style={{ padding: '12px 8px' }}>
-                                    <span className="badge badge-blue" style={{ fontSize: '11px' }}>{item.kode_sub_cpmk}</span>
+                                    <span className="sa-badge sa-badge-primary" style={{ fontSize: '11px' }}>{item.kode_sub_cpmk}</span>
                                   </td>
                                   <td style={{ padding: '12px 8px', maxWidth: '300px' }}>{item.deskripsi}</td>
                                   <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                                    <span className="badge badge-yellow" style={{ fontSize: '11px' }}>{(item.bobot * 100).toFixed(2)}</span>
+                                    <span className="sa-badge sa-badge-accent" style={{ fontSize: '11px' }}>{(item.bobot * 100).toFixed(2)}</span>
                                   </td>
                                   <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                                     <span style={{ fontWeight: '600' }}>{((item.bobot / cplBobot) * 100).toFixed(1)}%</span>
@@ -562,110 +553,84 @@ export default function SubCPMKPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={handleModalClose}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              {editMode ? 'Edit Sub-CPMK' : 'Tambah Sub-CPMK'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              {editMode ? 'Ubah data sub-CPMK' : 'Isi form di bawah untuk menambahkan sub-CPMK baru'}
-            </p>
+        <div className="sa-modal-overlay" onClick={handleModalClose}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <h2 className="sa-modal-title">{editMode ? 'Edit Sub-CPMK' : 'Tambah Sub-CPMK'}</h2>
+              <p className="sa-modal-subtitle">{editMode ? 'Ubah data sub-CPMK' : 'Isi form di bawah untuk menambahkan sub-CPMK baru'}</p>
+            </div>
             
             <form onSubmit={handleSubmit}>
-              {/* Kode Sub-CPMK */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Kode Sub-CPMK <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.kode_sub_cpmk}
-                  onChange={(e) => setFormData({ ...formData, kode_sub_cpmk: e.target.value })}
-                  placeholder="Contoh: SCPL-01, SCPL-02"
-                  className="input-field"
-                  required
-                  disabled={formLoading}
-                />
+              <div className="sa-modal-body">
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Kode Sub-CPMK <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <input
+                    type="text"
+                    value={formData.kode_sub_cpmk}
+                    onChange={(e) => setFormData({ ...formData, kode_sub_cpmk: e.target.value })}
+                    placeholder="Contoh: SCPL-01, SCPL-02"
+                    className="sa-form-control"
+                    required
+                    disabled={formLoading}
+                  />
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Deskripsi <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <textarea
+                    value={formData.deskripsi}
+                    onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
+                    placeholder="Deskripsi sub-CPMK"
+                    className="sa-form-control"
+                    required
+                    disabled={formLoading}
+                    rows={3}
+                    style={{ resize: 'vertical', minHeight: '60px' }}
+                  />
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Mata Kuliah & CPL <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <select
+                    value={formData.mk_cpl_id}
+                    onChange={(e) => setFormData({ ...formData, mk_cpl_id: e.target.value })}
+                    className="sa-form-control"
+                    required
+                    disabled={formLoading}
+                  >
+                    <option value="">Pilih Mata Kuliah & CPL</option>
+                    {mkCplList.map((mkCpl) => (
+                      <option key={mkCpl.id} value={mkCpl.id}>
+                        {mkCpl.kode_mk} - {mkCpl.nama_mk} → {mkCpl.kode_cpl}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="sa-form-hint">Pilih pemetaan mata kuliah ke CPL yang sesuai</p>
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Bobot (%) <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <input
+                    type="number"
+                    value={formData.bobot}
+                    onChange={(e) => setFormData({ ...formData, bobot: e.target.value })}
+                    placeholder="Masukkan bobot 0-100"
+                    className="sa-form-control"
+                    required
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    disabled={formLoading}
+                  />
+                  <p className="sa-form-hint">Masukkan bobot dalam persen (0-100). Total bobot semua sub-CPMK dalam satu MK-CPL harus 100%</p>
+                </div>
               </div>
 
-              {/* Deskripsi */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Deskripsi <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <textarea
-                  value={formData.deskripsi}
-                  onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
-                  placeholder="Deskripsi sub-CPMK"
-                  className="input-field"
-                  required
-                  disabled={formLoading}
-                  rows={3}
-                  style={{ resize: 'vertical', minHeight: '60px' }}
-                />
-              </div>
-
-              {/* Mata Kuliah & CPL */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Mata Kuliah & CPL <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <select
-                  value={formData.mk_cpl_id}
-                  onChange={(e) => setFormData({ ...formData, mk_cpl_id: e.target.value })}
-                  className="select-field"
-                  required
-                  disabled={formLoading}
-                >
-                  <option value="">Pilih Mata Kuliah & CPL</option>
-                  {mkCplList.map((mkCpl) => (
-                    <option key={mkCpl.id} value={mkCpl.id}>
-                      {mkCpl.kode_mk} - {mkCpl.nama_mk} → {mkCpl.kode_cpl}
-                    </option>
-                  ))}
-                </select>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Pilih pemetaan mata kuliah ke CPL yang sesuai
-                </p>
-              </div>
-
-              {/* Bobot */}
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Bobot (%) <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="number"
-                  value={formData.bobot}
-                  onChange={(e) => setFormData({ ...formData, bobot: e.target.value })}
-                  placeholder="Masukkan bobot 0-100"
-                  className="input-field"
-                  required
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  disabled={formLoading}
-                />
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Masukkan bobot dalam persen (0-100). Total bobot semua sub-CPMK dalam satu MK-CPL harus 100%
-                </p>
-              </div>
-
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button 
-                  type="button"
-                  onClick={handleModalClose} 
-                  className="btn btn-ghost"
-                  disabled={formLoading}
-                >
+              <div className="sa-modal-footer">
+                <button type="button" onClick={handleModalClose} className="sa-btn sa-btn-ghost" disabled={formLoading}>
                   Batal
                 </button>
-                <button 
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={formLoading}
-                >
+                <button type="submit" className="sa-btn sa-btn-primary" disabled={formLoading}>
                   {formLoading ? 'Menyimpan...' : 'Simpan'}
                 </button>
               </div>
@@ -673,6 +638,6 @@ export default function SubCPMKPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

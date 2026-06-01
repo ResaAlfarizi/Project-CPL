@@ -123,45 +123,43 @@ export default function ThresholdPage() {
   const getProdiName = (id: string) => prodi.find(p => p.id === id)?.nama_prodi || '';
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
 
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Threshold Status CPL</h1>
-        <p className="page-subtitle">Atur batas nilai untuk status pencapaian CPL</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">Threshold Status CPL</h1>
+        <p className="sa-page-subtitle">Atur batas nilai untuk status pencapaian CPL</p>
       </div>
 
       {prodi.length === 0 && (
-        <div className="animate-fade-in stagger-1" style={{ background: '#fef9e7', border: '1px solid #f9ca7a', borderRadius: '10px', padding: '14px 18px', marginBottom: '20px', fontSize: '14px' }}>
+        <div className="sa-alert sa-alert-warning">
           ⚠️ Belum ada Program Studi. Daftarkan dulu di menu Program Studi.
         </div>
       )}
 
-      <div className="animate-fade-in stagger-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
           <label style={{ fontSize: '13px', fontWeight: '600', marginRight: '10px' }}>Program Studi:</label>
-          <select className="select-field" value={selectedProdi} onChange={e => setSelectedProdi(e.target.value)} style={{ minWidth: '280px' }}>
+          <select className="sa-form-control" value={selectedProdi} onChange={e => setSelectedProdi(e.target.value)} style={{ minWidth: '280px' }}>
             <option value="">— Pilih Prodi —</option>
             {prodi.map(p => <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>)}
           </select>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn btn-ghost" onClick={handleReset}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="23 4 23 10 17 10" />
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-            </svg>
-            Reset Default
+        <div className="sa-toolbar-right">
+          <button className="sa-btn sa-btn-ghost" onClick={handleReset}>
+            <span>🔄</span>
+            <span>Reset Default</span>
           </button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={saving || !selectedProdi}>
-            {saving ? '⏳ Menyimpan...' : '💾 Simpan Threshold'}
+          <button className="sa-btn sa-btn-primary" onClick={handleSave} disabled={saving || !selectedProdi}>
+            <span>{saving ? '⏳' : '💾'}</span>
+            <span>{saving ? 'Menyimpan...' : 'Simpan Threshold'}</span>
           </button>
         </div>
       </div>
 
-      <div className="animate-fade-in stagger-2" style={{ background: '#f0f4f9', border: '1px solid var(--color-alice-blue)', borderRadius: '10px', padding: '16px 20px', marginBottom: '24px' }}>
+      <div className="sa-alert" style={{ background: '#f0f4f9', border: '1px solid #D8DFE9', marginBottom: '24px' }}>
         <div style={{ fontWeight: '700', marginBottom: '6px' }}>ℹ️ Tentang Threshold Status CPL</div>
-        <p style={{ fontSize: '13px', color: '#4b5563', lineHeight: '1.7' }}>
+        <p style={{ fontSize: '13px', lineHeight: '1.7' }}>
           Threshold menentukan status pencapaian CPL mahasiswa berdasarkan nilai akhir. Setiap prodi dapat memiliki threshold berbeda.
           Nilai yang dimasukkan harus dalam rentang <strong>0 – 100</strong> dan pastikan tidak ada rentang yang tumpang tindih.
         </p>
@@ -169,11 +167,11 @@ export default function ThresholdPage() {
 
       {selectedProdi && (
         <>
-          <div className="card animate-fade-in stagger-3" style={{ marginBottom: '20px' }}>
-            <div className="card-header">
+          <div className="sa-card" style={{ marginBottom: '20px' }}>
+            <div className="sa-card-header">
               <div>
-                <div className="card-title">Konfigurasi Threshold</div>
-                <div className="card-subtitle">{getProdiName(selectedProdi)}</div>
+                <div className="sa-card-title">Konfigurasi Threshold</div>
+                <div className="sa-card-subtitle">{getProdiName(selectedProdi)}</div>
               </div>
             </div>
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -238,12 +236,12 @@ export default function ThresholdPage() {
             </div>
           </div>
 
-          <div className="card animate-fade-in stagger-4">
-            <div className="card-header">
-              <div className="card-title">Preview Threshold</div>
+          <div className="sa-card">
+            <div className="sa-card-header">
+              <div className="sa-card-title">Preview Threshold</div>
             </div>
-            <div className="table-wrapper">
-              <table>
+            <div className="sa-table-wrapper">
+              <table className="sa-table">
                 <thead>
                   <tr>
                     <th>Status</th>
@@ -278,6 +276,6 @@ export default function ThresholdPage() {
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }

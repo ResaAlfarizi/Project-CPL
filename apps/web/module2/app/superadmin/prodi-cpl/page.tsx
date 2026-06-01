@@ -244,56 +244,55 @@ export default function ProdiCPLPage() {
   );
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
       
       {/* Header */}
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Program Studi & CPL</h1>
-        <p className="page-subtitle">Kelola program studi dan capaian pembelajaran lulusan</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">Program Studi & CPL</h1>
+        <p className="sa-page-subtitle">Kelola program studi dan capaian pembelajaran lulusan</p>
       </div>
 
       {/* Toolbar */}
-      <div className="animate-fade-in stagger-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input type="text" placeholder="Cari program studi..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <div className="sa-search">
+            <span className="sa-search-icon">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Cari program studi..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              className="sa-search-input"
+            />
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-accent" onClick={() => setShowCPLModal(true)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Tambah CPL
+        <div className="sa-toolbar-right">
+          <button className="sa-btn sa-btn-accent" onClick={() => setShowCPLModal(true)}>
+            <span>➕</span>
+            <span>Tambah CPL</span>
           </button>
-          <button className="btn btn-primary" onClick={() => setShowProdiModal(true)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Tambah Program Studi
+          <button className="sa-btn sa-btn-primary" onClick={() => setShowProdiModal(true)}>
+            <span>➕</span>
+            <span>Tambah Program Studi</span>
           </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="card animate-fade-in stagger-2" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="sa-card">
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
-            <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
+          <div className="sa-empty">
+            <p>⏳ Memuat data...</p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Tidak ada program studi ditemukan</p>
-            <p>Coba ubah kata kunci pencarian</p>
+          <div className="sa-empty">
+            <p className="sa-empty-title">🎓 Tidak ada program studi ditemukan</p>
+            <p className="sa-empty-subtitle">Coba ubah kata kunci pencarian</p>
           </div>
         ) : (
-          <table className="data-table">
+          <div className="sa-table-wrapper">
+            <table className="sa-table">
             <thead>
               <tr>
                 <th>No</th>
@@ -307,7 +306,7 @@ export default function ProdiCPLPage() {
               {filteredItems.map((item, index) => (
                 <tr key={item.id}>
                   <td>{index + 1}</td>
-                  <td><span className="badge badge-dark">{item.kode_prodi}</span></td>
+                  <td><span className="sa-badge sa-badge-primary">{item.kode_prodi}</span></td>
                   <td style={{ fontWeight: '600' }}>{item.nama_prodi}</td>
                   <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                     {item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-'}
@@ -316,31 +315,24 @@ export default function ProdiCPLPage() {
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button 
                         onClick={() => handleViewCPL(item)}
-                        className="btn btn-accent btn-sm"
+                        className="sa-btn sa-btn-accent sa-btn-sm"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        CPL
+                        <span>👁️</span>
+                        <span>CPL</span>
                       </button>
                       <button 
                         onClick={() => handleEditProdi(item)}
-                        className="btn btn-secondary btn-sm"
+                        className="sa-btn sa-btn-secondary sa-btn-sm"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                        Edit
+                        <span>✏️</span>
+                        <span>Edit</span>
                       </button>
                       <button 
                         onClick={() => handleDelete(item.id)}
-                        className="btn btn-sm" 
-                        style={{ backgroundColor: '#fdecea', color: '#e74c3c' }}
+                        className="sa-btn sa-btn-danger sa-btn-sm"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                        Hapus
+                        <span>🗑️</span>
+                        <span>Hapus</span>
                       </button>
                     </div>
                   </td>
@@ -353,82 +345,63 @@ export default function ProdiCPLPage() {
 
       {/* Modal Tambah Prodi */}
       {showProdiModal && (
-        <div className="modal-overlay" onClick={handleProdiModalClose}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              {editProdiMode ? 'Edit Program Studi' : 'Tambah Program Studi'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              {editProdiMode ? 'Ubah data program studi' : 'Isi form di bawah untuk menambahkan program studi baru'}
-            </p>
+        <div className="sa-modal-overlay" onClick={handleProdiModalClose}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <h2 className="sa-modal-title">{editProdiMode ? 'Edit Program Studi' : 'Tambah Program Studi'}</h2>
+              <p className="sa-modal-subtitle">{editProdiMode ? 'Ubah data program studi' : 'Isi form di bawah untuk menambahkan program studi baru'}</p>
+            </div>
             
             <form onSubmit={handleSubmit}>
-              {/* Kode Prodi */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Kode Program Studi <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={prodiFormData.kode_prodi}
-                  onChange={(e) => setProdiFormData({ ...prodiFormData, kode_prodi: e.target.value })}
-                  placeholder="Contoh: TI, SI, IF"
-                  className="input-field"
-                  required
-                  disabled={formLoading}
-                />
+              <div className="sa-modal-body">
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Kode Program Studi <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <input
+                    type="text"
+                    value={prodiFormData.kode_prodi}
+                    onChange={(e) => setProdiFormData({ ...prodiFormData, kode_prodi: e.target.value })}
+                    placeholder="Contoh: TI, SI, IF"
+                    className="sa-form-control"
+                    required
+                    disabled={formLoading}
+                  />
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Nama Program Studi <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <input
+                    type="text"
+                    value={prodiFormData.nama_prodi}
+                    onChange={(e) => setProdiFormData({ ...prodiFormData, nama_prodi: e.target.value })}
+                    placeholder="Contoh: Teknik Informatika"
+                    className="sa-form-control"
+                    required
+                    disabled={formLoading}
+                  />
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Jenjang <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <select
+                    value={prodiFormData.jenjang}
+                    onChange={(e) => setProdiFormData({ ...prodiFormData, jenjang: e.target.value })}
+                    className="sa-form-control"
+                    required
+                    disabled={formLoading}
+                  >
+                    <option value="D3">D3 - Diploma 3</option>
+                    <option value="S1">S1 - Sarjana</option>
+                    <option value="S2">S2 - Magister</option>
+                    <option value="S3">S3 - Doktor</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Nama Prodi */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Nama Program Studi <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={prodiFormData.nama_prodi}
-                  onChange={(e) => setProdiFormData({ ...prodiFormData, nama_prodi: e.target.value })}
-                  placeholder="Contoh: Teknik Informatika"
-                  className="input-field"
-                  required
-                  disabled={formLoading}
-                />
-              </div>
-
-              {/* Jenjang */}
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Jenjang <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <select
-                  value={prodiFormData.jenjang}
-                  onChange={(e) => setProdiFormData({ ...prodiFormData, jenjang: e.target.value })}
-                  className="select-field"
-                  required
-                  disabled={formLoading}
-                >
-                  <option value="D3">D3 - Diploma 3</option>
-                  <option value="S1">S1 - Sarjana</option>
-                  <option value="S2">S2 - Magister</option>
-                  <option value="S3">S3 - Doktor</option>
-                </select>
-              </div>
-
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button 
-                  type="button"
-                  onClick={handleProdiModalClose} 
-                  className="btn btn-ghost"
-                  disabled={formLoading}
-                >
+              <div className="sa-modal-footer">
+                <button type="button" onClick={handleProdiModalClose} className="sa-btn sa-btn-ghost" disabled={formLoading}>
                   Batal
                 </button>
-                <button 
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={formLoading}
-                >
+                <button type="submit" className="sa-btn sa-btn-primary" disabled={formLoading}>
                   {formLoading ? 'Menyimpan...' : 'Simpan'}
                 </button>
               </div>
@@ -439,14 +412,12 @@ export default function ProdiCPLPage() {
 
       {/* Modal Tambah CPL */}
       {showCPLModal && (
-        <div className="modal-overlay" onClick={handleCPLModalClose}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              {editMode ? 'Edit CPL' : 'Tambah CPL'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              {editMode ? 'Ubah data Capaian Pembelajaran Lulusan' : 'Isi form di bawah untuk menambahkan Capaian Pembelajaran Lulusan baru'}
-            </p>
+        <div className="sa-modal-overlay" onClick={handleCPLModalClose}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <h2 className="sa-modal-title">{editMode ? 'Edit CPL' : 'Tambah CPL'}</h2>
+              <p className="sa-modal-subtitle">{editMode ? 'Ubah data Capaian Pembelajaran Lulusan' : 'Isi form di bawah untuk menambahkan Capaian Pembelajaran Lulusan baru'}</p>
+            </div>
             
             <form onSubmit={handleCPLSubmit}>
               {/* Program Studi */}
@@ -547,32 +518,26 @@ export default function ProdiCPLPage() {
 
       {/* Modal Daftar CPL per Prodi */}
       {showCPLListModal && (
-        <div className="modal-overlay" onClick={() => setShowCPLListModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              Daftar CPL - {selectedProdi?.nama_prodi}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              Capaian Pembelajaran Lulusan untuk program studi {selectedProdi?.kode_prodi}
-            </p>
+        <div className="sa-modal-overlay" onClick={() => setShowCPLListModal(false)}>
+          <div className="sa-modal sa-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <h2 className="sa-modal-title">Daftar CPL - {selectedProdi?.nama_prodi}</h2>
+              <p className="sa-modal-subtitle">Capaian Pembelajaran Lulusan untuk program studi {selectedProdi?.kode_prodi}</p>
+            </div>
 
-            {cplListLoading ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                <div className="skeleton" style={{ width: '100%', height: '40px', marginBottom: '12px' }}></div>
-                <div className="skeleton" style={{ width: '100%', height: '40px', marginBottom: '12px' }}></div>
-                <div className="skeleton" style={{ width: '100%', height: '40px' }}></div>
-              </div>
-            ) : cplList.length === 0 ? (
-              <div className="empty-state" style={{ padding: '40px 20px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: '48px', height: '48px', margin: '0 auto 12px' }}>
-                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/>
-                </svg>
-                <p style={{ fontWeight: '600', fontSize: '16px', marginBottom: '4px' }}>Belum ada CPL</p>
-                <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Tambahkan CPL untuk program studi ini</p>
-              </div>
-            ) : (
-              <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '20px' }}>
-                <table className="data-table">
+            <div className="sa-modal-body">
+              {cplListLoading ? (
+                <div className="sa-empty">
+                  <p>⏳ Memuat data...</p>
+                </div>
+              ) : cplList.length === 0 ? (
+                <div className="sa-empty">
+                  <p className="sa-empty-title">📋 Belum ada CPL</p>
+                  <p className="sa-empty-subtitle">Tambahkan CPL untuk program studi ini</p>
+                </div>
+              ) : (
+                <div className="sa-table-wrapper">
+                  <table className="sa-table">
                   <thead>
                     <tr>
                       <th>No</th>

@@ -205,25 +205,23 @@ export default function SettingsPage() {
     : thresholds.filter(t => t.prodi_id === selectedProdi);
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
       
       {/* Header */}
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Pengaturan Threshold</h1>
-        <p className="page-subtitle">Kelola batas nilai threshold per program studi</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">Pengaturan Threshold</h1>
+        <p className="sa-page-subtitle">Kelola batas nilai threshold per program studi</p>
       </div>
 
       {/* Toolbar */}
-      <div className="animate-fade-in stagger-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginRight: '4px' }}>
-            Filter Prodi:
-          </span>
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <span style={{ fontSize: '14px', marginRight: '8px' }}>Filter Prodi:</span>
           <select
             value={selectedProdi}
             onChange={(e) => setSelectedProdi(e.target.value)}
-            className="select-field"
+            className="sa-form-control"
             style={{ minWidth: '200px' }}
           >
             <option value="Semua">Semua Program Studi</option>
@@ -234,57 +232,54 @@ export default function SettingsPage() {
             ))}
           </select>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Tambah Threshold
-        </button>
+        <div className="sa-toolbar-right">
+          <button className="sa-btn sa-btn-primary" onClick={() => setShowModal(true)}>
+            <span>➕</span>
+            <span>Tambah Threshold</span>
+          </button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="card animate-fade-in stagger-2" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="sa-card">
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
-            <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
+          <div className="sa-empty">
+            <p>⏳ Memuat data...</p>
           </div>
         ) : filteredThresholds.length === 0 ? (
-          <div className="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H5m13.2 5.2l-4.2-4.2m0-6l4.2-4.2"/>
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Tidak ada threshold ditemukan</p>
-            <p>Coba ubah filter program studi</p>
+          <div className="sa-empty">
+            <p className="sa-empty-title">⚙️ Tidak ada threshold ditemukan</p>
+            <p className="sa-empty-subtitle">Coba ubah filter program studi</p>
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Program Studi</th>
-                <th>Status</th>
-                <th>Nilai Minimum</th>
-                <th>Nilai Maximum</th>
-                <th>Range</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredThresholds.map((threshold, index) => (
+          <div className="sa-table-wrapper">
+            <table className="sa-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Program Studi</th>
+                  <th>Status</th>
+                  <th>Nilai Minimum</th>
+                  <th>Nilai Maximum</th>
+                  <th>Range</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredThresholds.map((threshold, index) => (
                 <tr key={threshold.id}>
                   <td>{index + 1}</td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span className="badge badge-blue" style={{ fontSize: '11px' }}>{threshold.kode_prodi}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{threshold.nama_prodi}</span>
+                      <span className="sa-badge sa-badge-primary" style={{ fontSize: '11px' }}>{threshold.kode_prodi}</span>
+                      <span style={{ fontSize: '12px', opacity: 0.7 }}>{threshold.nama_prodi}</span>
                     </div>
                   </td>
                   <td>
-                    <span className={`badge ${
-                      threshold.nama_status === 'Excellence' ? 'badge-green' :
-                      threshold.nama_status === 'Satisfactory' ? 'badge-blue' :
-                      threshold.nama_status === 'Competent' ? 'badge-yellow' : 'badge-red'
+                    <span className={`sa-badge ${
+                      threshold.nama_status === 'Excellence' ? 'sa-badge-success' :
+                      threshold.nama_status === 'Satisfactory' ? 'sa-badge-primary' :
+                      threshold.nama_status === 'Competent' ? 'sa-badge-accent' : 'sa-badge-danger'
                     }`}>
                       {threshold.nama_status}
                     </span>
@@ -320,22 +315,17 @@ export default function SettingsPage() {
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button 
                         onClick={() => handleEdit(threshold)}
-                        className="btn btn-secondary btn-sm"
+                        className="sa-btn sa-btn-secondary sa-btn-sm"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                        Edit
+                        <span>✏️</span>
+                        <span>Edit</span>
                       </button>
                       <button 
                         onClick={() => handleDelete(threshold.id)}
-                        className="btn btn-sm" 
-                        style={{ backgroundColor: '#fdecea', color: '#e74c3c' }}
+                        className="sa-btn sa-btn-danger sa-btn-sm"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                        Hapus
+                        <span>🗑️</span>
+                        <span>Hapus</span>
                       </button>
                     </div>
                   </td>
@@ -343,122 +333,123 @@ export default function SettingsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={handleModalClose}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              {editMode ? 'Edit Threshold' : 'Tambah Threshold Baru'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              {editMode ? 'Ubah batas nilai threshold' : 'Isi form di bawah untuk menambah threshold baru'}
-            </p>
+        <div className="sa-modal-overlay" onClick={handleModalClose}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <h2 className="sa-modal-title">{editMode ? 'Edit Threshold' : 'Tambah Threshold Baru'}</h2>
+              <p className="sa-modal-subtitle">{editMode ? 'Ubah batas nilai threshold' : 'Isi form di bawah untuk menambah threshold baru'}</p>
+            </div>
             
             <form onSubmit={handleSubmit}>
-              {/* Program Studi */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Program Studi <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <select
-                  value={formData.prodi_id}
-                  onChange={(e) => setFormData({ ...formData, prodi_id: e.target.value })}
-                  className="select-field"
-                  required
-                  disabled={formLoading || editMode}
-                  style={editMode ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
-                >
-                  <option value="">Pilih Program Studi</option>
-                  {prodiList.map((prodi) => (
-                    <option key={prodi.id} value={prodi.id}>
-                      {prodi.kode_prodi} - {prodi.nama_prodi}
-                    </option>
-                  ))}
-                </select>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  {editMode ? 'Program studi tidak dapat diubah saat edit' : 'Pilih program studi untuk threshold'}
-                </p>
-              </div>
+              <div className="sa-modal-body">
+                {/* Program Studi */}
+                <div className="sa-form-group">
+                  <label className="sa-form-label">
+                    Program Studi <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <select
+                    value={formData.prodi_id}
+                    onChange={(e) => setFormData({ ...formData, prodi_id: e.target.value })}
+                    className="sa-form-control"
+                    required
+                    disabled={formLoading || editMode}
+                    style={editMode ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
+                  >
+                    <option value="">Pilih Program Studi</option>
+                    {prodiList.map((prodi) => (
+                      <option key={prodi.id} value={prodi.id}>
+                        {prodi.kode_prodi} - {prodi.nama_prodi}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="sa-form-hint">
+                    {editMode ? 'Program studi tidak dapat diubah saat edit' : 'Pilih program studi untuk threshold'}
+                  </p>
+                </div>
 
-              {/* Nama Status */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Nama Status <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.nama_status}
-                  onChange={(e) => setFormData({ ...formData, nama_status: e.target.value })}
-                  placeholder="Contoh: Excellence, Satisfactory, Competent"
-                  className="input-field"
-                  required
-                  disabled={formLoading}
-                />
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Nama label status threshold (Excellence, Satisfactory, dll)
-                </p>
-              </div>
+                {/* Nama Status */}
+                <div className="sa-form-group">
+                  <label className="sa-form-label">
+                    Nama Status <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nama_status}
+                    onChange={(e) => setFormData({ ...formData, nama_status: e.target.value })}
+                    placeholder="Contoh: Excellence, Satisfactory, Competent"
+                    className="sa-form-control"
+                    required
+                    disabled={formLoading}
+                  />
+                  <p className="sa-form-hint">
+                    Nama label status threshold (Excellence, Satisfactory, dll)
+                  </p>
+                </div>
 
-              {/* Nilai Minimum */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Nilai Minimum <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="number"
-                  value={formData.nilai_min}
-                  onChange={(e) => setFormData({ ...formData, nilai_min: e.target.value })}
-                  placeholder="Masukkan nilai minimum"
-                  className="input-field"
-                  required
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  disabled={formLoading}
-                />
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Batas nilai minimum untuk status ini
-                </p>
-              </div>
+                {/* Nilai Minimum */}
+                <div className="sa-form-group">
+                  <label className="sa-form-label">
+                    Nilai Minimum <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.nilai_min}
+                    onChange={(e) => setFormData({ ...formData, nilai_min: e.target.value })}
+                    placeholder="Masukkan nilai minimum"
+                    className="sa-form-control"
+                    required
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    disabled={formLoading}
+                  />
+                  <p className="sa-form-hint">
+                    Batas nilai minimum untuk status ini
+                  </p>
+                </div>
 
-              {/* Nilai Maximum */}
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Nilai Maximum <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="number"
-                  value={formData.nilai_max}
-                  onChange={(e) => setFormData({ ...formData, nilai_max: e.target.value })}
-                  placeholder="Masukkan nilai maximum"
-                  className="input-field"
-                  required
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  disabled={formLoading}
-                />
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Batas nilai maximum untuk status ini
-                </p>
+                {/* Nilai Maximum */}
+                <div className="sa-form-group">
+                  <label className="sa-form-label">
+                    Nilai Maximum <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.nilai_max}
+                    onChange={(e) => setFormData({ ...formData, nilai_max: e.target.value })}
+                    placeholder="Masukkan nilai maximum"
+                    className="sa-form-control"
+                    required
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    disabled={formLoading}
+                  />
+                  <p className="sa-form-hint">
+                    Batas nilai maximum untuk status ini
+                  </p>
+                </div>
               </div>
 
               {/* Buttons */}
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <div className="sa-modal-footer">
                 <button 
                   type="button"
                   onClick={handleModalClose} 
-                  className="btn btn-ghost"
+                  className="sa-btn sa-btn-ghost"
                   disabled={formLoading}
                 >
                   Batal
                 </button>
                 <button 
                   type="submit"
-                  className="btn btn-primary"
+                  className="sa-btn sa-btn-primary"
                   disabled={formLoading}
                 >
                   {formLoading ? 'Menyimpan...' : 'Simpan'}
@@ -468,6 +459,6 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

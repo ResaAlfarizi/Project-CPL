@@ -168,66 +168,80 @@ export default function CPLPage() {
   const getProdiName = (id: string) => prodiList.find(p => p.id === id)?.nama_prodi || '—';
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">CPL</h1>
-        <p className="page-subtitle">Kelola Capaian Pembelajaran Lulusan</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">CPL</h1>
+        <p className="sa-page-subtitle">Kelola Capaian Pembelajaran Lulusan</p>
       </div>
 
       {prodiList.length === 0 && (
-        <div style={{ background: '#fef9e7', border: '1px solid #f9ca7a', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', fontSize: '13px', lineHeight: '1.6' }}>
+        <div style={{ background: '#fef9e7', border: '1px solid #f9ca7a', borderRadius: '12px', padding: '12px 16px', marginBottom: '20px', fontSize: '13px', lineHeight: '1.6' }}>
           ⚠️ Belum ada Program Studi. Daftarkan dulu di menu Prodi.
         </div>
       )}
 
-      <div className="animate-fade-in stagger-1" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', flex: '1' }}>
-            <div style={{ position: 'relative', minWidth: '250px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-              </svg>
-              <input type="text" placeholder="Cari CPL..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
-            </div>
-            <select className="select-field" value={filterProdi} onChange={(e) => setFilterProdi(e.target.value)} style={{ minWidth: '200px' }}>
-              <option value="">Semua Prodi</option>
-              {prodiList.map(p => <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>)}
-            </select>
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <div className="sa-search">
+            <span className="sa-search-icon">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Cari CPL..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              className="sa-search-input"
+            />
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={prodiList.length === 0}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Tambah CPL
+          <select 
+            className="sa-select" 
+            value={filterProdi} 
+            onChange={(e) => setFilterProdi(e.target.value)}
+          >
+            <option value="">Semua Prodi</option>
+            {prodiList.map(p => <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>)}
+          </select>
+        </div>
+        <div className="sa-toolbar-right">
+          <button 
+            className="sa-btn sa-btn-primary" 
+            onClick={() => setShowModal(true)} 
+            disabled={prodiList.length === 0}
+          >
+            <span>➕</span>
+            <span>Tambah CPL</span>
           </button>
         </div>
       </div>
 
-      <div className="card animate-fade-in stagger-2">
-        <div className="card-header">
+      <div className="sa-card">
+        <div className="sa-card-header">
           <div>
-            <div className="card-title">Daftar CPL</div>
-            <div className="card-subtitle">{filteredItems.length} dari {items.length} CPL terdaftar</div>
+            <div className="sa-card-title">
+              <span className="sa-card-title-icon">✅</span>
+              <span>Daftar CPL</span>
+            </div>
+            <div className="sa-card-subtitle">{filteredItems.length} dari {items.length} CPL terdaftar</div>
           </div>
         </div>
 
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
+          <div className="sa-card-body" style={{ textAlign: 'center' }}>
+            <div style={{ height: '20px', width: '200px', margin: '0 auto 12px', background: '#e5e7eb', borderRadius: '4px' }} />
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Belum ada CPL</p>
-            <p>Tambahkan Capaian Pembelajaran Lulusan untuk prodi Anda</p>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={prodiList.length === 0}>Tambah CPL</button>
+          <div className="sa-empty">
+            <div className="sa-empty-icon">✅</div>
+            <div className="sa-empty-title">Belum ada CPL</div>
+            <div className="sa-empty-text">Tambahkan Capaian Pembelajaran Lulusan untuk prodi Anda</div>
+            <button className="sa-btn sa-btn-primary" onClick={() => setShowModal(true)} disabled={prodiList.length === 0}>
+              <span>➕</span>
+              <span>Tambah CPL</span>
+            </button>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table>
+          <div className="sa-table-wrapper">
+            <table className="sa-table">
               <thead>
                 <tr>
                   <th style={{ width: '60px' }}>#</th>
@@ -241,28 +255,28 @@ export default function CPLPage() {
               <tbody>
                 {filteredItems.map((item, index) => (
                   <tr key={item.id}>
-                    <td style={{ color: 'var(--text-secondary)' }}>{index + 1}</td>
-                    <td><span className="badge badge-blue" style={{ fontFamily: 'monospace', fontWeight: '700' }}>{item.kode_cpl}</span></td>
+                    <td className="sa-text-muted">{index + 1}</td>
+                    <td><span className="sa-badge sa-badge-secondary" style={{ fontFamily: 'monospace', fontWeight: '700' }}>{item.kode_cpl}</span></td>
                     <td style={{ maxWidth: '400px', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.deskripsi}>{item.deskripsi}</td>
-                    <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{getProdiName(item.prodi_id)}</td>
+                    <td className="sa-text-muted" style={{ fontSize: '13px' }}>{getProdiName(item.prodi_id)}</td>
                     <td>
-                      <button onClick={() => toggleActive(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: item.is_active ? '#27ae60' : '#9ca3af' }}>
+                      <button 
+                        onClick={() => toggleActive(item)} 
+                        className={`sa-badge ${item.is_active ? 'sa-badge-success' : 'sa-badge-gray'}`}
+                        style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
+                      >
                         {item.is_active ? '✅ Aktif' : '⭕ Nonaktif'}
                       </button>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                        <button onClick={() => handleEdit(item)} className="btn btn-secondary btn-sm">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          Edit
+                      <div className="sa-table-actions">
+                        <button onClick={() => handleEdit(item)} className="sa-btn sa-btn-sm sa-btn-secondary">
+                          <span>✏️</span>
+                          <span>Edit</span>
                         </button>
-                        <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="btn btn-sm" style={{ backgroundColor: '#fdecea', color: '#e74c3c' }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                          Hapus
+                        <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="sa-btn sa-btn-sm sa-btn-danger">
+                          <span>🗑️</span>
+                          <span>Hapus</span>
                         </button>
                       </div>
                     </td>
@@ -275,62 +289,72 @@ export default function CPLPage() {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={handleModalClose}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              {editMode ? 'Edit CPL' : 'Tambah CPL'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              {editMode ? 'Ubah data CPL' : 'Isi form di bawah untuk menambahkan CPL baru'}
-            </p>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  Program Studi <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <select value={formData.prodi_id} onChange={(e) => setFormData({ ...formData, prodi_id: e.target.value })} className="select-field" required disabled={formLoading}>
-                  <option value="">— Pilih Prodi —</option>
-                  {prodiList.map(p => <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>)}
-                </select>
+        <div className="sa-modal-overlay" onClick={handleModalClose}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <div className="sa-modal-title">
+                <span>{editMode ? '✏️' : '➕'}</span>
+                <span>{editMode ? 'Edit CPL' : 'Tambah CPL'}</span>
               </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  Kode CPL <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input type="text" value={formData.kode_cpl} onChange={(e) => setFormData({ ...formData, kode_cpl: e.target.value })} placeholder="Contoh: CPL-01" className="input-field" required maxLength={20} disabled={formLoading} />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  Deskripsi CPL <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <textarea value={formData.deskripsi} onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })} placeholder="Deskripsikan capaian pembelajaran..." className="input-field" rows={3} required disabled={formLoading} style={{ resize: 'vertical', minHeight: '60px' }} />
-              </div>
-              <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <input type="checkbox" id="is_active" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} style={{ width: '16px', height: '16px' }} disabled={formLoading} />
-                <label htmlFor="is_active" style={{ fontSize: '14px', cursor: 'pointer' }}>CPL aktif</label>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={handleModalClose} className="btn btn-ghost" disabled={formLoading}>Batal</button>
-                <button type="submit" className="btn btn-primary" disabled={formLoading}>{formLoading ? 'Menyimpan...' : 'Simpan'}</button>
-              </div>
-            </form>
+              <button className="sa-modal-close" onClick={handleModalClose}>×</button>
+            </div>
+            <div className="sa-modal-body">
+              <p className="sa-text-muted sa-mb-24" style={{ fontSize: '14px' }}>
+                {editMode ? 'Ubah data CPL' : 'Isi form di bawah untuk menambahkan CPL baru'}
+              </p>
+              <form onSubmit={handleSubmit}>
+                <div className="sa-form-group">
+                  <label className="sa-form-label required">Program Studi</label>
+                  <select value={formData.prodi_id} onChange={(e) => setFormData({ ...formData, prodi_id: e.target.value })} className="sa-form-control" required disabled={formLoading}>
+                    <option value="">— Pilih Prodi —</option>
+                    {prodiList.map(p => <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>)}
+                  </select>
+                </div>
+                <div className="sa-form-group">
+                  <label className="sa-form-label required">Kode CPL</label>
+                  <input type="text" value={formData.kode_cpl} onChange={(e) => setFormData({ ...formData, kode_cpl: e.target.value })} placeholder="Contoh: CPL-01" className="sa-form-control" required maxLength={20} disabled={formLoading} />
+                </div>
+                <div className="sa-form-group">
+                  <label className="sa-form-label required">Deskripsi CPL</label>
+                  <textarea value={formData.deskripsi} onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })} placeholder="Deskripsikan capaian pembelajaran..." className="sa-form-control" rows={3} required disabled={formLoading} style={{ resize: 'vertical', minHeight: '60px' }} />
+                </div>
+                <div className="sa-form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input type="checkbox" id="is_active" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} style={{ width: '16px', height: '16px' }} disabled={formLoading} />
+                    <span style={{ fontSize: '14px' }}>CPL aktif</span>
+                  </label>
+                </div>
+              </form>
+            </div>
+            <div className="sa-modal-footer">
+              <button type="button" onClick={handleModalClose} className="sa-btn sa-btn-ghost" disabled={formLoading}>Batal</button>
+              <button type="submit" onClick={handleSubmit} className="sa-btn sa-btn-primary" disabled={formLoading}>{formLoading ? 'Menyimpan...' : 'Simpan'}</button>
+            </div>
           </div>
         </div>
       )}
 
       {showDeleteModal && itemToDelete && (
-        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>Hapus CPL</h2>
-            <p style={{ fontSize: '15px' }}>Yakin ingin menghapus CPL <strong>{itemToDelete.kode_cpl}</strong>?</p>
-            <p style={{ fontSize: '13px', color: '#e74c3c', marginTop: '6px' }}>⚠️ Semua pemetaan MK-CPL dan Sub-CPMK terkait juga akan dihapus!</p>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button onClick={() => setShowDeleteModal(false)} className="btn btn-ghost">Batal</button>
-              <button onClick={handleDelete} className="btn" style={{ backgroundColor: '#e74c3c', color: 'white' }}>Ya, Hapus</button>
+        <div className="sa-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="sa-modal-header">
+              <div className="sa-modal-title">
+                <span>🗑️</span>
+                <span>Hapus CPL</span>
+              </div>
+              <button className="sa-modal-close" onClick={() => setShowDeleteModal(false)}>×</button>
+            </div>
+            <div className="sa-modal-body">
+              <p style={{ fontSize: '15px' }}>Yakin ingin menghapus CPL <strong>{itemToDelete.kode_cpl}</strong>?</p>
+              <p style={{ fontSize: '13px', color: '#e74c3c', marginTop: '6px' }}>⚠️ Semua pemetaan MK-CPL dan Sub-CPMK terkait juga akan dihapus!</p>
+            </div>
+            <div className="sa-modal-footer">
+              <button onClick={() => setShowDeleteModal(false)} className="sa-btn sa-btn-ghost">Batal</button>
+              <button onClick={handleDelete} className="sa-btn sa-btn-danger">Ya, Hapus</button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

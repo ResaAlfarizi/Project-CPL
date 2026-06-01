@@ -148,27 +148,27 @@ export default function ProdiPage() {
   );
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
 
       {/* Header */}
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Program Studi</h1>
-        <p className="page-subtitle">Kelola data program studi</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">Program Studi</h1>
+        <p className="sa-page-subtitle">Kelola data program studi</p>
       </div>
 
       {/* Summary Cards */}
-      <div className="animate-fade-in stagger-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+      <div className="sa-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
         {JENJANG.map((jenjang) => {
           const count = items.filter(item => item.jenjang === jenjang).length;
           return (
-            <div key={jenjang} className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--color-alice-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '12px', flexShrink: 0 }}>
+            <div key={jenjang} className="sa-stat-card">
+              <div className="sa-stat-icon" style={{ fontSize: '14px', fontWeight: '700' }}>
                 {jenjang}
               </div>
-              <div>
-                <div style={{ fontSize: '20px', fontWeight: '700', lineHeight: '1.2' }}>{count}</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>Prodi {jenjang}</div>
+              <div className="sa-stat-content">
+                <div className="sa-stat-value">{count}</div>
+                <div className="sa-stat-label">Prodi {jenjang}</div>
               </div>
             </div>
           );
@@ -176,47 +176,57 @@ export default function ProdiPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="animate-fade-in stagger-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
-          <input type="text" placeholder="Cari prodi..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field" style={{ paddingLeft: '38px' }} />
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <div className="sa-search">
+            <span className="sa-search-icon">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Cari prodi..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              className="sa-search-input"
+            />
+          </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Tambah Prodi
-        </button>
+        <div className="sa-toolbar-right">
+          <button className="sa-btn sa-btn-primary" onClick={() => setShowModal(true)}>
+            <span>➕</span>
+            <span>Tambah Prodi</span>
+          </button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="card animate-fade-in stagger-3">
-        <div className="card-header">
+      <div className="sa-card">
+        <div className="sa-card-header">
           <div>
-            <div className="card-title">Daftar Program Studi</div>
-            <div className="card-subtitle">{filteredItems.length} dari {items.length} prodi</div>
+            <div className="sa-card-title">
+              <span className="sa-card-title-icon">🎓</span>
+              <span>Daftar Program Studi</span>
+            </div>
+            <div className="sa-card-subtitle">{filteredItems.length} dari {items.length} prodi</div>
           </div>
         </div>
 
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
-            <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
+          <div className="sa-card-body" style={{ textAlign: 'center' }}>
+            <div style={{ height: '20px', width: '200px', margin: '0 auto 12px', background: '#e5e7eb', borderRadius: '4px' }} />
+            <div style={{ height: '16px', width: '300px', margin: '0 auto', background: '#e5e7eb', borderRadius: '4px' }} />
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /><path d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Belum ada program studi</p>
-            <p>Mulai dengan menambahkan program studi pertama</p>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>Tambah Sekarang</button>
+          <div className="sa-empty">
+            <div className="sa-empty-icon">🎓</div>
+            <div className="sa-empty-title">Belum ada program studi</div>
+            <div className="sa-empty-text">Mulai dengan menambahkan program studi pertama</div>
+            <button className="sa-btn sa-btn-primary" onClick={() => setShowModal(true)}>
+              <span>➕</span>
+              <span>Tambah Sekarang</span>
+            </button>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table>
+          <div className="sa-table-wrapper">
+            <table className="sa-table">
               <thead>
                 <tr>
                   <th style={{ width: '60px' }}>#</th>
@@ -230,30 +240,31 @@ export default function ProdiPage() {
               <tbody>
                 {filteredItems.map((item, index) => (
                   <tr key={item.id}>
-                    <td style={{ color: 'var(--text-secondary)' }}>{index + 1}</td>
+                    <td className="sa-text-muted">{index + 1}</td>
                     <td>
-                      <span className="badge badge-blue" style={{ fontFamily: 'monospace' }}>{item.kode_prodi}</span>
+                      <span className="sa-badge sa-badge-secondary" style={{ fontFamily: 'monospace' }}>{item.kode_prodi}</span>
                     </td>
-                    <td style={{ fontWeight: '600' }}>{item.nama_prodi}</td>
+                    <td className="sa-font-semibold">{item.nama_prodi}</td>
                     <td>
-                      <span className={`badge ${JENJANG_COLOR[item.jenjang] || 'badge-gray'}`}>{item.jenjang}</span>
+                      <span className={`sa-badge ${
+                        item.jenjang === 'S1' ? 'sa-badge-secondary' :
+                        item.jenjang === 'S2' ? 'sa-badge-success' :
+                        item.jenjang === 'S3' ? 'sa-badge-accent' :
+                        'sa-badge-gray'
+                      }`}>{item.jenjang}</span>
                     </td>
-                    <td style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                    <td className="sa-text-muted" style={{ fontSize: '12px' }}>
                       {item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '—'}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                        <button onClick={() => handleEdit(item)} className="btn btn-secondary btn-sm">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          Edit
+                      <div className="sa-table-actions">
+                        <button onClick={() => handleEdit(item)} className="sa-btn sa-btn-sm sa-btn-secondary">
+                          <span>✏️</span>
+                          <span>Edit</span>
                         </button>
-                        <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="btn btn-sm" style={{ backgroundColor: '#fdecea', color: '#e74c3c' }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                          Hapus
+                        <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="sa-btn sa-btn-sm sa-btn-danger">
+                          <span>🗑️</span>
+                          <span>Hapus</span>
                         </button>
                       </div>
                     </td>
@@ -267,101 +278,110 @@ export default function ProdiPage() {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={handleModalClose}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              {editMode ? 'Edit Program Studi' : 'Tambah Program Studi'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              {editMode ? 'Ubah data program studi' : 'Isi form di bawah untuk menambahkan program studi baru'}
-            </p>
+        <div className="sa-modal-overlay" onClick={handleModalClose}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <div className="sa-modal-title">
+                <span>{editMode ? '✏️' : '➕'}</span>
+                <span>{editMode ? 'Edit Program Studi' : 'Tambah Program Studi'}</span>
+              </div>
+              <button className="sa-modal-close" onClick={handleModalClose}>×</button>
+            </div>
 
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                    Kode Prodi <span style={{ color: '#e74c3c' }}>*</span>
-                  </label>
+            <div className="sa-modal-body">
+              <p className="sa-text-muted sa-mb-24" style={{ fontSize: '14px' }}>
+                {editMode ? 'Ubah data program studi' : 'Isi form di bawah untuk menambahkan program studi baru'}
+              </p>
+
+              <form onSubmit={handleSubmit}>
+                <div className="sa-form-row">
+                  <div className="sa-form-group">
+                    <label className="sa-form-label required">Kode Prodi</label>
+                    <input
+                      type="text"
+                      value={formData.kode_prodi}
+                      onChange={(e) => setFormData({ ...formData, kode_prodi: e.target.value })}
+                      placeholder="Contoh: TI-S1"
+                      className="sa-form-control"
+                      required
+                      maxLength={20}
+                      disabled={formLoading}
+                    />
+                  </div>
+                  <div className="sa-form-group">
+                    <label className="sa-form-label required">Jenjang</label>
+                    <select
+                      value={formData.jenjang}
+                      onChange={(e) => setFormData({ ...formData, jenjang: e.target.value })}
+                      className="sa-form-control"
+                      required
+                      disabled={formLoading}
+                    >
+                      {JENJANG.map((j) => (
+                        <option key={j} value={j}>{j}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label required">Nama Program Studi</label>
                   <input
                     type="text"
-                    value={formData.kode_prodi}
-                    onChange={(e) => setFormData({ ...formData, kode_prodi: e.target.value })}
-                    placeholder="Contoh: TI-S1"
-                    className="input-field"
+                    value={formData.nama_prodi}
+                    onChange={(e) => setFormData({ ...formData, nama_prodi: e.target.value })}
+                    placeholder="Contoh: Teknik Informatika"
+                    className="sa-form-control"
                     required
-                    maxLength={20}
+                    maxLength={150}
                     disabled={formLoading}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                    Jenjang <span style={{ color: '#e74c3c' }}>*</span>
-                  </label>
-                  <select
-                    value={formData.jenjang}
-                    onChange={(e) => setFormData({ ...formData, jenjang: e.target.value })}
-                    className="select-field"
-                    required
-                    disabled={formLoading}
-                  >
-                    {JENJANG.map((j) => (
-                      <option key={j} value={j}>{j}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              </form>
+            </div>
 
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Nama Program Studi <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.nama_prodi}
-                  onChange={(e) => setFormData({ ...formData, nama_prodi: e.target.value })}
-                  placeholder="Contoh: Teknik Informatika"
-                  className="input-field"
-                  required
-                  maxLength={150}
-                  disabled={formLoading}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={handleModalClose} className="btn btn-ghost" disabled={formLoading}>
-                  Batal
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={formLoading}>
-                  {formLoading ? 'Menyimpan...' : 'Simpan'}
-                </button>
-              </div>
-            </form>
+            <div className="sa-modal-footer">
+              <button type="button" onClick={handleModalClose} className="sa-btn sa-btn-ghost" disabled={formLoading}>
+                Batal
+              </button>
+              <button type="submit" onClick={handleSubmit} className="sa-btn sa-btn-primary" disabled={formLoading}>
+                {formLoading ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && itemToDelete && (
-        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>Hapus Program Studi</h2>
-            <p style={{ fontSize: '15px', marginBottom: '8px' }}>
-              Yakin ingin menghapus prodi <strong>{itemToDelete.nama_prodi}</strong>?
-            </p>
-            <p style={{ fontSize: '13px', color: '#e74c3c', marginBottom: '20px' }}>
-              ⚠️ Semua CPL, Mahasiswa, MK, dan data terkait akan ikut terhapus!
-            </p>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowDeleteModal(false)} className="btn btn-ghost">
+        <div className="sa-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="sa-modal-header">
+              <div className="sa-modal-title">
+                <span>🗑️</span>
+                <span>Hapus Program Studi</span>
+              </div>
+              <button className="sa-modal-close" onClick={() => setShowDeleteModal(false)}>×</button>
+            </div>
+            <div className="sa-modal-body">
+              <p style={{ fontSize: '15px', marginBottom: '8px' }}>
+                Yakin ingin menghapus prodi <strong>{itemToDelete.nama_prodi}</strong>?
+              </p>
+              <p style={{ fontSize: '13px', color: '#e74c3c' }}>
+                ⚠️ Semua CPL, Mahasiswa, MK, dan data terkait akan ikut terhapus!
+              </p>
+            </div>
+            <div className="sa-modal-footer">
+              <button onClick={() => setShowDeleteModal(false)} className="sa-btn sa-btn-ghost">
                 Batal
               </button>
-              <button onClick={handleDelete} className="btn" style={{ backgroundColor: '#e74c3c', color: 'white' }}>
+              <button onClick={handleDelete} className="sa-btn sa-btn-danger">
                 Ya, Hapus
               </button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

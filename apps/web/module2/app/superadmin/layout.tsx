@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import SuperadminSidebar from '@/components/superadmin/SuperadminSidebar';
 import SuperadminHeader from '@/components/superadmin/SuperadminHeader';
+import './superadmin.css';
 
 export default function SuperadminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

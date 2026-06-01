@@ -158,93 +158,89 @@ export default function MataKuliahMasterPage() {
 
   const getMkCplCount = (mkId: string) => mkcpl.filter(m => m.mk_id === mkId).length;
   const getProdiCode = (id: string) => prodi.find(p => p.id === id)?.kode_prodi || '—';
-  const semColor = (s: number) => s <= 2 ? 'badge-blue' : s <= 4 ? 'badge-green' : s <= 6 ? 'badge-yellow' : 'badge-gray';
+  const semColor = (s: number) => s <= 2 ? 'sa-badge-primary' : s <= 4 ? 'sa-badge-success' : s <= 6 ? 'sa-badge-accent' : 'sa-badge-secondary';
 
   return (
-    <>
+    <div className="sa-page">
       <ToastContainer />
 
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Mata Kuliah</h1>
-        <p className="page-subtitle">Kelola data mata kuliah per program studi</p>
+      <div className="sa-page-header">
+        <h1 className="sa-page-title">Mata Kuliah</h1>
+        <p className="sa-page-subtitle">Kelola data mata kuliah per program studi</p>
       </div>
 
       {prodi.length === 0 && (
-        <div className="animate-fade-in stagger-1" style={{ background: '#fef9e7', border: '1px solid #f9ca7a', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', fontSize: '13px', lineHeight: '1.6' }}>
+        <div className="sa-alert sa-alert-warning">
           ⚠️ Belum ada Program Studi. Daftarkan dulu di menu Program Studi.
         </div>
       )}
 
-      <div className="animate-fade-in stagger-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <select className="select-field" value={filterProdi} onChange={e => setFilterProdi(e.target.value)}>
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <select className="sa-form-control" value={filterProdi} onChange={e => setFilterProdi(e.target.value)}>
             <option value="">Semua Prodi</option>
             {prodi.map(p => <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>)}
           </select>
-          <select className="select-field" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
+          <select className="sa-form-control" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
             <option value="">Semua Semester</option>
             {semList.map(s => <option key={s} value={s}>Semester {s}</option>)}
           </select>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={prodi.length === 0}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Tambah MK
-        </button>
+        <div className="sa-toolbar-right">
+          <button className="sa-btn sa-btn-primary" onClick={() => setShowModal(true)} disabled={prodi.length === 0}>
+            <span>➕</span>
+            <span>Tambah MK</span>
+          </button>
+        </div>
       </div>
 
       {semList.length > 0 && (
-        <div className="animate-fade-in stagger-2" style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
           {semList.map(s => (
             <div
               key={s}
-              className="card"
+              className="sa-card"
               style={{
                 padding: '10px 14px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 cursor: 'pointer',
-                background: filterSem === String(s) ? 'var(--color-alice-blue)' : '#fff',
+                background: filterSem === String(s) ? '#EFFDA3' : '#fff',
                 transition: 'all 0.2s',
               }}
               onClick={() => setFilterSem(filterSem === String(s) ? '' : String(s))}
             >
               <span style={{ fontWeight: '600', fontSize: '13px' }}>Sem {s}</span>
-              <span className={`badge ${semColor(s)}`} style={{ fontSize: '11px', padding: '3px 7px' }}>{items.filter(m => m.semester === s).length} MK</span>
+              <span className={`sa-badge ${semColor(s).replace('badge', 'sa-badge')}`} style={{ fontSize: '11px', padding: '3px 7px' }}>{items.filter(m => m.semester === s).length} MK</span>
             </div>
           ))}
         </div>
       )}
 
-      <div className="card animate-fade-in stagger-3">
-        <div className="card-header">
+      <div className="sa-card">
+        <div className="sa-card-header">
           <div>
-            <div className="card-title">Daftar Mata Kuliah</div>
-            <div className="card-subtitle">{filtered.length} dari {items.length} mata kuliah</div>
+            <div className="sa-card-title">Daftar Mata Kuliah</div>
+            <div className="sa-card-subtitle">{filtered.length} dari {items.length} mata kuliah</div>
           </div>
         </div>
 
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="skeleton" style={{ height: '20px', width: '200px', margin: '0 auto 12px' }} />
-            <div className="skeleton" style={{ height: '16px', width: '300px', margin: '0 auto' }} />
+          <div className="sa-empty">
+            <p>⏳ Memuat data...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            <p style={{ fontWeight: '600', fontSize: '16px' }}>Belum ada Mata Kuliah</p>
-            <p>Tambahkan mata kuliah untuk program studi</p>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={prodi.length === 0}>
+          <div className="sa-empty">
+            <p className="sa-empty-title">📚 Belum ada Mata Kuliah</p>
+            <p className="sa-empty-subtitle">Tambahkan mata kuliah untuk program studi</p>
+            <button className="sa-btn sa-btn-primary" onClick={() => setShowModal(true)} disabled={prodi.length === 0}>
               Tambah Sekarang
             </button>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table>
+          <div className="sa-table-wrapper">
+            <table className="sa-table">
               <thead>
                 <tr>
                   <th style={{ width: '60px' }}>#</th>
@@ -260,47 +256,40 @@ export default function MataKuliahMasterPage() {
               <tbody>
                 {filtered.map((row, i) => (
                   <tr key={row.id}>
-                    <td style={{ color: 'var(--text-secondary)' }}>{i + 1}</td>
+                    <td>{i + 1}</td>
                     <td>
-                      <span className="badge badge-blue" style={{ fontFamily: 'monospace' }}>{row.kode_mk}</span>
+                      <span className="sa-badge sa-badge-primary">{row.kode_mk}</span>
                     </td>
-                    <td style={{ fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }} title={row.nama_mk}>{row.nama_mk}</td>
-                    <td style={{ fontSize: '13px' }}>{getProdiCode(row.prodi_id)}</td>
+                    <td style={{ fontWeight: '600' }} title={row.nama_mk}>{row.nama_mk}</td>
+                    <td>{getProdiCode(row.prodi_id)}</td>
                     <td>
-                      <span className="badge badge-gray">{row.sks} SKS</span>
+                      <span className="sa-badge sa-badge-secondary">{row.sks} SKS</span>
                     </td>
                     <td>
-                      <span className={`badge ${semColor(row.semester)}`}>Sem {row.semester}</span>
+                      <span className={`sa-badge ${semColor(row.semester).replace('badge', 'sa-badge')}`}>Sem {row.semester}</span>
                     </td>
                     <td>
                       {getMkCplCount(row.id) > 0 ? (
-                        <span className="badge badge-green">{getMkCplCount(row.id)} CPL</span>
+                        <span className="sa-badge sa-badge-success">{getMkCplCount(row.id)} CPL</span>
                       ) : (
-                        <span className="badge" style={{ backgroundColor: '#fdecea', color: '#e74c3c' }}>Belum dipetakan</span>
+                        <span className="sa-badge sa-badge-danger">Belum dipetakan</span>
                       )}
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                        <button onClick={() => handleEdit(row)} className="btn btn-secondary btn-sm">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          Edit
+                        <button onClick={() => handleEdit(row)} className="sa-btn sa-btn-secondary sa-btn-sm">
+                          <span>✏️</span>
+                          <span>Edit</span>
                         </button>
                         <button
                           onClick={() => {
                             setItemToDelete(row);
                             setShowDeleteModal(true);
                           }}
-                          className="btn btn-sm"
-                          style={{ backgroundColor: '#fdecea', color: '#e74c3c' }}
+                          className="sa-btn sa-btn-danger sa-btn-sm"
                         >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                          Hapus
+                          <span>🗑️</span>
+                          <span>Hapus</span>
                         </button>
                       </div>
                     </td>
@@ -313,104 +302,94 @@ export default function MataKuliahMasterPage() {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={handleModalClose}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
-              {editMode ? 'Edit Mata Kuliah' : 'Tambah Mata Kuliah'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
-              {editMode ? 'Ubah data mata kuliah' : 'Isi form di bawah untuk menambahkan mata kuliah baru'}
-            </p>
+        <div className="sa-modal-overlay" onClick={handleModalClose}>
+          <div className="sa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <h2 className="sa-modal-title">{editMode ? 'Edit Mata Kuliah' : 'Tambah Mata Kuliah'}</h2>
+              <p className="sa-modal-subtitle">{editMode ? 'Ubah data mata kuliah' : 'Isi form di bawah untuk menambahkan mata kuliah baru'}</p>
+            </div>
 
             <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  Program Studi <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <select
-                  className="select-field"
-                  value={formData.prodi_id}
-                  onChange={(e) => setFormData({ ...formData, prodi_id: e.target.value })}
-                  required
-                  disabled={formLoading}
-                >
-                  <option value="">— Pilih Prodi —</option>
-                  {prodi.map(p => (
-                    <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>
-                  ))}
-                </select>
-              </div>
+              <div className="sa-modal-body">
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Program Studi <span style={{ color: '#e74c3c' }}>*</span></label>
+                  <select
+                    className="sa-form-control"
+                    value={formData.prodi_id}
+                    onChange={(e) => setFormData({ ...formData, prodi_id: e.target.value })}
+                    required
+                    disabled={formLoading}
+                  >
+                    <option value="">— Pilih Prodi —</option>
+                    {prodi.map(p => (
+                      <option key={p.id} value={p.id}>{p.kode_prodi} – {p.nama_prodi}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                    Kode MK <span style={{ color: '#e74c3c' }}>*</span>
-                  </label>
+                <div className="sa-form-row">
+                  <div className="sa-form-group">
+                    <label className="sa-form-label">Kode MK <span style={{ color: '#e74c3c' }}>*</span></label>
+                    <input
+                      type="text"
+                      className="sa-form-control"
+                      placeholder="Contoh: IF101"
+                      value={formData.kode_mk}
+                      onChange={(e) => setFormData({ ...formData, kode_mk: e.target.value })}
+                      required
+                      maxLength={20}
+                      disabled={formLoading}
+                    />
+                  </div>
+                  <div className="sa-form-group">
+                    <label className="sa-form-label">SKS <span style={{ color: '#e74c3c' }}>*</span></label>
+                    <select
+                      className="sa-form-control"
+                      value={formData.sks}
+                      onChange={(e) => setFormData({ ...formData, sks: parseInt(e.target.value) })}
+                      disabled={formLoading}
+                    >
+                      {[1, 2, 3, 4, 5, 6].map(s => (
+                        <option key={s} value={s}>{s} SKS</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Nama Mata Kuliah <span style={{ color: '#e74c3c' }}>*</span></label>
                   <input
                     type="text"
-                    className="input-field"
-                    placeholder="Contoh: IF101"
-                    value={formData.kode_mk}
-                    onChange={(e) => setFormData({ ...formData, kode_mk: e.target.value })}
+                    className="sa-form-control"
+                    placeholder="Contoh: Algoritma & Pemrograman"
+                    value={formData.nama_mk}
+                    onChange={(e) => setFormData({ ...formData, nama_mk: e.target.value })}
                     required
-                    maxLength={20}
+                    maxLength={200}
                     disabled={formLoading}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                    SKS <span style={{ color: '#e74c3c' }}>*</span>
-                  </label>
+
+                <div className="sa-form-group">
+                  <label className="sa-form-label">Semester <span style={{ color: '#e74c3c' }}>*</span></label>
                   <select
-                    className="select-field"
-                    value={formData.sks}
-                    onChange={(e) => setFormData({ ...formData, sks: parseInt(e.target.value) })}
+                    className="sa-form-control"
+                    value={formData.semester}
+                    onChange={(e) => setFormData({ ...formData, semester: parseInt(e.target.value) })}
                     disabled={formLoading}
                   >
-                    {[1, 2, 3, 4, 5, 6].map(s => (
-                      <option key={s} value={s}>{s} SKS</option>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
+                      <option key={s} value={s}>Semester {s}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  Nama Mata Kuliah <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="Contoh: Algoritma & Pemrograman"
-                  value={formData.nama_mk}
-                  onChange={(e) => setFormData({ ...formData, nama_mk: e.target.value })}
-                  required
-                  maxLength={200}
-                  disabled={formLoading}
-                />
-              </div>
-
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                  Semester <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <select
-                  className="select-field"
-                  value={formData.semester}
-                  onChange={(e) => setFormData({ ...formData, semester: parseInt(e.target.value) })}
-                  disabled={formLoading}
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
-                    <option key={s} value={s}>Semester {s}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={handleModalClose} className="btn btn-ghost" disabled={formLoading}>
+              <div className="sa-modal-footer">
+                <button type="button" onClick={handleModalClose} className="sa-btn sa-btn-ghost" disabled={formLoading}>
                   Batal
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={formLoading}>
+                <button type="submit" className="sa-btn sa-btn-primary" disabled={formLoading}>
                   {formLoading ? 'Menyimpan...' : 'Simpan'}
                 </button>
               </div>
@@ -420,26 +399,30 @@ export default function MataKuliahMasterPage() {
       )}
 
       {showDeleteModal && itemToDelete && (
-        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>Hapus Mata Kuliah</h2>
-            <p style={{ fontSize: '15px', marginBottom: '8px' }}>
-              Yakin ingin menghapus MK <strong>{itemToDelete.nama_mk}</strong>?
-            </p>
-            <p style={{ fontSize: '13px', color: '#e74c3c', marginBottom: '20px' }}>
-              ⚠️ Semua pemetaan MK-CPL dan Sub-CPMK terkait juga akan dihapus!
-            </p>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowDeleteModal(false)} className="btn btn-ghost">
+        <div className="sa-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="sa-modal sa-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="sa-modal-header">
+              <h2 className="sa-modal-title">Hapus Mata Kuliah</h2>
+            </div>
+            <div className="sa-modal-body">
+              <p style={{ marginBottom: '8px' }}>
+                Yakin ingin menghapus MK <strong>{itemToDelete.nama_mk}</strong>?
+              </p>
+              <p style={{ fontSize: '13px', color: '#e74c3c' }}>
+                ⚠️ Semua pemetaan MK-CPL dan Sub-CPMK terkait juga akan dihapus!
+              </p>
+            </div>
+            <div className="sa-modal-footer">
+              <button onClick={() => setShowDeleteModal(false)} className="sa-btn sa-btn-ghost">
                 Batal
               </button>
-              <button onClick={handleDelete} className="btn" style={{ backgroundColor: '#e74c3c', color: 'white' }}>
+              <button onClick={handleDelete} className="sa-btn sa-btn-danger">
                 Ya, Hapus
               </button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
