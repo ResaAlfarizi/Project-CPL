@@ -5,6 +5,10 @@ export interface DecodedToken {
   email: string;
   role: string;
   name?: string;
+  nama?: string;
+  entity_id?: string;
+  entity_type?: string;
+  prodi_id?: string;
   iat: number;
   exp: number;
 }

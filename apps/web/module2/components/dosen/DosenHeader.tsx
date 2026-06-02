@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { authStorage } from '@/lib/auth';
 
 interface DosenHeaderProps {
   onToggleSidebar: () => void;
@@ -12,7 +13,42 @@ interface DosenHeaderProps {
 export default function DosenHeader({ onToggleSidebar, sidebarCollapsed }: DosenHeaderProps) {
   const { logout, user } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch email from profile API
+  useEffect(() => {
+    const fetchEmail = async () => {
+      try {
+        const token = authStorage.getToken();
+        if (!token) return;
+        
+        const decodedToken = authStorage.decodeToken(token);
+        const emailFromToken = (decodedToken as any)?.email;
+        
+        if (emailFromToken) {
+          setUserEmail(emailFromToken);
+        } else {
+          // Fallback: fetch from profile API
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+          const res = await fetch(`${API_URL}/api/v1/m2/profile/me`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            setUserEmail(data.data?.email || data.email || '');
+          }
+        }
+      } catch (e) {
+        console.log('Could not fetch email for header:', e);
+      }
+    };
+    
+    fetchEmail();
+  }, []);
+
+  const displayEmail = userEmail || user?.email || 'dosen@if.ac.id';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -115,7 +151,7 @@ export default function DosenHeader({ onToggleSidebar, sidebarCollapsed }: Dosen
               {user?.nama || user?.role || 'Dosen'}
             </p>
             <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-              {user?.email || 'dosen@if.ac.id'}
+              {displayEmail}
             </p>
           </div>
 
@@ -178,7 +214,7 @@ export default function DosenHeader({ onToggleSidebar, sidebarCollapsed }: Dosen
                     {user?.nama || user?.role || 'Dosen'}
                   </p>
                   <p style={{ fontSize: '13px', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>
-                    {user?.email || 'dosen@if.ac.id'}
+                    {displayEmail}
                   </p>
                 </div>
               </div>
