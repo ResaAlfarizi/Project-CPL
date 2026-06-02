@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { mahasiswaApi } from '@/lib/api';
 
 interface Prodi {
@@ -20,7 +19,6 @@ interface CPL {
 }
 
 export default function ProgramStudiPage() {
-  const { user } = useAuth();
   const [prodi, setProdi] = useState<Prodi | null>(null);
   const [cplList, setCplList] = useState<CPL[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,18 +27,15 @@ export default function ProgramStudiPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get mahasiswa profile to get prodi_id
         const profileRes = await mahasiswaApi.getMyProfile();
         const profile = profileRes.data || profileRes;
-        
-        if (profile && profile.prodi_id) {
-          // Get prodi detail
-          const prodiRes = await mahasiswaApi.getProdiById(profile.prodi_id);
-          const prodiData = prodiRes.data || prodiRes;
-          setProdi(prodiData);
-          
-          // Get CPL for this prodi
-          const cplRes = await mahasiswaApi.getCPLByProdi(profile.prodi_id);
+
+        if (profile?.prodi_id) {
+          const [prodiRes, cplRes] = await Promise.all([
+            mahasiswaApi.getProdiById(profile.prodi_id),
+            mahasiswaApi.getCPLByProdi(profile.prodi_id),
+          ]);
+          setProdi(prodiRes.data || prodiRes);
           const cplData = Array.isArray(cplRes) ? cplRes : cplRes.data || [];
           setCplList(cplData);
         }
@@ -55,122 +50,127 @@ export default function ProgramStudiPage() {
 
   const filteredCpl = cplList.filter((cpl) => {
     const q = search.toLowerCase();
-    return (
-      cpl.kode_cpl.toLowerCase().includes(q) ||
-      cpl.deskripsi.toLowerCase().includes(q)
-    );
+    return cpl.kode_cpl.toLowerCase().includes(q) || cpl.deskripsi.toLowerCase().includes(q);
   });
 
-  if (isLoading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800"></div>
-      </div>
-    );
-  }
-
-  if (!prodi) {
-    return (
-      <div className="card" style={{ padding: '48px 24px', textAlign: 'center' }}>
-        <p style={{ color: 'var(--text-secondary)' }}>Data program studi tidak ditemukan</p>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Prodi Info Card */}
-      <div className="card animate-fade-in">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px',
-            fontWeight: '700',
-            color: '#fff',
-          }}>
-            {prodi.kode_prodi}
-          </div>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--eerie-black)', marginBottom: '4px' }}>
-              {prodi.nama_prodi}
-            </h2>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Jenjang: <span style={{ fontWeight: '600', color: 'var(--eerie-black)' }}>{prodi.jenjang}</span>
-            </p>
-          </div>
-        </div>
+    <>
+      {/* Page Header */}
+      <div className="page-header animate-fade-in">
+        <h1 className="page-title">Program Studi & CPL</h1>
+        <p className="page-subtitle">Informasi program studi dan Capaian Pembelajaran Lulusan</p>
       </div>
 
-      {/* CPL Section */}
-      <div className="card animate-fade-in">
-        <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--eerie-black)', marginBottom: '4px' }}>
-            Capaian Pembelajaran Lulusan (CPL)
-          </h3>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-            Daftar CPL untuk program studi {prodi.nama_prodi}
-          </p>
+      {isLoading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="skeleton" style={{ height: '72px', borderRadius: 'var(--radius-xl)' }} />
+          <div className="skeleton" style={{ height: '300px', borderRadius: 'var(--radius-xl)' }} />
         </div>
-
-        {/* Search */}
-        <div style={{ position: 'relative', marginBottom: '20px' }}>
-          <input
-            type="text"
-            placeholder="Cari CPL..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input-field"
-            style={{ paddingLeft: '40px' }}
-          />
-          <svg style={{ width: '20px', height: '20px', color: '#9CA3AF', position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+      ) : !prodi ? (
+        <div className="card" style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>Data program studi tidak ditemukan</p>
         </div>
-
-        {/* CPL List */}
-        {filteredCpl.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '14px' }}>
-            {search ? 'Tidak ada CPL yang sesuai dengan pencarian' : 'Tidak ada CPL untuk program studi ini'}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filteredCpl.map((cpl, idx) => (
-              <div key={cpl.id} className="card-flat" style={{ padding: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                  <span className="badge badge-dark" style={{ flexShrink: 0 }}>
-                    {cpl.kode_cpl}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--eerie-black)', lineHeight: '1.6' }}>
-                      {cpl.deskripsi}
-                    </p>
-                    {!cpl.is_active && (
-                      <span className="badge" style={{ marginTop: '8px', background: '#FEE2E2', color: '#991B1B', fontSize: '11px' }}>
-                        Tidak Aktif
-                      </span>
-                    )}
-                  </div>
-                </div>
+      ) : (
+        <>
+          {/* Prodi Info Card */}
+          <div className="card animate-fade-in stagger-1" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #212121 0%, #374151 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '11px',
+              fontWeight: '800',
+              color: '#EFFDA3',
+              letterSpacing: '0.04em',
+              flexShrink: 0,
+              textAlign: 'center',
+              lineHeight: 1.2,
+            }}>
+              {prodi.kode_prodi}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
+                Program Studi
+              </p>
+              <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--eerie-black)', marginBottom: '8px', lineHeight: 1.2 }}>
+                {prodi.nama_prodi}
+              </h2>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <span className="badge badge-dark">{prodi.kode_prodi}</span>
+                <span className="badge badge-blue">{prodi.jenjang}</span>
+                <span className="badge badge-yellow">{cplList.length} CPL</span>
               </div>
-            ))}
+            </div>
           </div>
-        )}
 
-        {/* Summary */}
-        {filteredCpl.length > 0 && (
-          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Total CPL: <span style={{ fontWeight: '600', color: 'var(--eerie-black)' }}>{filteredCpl.length}</span>
-            </p>
+          {/* CPL Section */}
+          <div className="animate-slide-in-up">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--eerie-black)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="badge badge-yellow">CPL</span>
+                Capaian Pembelajaran Lulusan
+              </h2>
+              {/* Search */}
+              <div style={{ maxWidth: '280px', flex: '0 1 280px' }}>
+                <input
+                  type="text"
+                  placeholder="Cari CPL..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="input-field"
+                  style={{ background: '#fff' }}
+                />
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              {filteredCpl.length === 0 ? (
+                <div className="empty-state">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <p style={{ fontWeight: '600', fontSize: '16px' }}>
+                    {search ? 'Tidak ada hasil' : 'Belum ada CPL'}
+                  </p>
+                  <p>
+                    {search ? `Tidak ditemukan CPL untuk "${search}"` : 'CPL untuk prodi ini belum tersedia'}
+                  </p>
+                </div>
+              ) : (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Kode CPL</th>
+                      <th>Deskripsi</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCpl.map((cpl, i) => (
+                      <tr key={cpl.id}>
+                        <td>{i + 1}</td>
+                        <td><span className="badge badge-dark">{cpl.kode_cpl}</span></td>
+                        <td style={{ fontSize: '14px', lineHeight: '1.6' }}>{cpl.deskripsi}</td>
+                        <td>
+                          <span className={`badge ${cpl.is_active ? 'badge-green' : 'badge-red'}`}>
+                            {cpl.is_active ? 'Aktif' : 'Nonaktif'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
+        </>
+      )}
+    </>
   );
 }
