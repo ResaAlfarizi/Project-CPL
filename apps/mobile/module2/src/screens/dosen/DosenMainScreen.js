@@ -20,7 +20,7 @@ import ProfilDetailScreen from './ProfilDetailScreen';
 import ScreenBackground from '../../components/ScreenBackground';
 
 // API
-import { tokenStorage, kelasApi, subCpmkApi, dashboardApi, nilaiApi } from '../../services/api';
+import { tokenStorage, kelasApi, subCpmkApi, dashboardApi, nilaiApi, profileApi } from '../../services/api';
 
 const COLORS = {
     primary: '#212c21',
@@ -57,22 +57,44 @@ export default function DosenMainScreen() {
     const [kelasList, setKelasList]       = useState([]);
     const [subCpmkList, setSubCpmkList]   = useState([]);
     const [dashboardData, setDashboardData] = useState({});
+    const [dosenNidn, setDosenNidn]       = useState('-');
+    const [dosenProdi, setDosenProdi]     = useState('-');
 
     useEffect(() => { loadAllData(); }, []);
 
     const loadAllData = async () => {
         try {
-            const [dashRes, kelasRes, subRes] = await Promise.allSettled([
+            const [dashRes, kelasRes, subRes, profileRes] = await Promise.allSettled([
                 dashboardApi.getDosen(),
                 kelasApi.getMyClasses(),
                 subCpmkApi.getAll(),
+                profileApi.getMyProfile(),
             ]);
             if (dashRes.status === 'fulfilled') {
                 const d = dashRes.value?.data || dashRes.value || {};
                 setDashboardData(d.statistik ? { ...d.statistik, kelas: d.kelas || [] } : d);
             }
-            if (kelasRes.status === 'fulfilled') setKelasList(kelasRes.value?.data || []);
+            if (kelasRes.status === 'fulfilled') {
+                const list = kelasRes.value?.data || [];
+                setKelasList(list);
+                // Ambil NIDN dari detail kelas pertama jika belum dapat dari profile
+                if (list.length > 0) {
+                    try {
+                        const detailJson = await kelasApi.getById(list[0].id);
+                        const detail = detailJson.data || {};
+                        if (detail.nidn) setDosenNidn(detail.nidn);
+                        if (detail.nama_prodi) setDosenProdi(detail.nama_prodi);
+                    } catch {}
+                }
+            }
             if (subRes.status === 'fulfilled')   setSubCpmkList(subRes.value?.data || []);
+            if (profileRes.status === 'fulfilled') {
+                const pData = profileRes.value?.data || {};
+                // nama_prodi dari /profile/me sudah benar
+                if (pData.nama_prodi && pData.nama_prodi !== 'Program Studi') {
+                    setDosenProdi(pData.nama_prodi);
+                }
+            }
         } catch {}
     };
 
@@ -134,7 +156,7 @@ export default function DosenMainScreen() {
             case 'sub_cpmk':    return <SubCpmkScreen subCpmkList={subCpmkList} onAdd={handleAddSubCpmk} onUpdate={handleUpdateSubCpmk} />;
             case 'input_nilai': return <InputNilaiScreen kelasList={formattedKelas} subCpmkList={subCpmkList} onAddGrade={handleAddGrade} onUpdateGrade={handleUpdateGrade} />;
             case 'capaian_mhs': return <CapaianScreen kelasList={formattedKelas} />;
-            case 'profile':     return <ProfilDetailScreen user={enrichedUser} />;
+            case 'profile':     return <ProfilDetailScreen user={enrichedUser} nidn={dosenNidn} namaProdi={dosenProdi} />;
             default:            return null;
         }
     };

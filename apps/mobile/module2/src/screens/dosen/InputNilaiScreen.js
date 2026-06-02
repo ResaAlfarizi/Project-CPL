@@ -245,7 +245,13 @@ export default function InputNilaiScreen({
                                         >
                                             <Text style={styles.miniSelectBtnText} numberOfLines={1}>
                                                 {selectedSubCpmkId
-                                                    ? (() => { const sc = kelasSubCpmk.find(s => s.id === selectedSubCpmkId); return sc ? sc.kode_sub_cpmk : selectedSubCpmkId; })()
+                                                    ? (() => {
+                                                        const sc = kelasSubCpmk.find(s => s.id === selectedSubCpmkId);
+                                                        if (!sc) return selectedSubCpmkId;
+                                                        return sc.kode_cpl
+                                                            ? `${sc.kode_sub_cpmk} → CPL: ${sc.kode_cpl}`
+                                                            : sc.kode_sub_cpmk;
+                                                      })()
                                                     : '-- Pilih --'}
                                             </Text>
                                             <MaterialCommunityIcons name="menu-down" size={16} color="#64748B" />
@@ -380,15 +386,32 @@ export default function InputNilaiScreen({
                         <Text style={styles.modalHeaderTitle}>Pilih Sub-CPMK</Text>
                         {kelasSubCpmk.length === 0 ? (
                             <Text style={{ color: '#94A3B8', fontSize: 13, padding: 8 }}>Tidak ada Sub-CPMK tersedia</Text>
-                        ) : kelasSubCpmk.map(c => (
-                            <TouchableOpacity
-                                key={c.id}
-                                style={styles.optionRow}
-                                onPress={() => { setSelectedSubCpmkId(c.id); setShowSubCpmkModal(false); }}
-                            >
-                                <Text style={styles.optionText}>{c.kode_sub_cpmk} - {c.deskripsi}</Text>
-                            </TouchableOpacity>
-                        ))}
+                        ) : kelasSubCpmk.map(sc => {
+                            const desc = sc.deskripsi
+                                ? (sc.deskripsi.length > 50 ? sc.deskripsi.substring(0, 50) + '...' : sc.deskripsi)
+                                : null;
+                            return (
+                                <TouchableOpacity
+                                    key={sc.id}
+                                    style={styles.optionRow}
+                                    onPress={() => { setSelectedSubCpmkId(sc.id); setShowSubCpmkModal(false); }}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: desc ? 3 : 0 }}>
+                                        <View style={styles.subCpmkCodeBadge}>
+                                            <Text style={styles.subCpmkCodeText}>{sc.kode_sub_cpmk}</Text>
+                                        </View>
+                                        {sc.kode_cpl ? (
+                                            <View style={styles.cplBadge}>
+                                                <Text style={styles.cplBadgeText}>CPL: {sc.kode_cpl}</Text>
+                                            </View>
+                                        ) : null}
+                                    </View>
+                                    {desc ? (
+                                        <Text style={styles.optionSubText}>{desc}</Text>
+                                    ) : null}
+                                </TouchableOpacity>
+                            );
+                        })}
                     </View>
                 </TouchableOpacity>
             </Modal>
@@ -852,6 +875,36 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-SemiBold',
         fontSize: 12,
         color: '#212121',
+    },
+    optionSubText: {
+        fontFamily: 'Urbanist-Regular',
+        fontSize: 11,
+        color: '#64748B',
+        marginTop: 3,
+    },
+    subCpmkCodeBadge: {
+        backgroundColor: '#212121',
+        borderRadius: 6,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+    },
+    subCpmkCodeText: {
+        fontFamily: 'Urbanist-Bold',
+        fontSize: 10,
+        fontWeight: '800',
+        color: '#FFFFFF',
+    },
+    cplBadge: {
+        backgroundColor: '#cad4ed',
+        borderRadius: 6,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+    },
+    cplBadgeText: {
+        fontFamily: 'Urbanist-Bold',
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#212c21',
     },
     emptyGrade: {
         padding: 24,
