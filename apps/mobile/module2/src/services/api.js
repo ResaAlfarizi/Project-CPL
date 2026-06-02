@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // PENTING: Ganti dengan IP komputer Anda yang menjalankan backend
-const API_BASE = 'http://192.168.18.81:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
+const API_BASE = 'http://20.5.24.235:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
 
 const TOKEN_KEY = 'auth_token';
 

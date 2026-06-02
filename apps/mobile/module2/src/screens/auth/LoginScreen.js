@@ -80,6 +80,8 @@ export default function LoginScreen({ navigation }) {
 
             if (role === 'mahasiswa') {
                 navigation.replace('MahasiswaMain', { user: formattedUser });
+            } else if (role === 'superadmin') {
+                navigation.replace('SuperAdminMain', { user: formattedUser });
             } else if (role === 'admin' || role === 'admin_prodi') {
                 navigation.replace('AdminMain', { user: formattedUser });
             } else {
