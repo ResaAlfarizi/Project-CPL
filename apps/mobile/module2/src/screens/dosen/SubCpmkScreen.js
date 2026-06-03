@@ -36,7 +36,7 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate }) {
 
     useEffect(() => {
         setMkCplLoading(true);
-        mkCplApi.getAll()
+        mkCplApi.getMyMkCpl()
             .then(res => setMkCplList(res?.data || res || []))
             .catch(() => setMkCplList([]))
             .finally(() => setMkCplLoading(false));
@@ -78,8 +78,9 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate }) {
     // ── Helpers ──────────────────────────────────────────────────────────────
     const selectedMkCpl = mkCplList.find(m => m.id === mkCplId);
 
+    // Format label sama persis dengan web dosen
     const mkCplLabel = (m) =>
-        `${m.nama_mk || ''} (${m.kode_mk || ''}) → ${m.kode_cpl || ''} (Bobot: ${Math.round((m.bobot || 0) * 100)}%)`;
+        `${m.nama_mk || ''} (${m.kode_mk || ''}) → ${m.kode_cpl || ''}`;
 
     const openAddModal = (prefillMkCplId = '') => {
         setEditMode(false); setSelectedId(null);
@@ -336,13 +337,17 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate }) {
                                 <Ionicons name="library-outline" size={20} color={PRIMARY_BLUE} style={styles.inputIcon} />
                                 <TouchableOpacity
                                     style={styles.dropdownTrigger}
-                                    onPress={() => { Keyboard.dismiss(); setShowMkDropdown(!showMkDropdown); }}
+                                    onPress={() => { Keyboard.dismiss(); setShowMkDropdown(true); }}
                                     disabled={editMode}
                                 >
                                     <Text style={[styles.dropdownValue, !mkCplId && { color: '#94A3B8' }]} numberOfLines={2}>
-                                        {mkCplLoading ? 'Memuat...' : selectedMkCpl ? mkCplLabel(selectedMkCpl) : '-- Pilih MK dan CPL --'}
+                                        {mkCplLoading
+                                            ? 'Memuat...'
+                                            : selectedMkCpl
+                                                ? `${selectedMkCpl.nama_mk} (${selectedMkCpl.kode_mk}) → ${selectedMkCpl.kode_cpl}`
+                                                : '-- Pilih MK dan CPL --'}
                                     </Text>
-                                    {!editMode && <Ionicons name={showMkDropdown ? 'chevron-up-outline' : 'chevron-down-outline'} size={20} color="#64748B" />}
+                                    {!editMode && <Ionicons name="chevron-down-outline" size={20} color="#64748B" />}
                                 </TouchableOpacity>
                             </View>
                             {/* Kode */}
@@ -374,32 +379,63 @@ export default function SubCpmkScreen({ subCpmkList, onAdd, onUpdate }) {
                             </View>
                         </ScrollView>
                     </View>
-                    {/* Picker MK-CPL */}
-                    {showMkDropdown && (
-                        <View style={styles.pickerOverlay}>
-                            <View style={styles.pickerBox}>
-                                <Text style={styles.pickerTitle}>Pilih Mata Kuliah → CPL</Text>
-                                <FlatList
-                                    data={mkCplList}
-                                    keyExtractor={item => String(item.id)}
-                                    showsVerticalScrollIndicator
-                                    renderItem={({ item }) => (
+                </View>
+            </Modal>
+
+            {/* ── Modal Picker MK-CPL — Modal TERPISAH agar FlatList bisa scroll penuh ── */}
+            <Modal
+                visible={showMkDropdown}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowMkDropdown(false)}
+            >
+                <View style={styles.pickerModalOverlay}>
+                    <TouchableWithoutFeedback onPress={() => setShowMkDropdown(false)}>
+                        <View style={styles.pickerModalBackdrop} />
+                    </TouchableWithoutFeedback>
+                    <View style={styles.pickerModalSheet}>
+                        {/* Handle bar */}
+                        <View style={styles.pickerHandle} />
+                        <Text style={styles.pickerTitle}>Pilih Mata Kuliah → CPL</Text>
+                        <FlatList
+                            data={mkGroups}
+                            keyExtractor={(item) => item.kode_mk}
+                            showsVerticalScrollIndicator={true}
+                            keyboardShouldPersistTaps="handled"
+                            contentContainerStyle={{ paddingBottom: 12 }}
+                            renderItem={({ item: group }) => (
+                                <View>
+                                    {/* Header Mata Kuliah */}
+                                    <View style={styles.pickerMkHeader}>
+                                        <View style={styles.pickerMkKodeBadge}>
+                                            <Text style={styles.pickerMkKodeText}>{group.kode_mk}</Text>
+                                        </View>
+                                        <Text style={styles.pickerMkNama} numberOfLines={1}>{group.nama_mk}</Text>
+                                    </View>
+                                    {/* CPL options di bawah MK ini */}
+                                    {group.mkCplItems.map((mc) => (
                                         <TouchableOpacity
-                                            style={[styles.pickerOption, item.id === mkCplId && styles.pickerOptionSelected]}
-                                            onPress={() => { setMkCplId(item.id); setShowMkDropdown(false); }}
+                                            key={mc.id}
+                                            style={[styles.pickerOption, mc.id === mkCplId && styles.pickerOptionSelected]}
+                                            onPress={() => { setMkCplId(mc.id); setShowMkDropdown(false); }}
                                         >
-                                            <Text style={[styles.pickerOptionText, item.id === mkCplId && { color: PRIMARY_BLUE, fontWeight: '700' }]}>
-                                                {mkCplLabel(item)}
-                                            </Text>
+                                            <View style={styles.pickerOptionRow}>
+                                                <View style={styles.pickerCplBadge}>
+                                                    <Text style={styles.pickerCplBadgeText}>{mc.kode_cpl}</Text>
+                                                </View>
+                                                <Text style={[styles.pickerOptionText, mc.id === mkCplId && { color: PRIMARY_BLUE, fontFamily: 'Urbanist-Bold' }]} numberOfLines={2}>
+                                                    {`${group.nama_mk} (${group.kode_mk}) → ${mc.kode_cpl}`}
+                                                </Text>
+                                            </View>
                                         </TouchableOpacity>
-                                    )}
-                                />
-                                <TouchableOpacity style={styles.pickerCloseBtn} onPress={() => setShowMkDropdown(false)}>
-                                    <Text style={styles.pickerCloseText}>Batal</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    )}
+                                    ))}
+                                </View>
+                            )}
+                        />
+                        <TouchableOpacity style={styles.pickerCloseBtn} onPress={() => setShowMkDropdown(false)}>
+                            <Text style={styles.pickerCloseText}>Batal</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </Modal>
 
@@ -589,13 +625,59 @@ const styles = StyleSheet.create({
     btnSubmit: { flex: 0.55, backgroundColor: PRIMARY_BLUE, borderRadius: 18, paddingVertical: 14, alignItems: 'center', elevation: 3 },
     btnSubmitText: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 14 },
 
-    // ── Picker ──
-    pickerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 999, padding: 20 },
-    pickerBox:     { backgroundColor: '#FFF', width: '100%', borderRadius: 24, maxHeight: '75%', padding: 20, elevation: 10 },
+    // ── Picker Modal (Modal terpisah, bottom sheet) ──
+    pickerModalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(33,44,33,0.5)',
+    },
+    pickerModalBackdrop: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    pickerModalSheet: {
+        backgroundColor: '#FFF',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+        paddingTop: 12,
+        maxHeight: '80%',       // batas tinggi 80% layar
+        elevation: 20,
+    },
+    pickerHandle: {
+        width: 40, height: 5,
+        backgroundColor: '#E2E8F0',
+        borderRadius: 10,
+        alignSelf: 'center',
+        marginBottom: 14,
+    },
+    pickerList:    { flexShrink: 1 },   // tidak perlu lagi, tapi tetap ada untuk kompatibilitas
     pickerTitle:   { fontFamily: 'Urbanist-Bold', fontSize: 17, color: PRIMARY_BLUE, textAlign: 'center', marginBottom: 14 },
-    pickerOption:  { paddingVertical: 13, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+
+    // MK group header dalam picker
+    pickerMkHeader: {
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: THEME_COLOR,
+        paddingHorizontal: 12, paddingVertical: 8,
+        borderRadius: 10, marginTop: 8, marginBottom: 4,
+    },
+    pickerMkKodeBadge: {
+        backgroundColor: 'rgba(33,44,33,0.15)',
+        borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2,
+    },
+    pickerMkKodeText: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: '#212121' },
+    pickerMkNama: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#212121', flex: 1 },
+
+    pickerOption:  { paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
     pickerOptionSelected: { backgroundColor: '#EFF0A3', borderRadius: 10 },
-    pickerOptionText: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#212121' },
+    pickerOptionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    pickerCplBadge: {
+        backgroundColor: '#D8DFE9',
+        borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2,
+        flexShrink: 0,
+    },
+    pickerCplBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#212121' },
+    pickerOptionText: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#212121', flex: 1 },
     pickerCloseBtn: { marginTop: 14, paddingVertical: 10, paddingHorizontal: 30, backgroundColor: CANCEL_BG, borderRadius: 14, alignSelf: 'center', borderWidth: 1, borderColor: '#ffcdd2' },
     pickerCloseText: { color: CANCEL_TEXT, fontFamily: 'Urbanist-Bold', fontSize: 14 },
 

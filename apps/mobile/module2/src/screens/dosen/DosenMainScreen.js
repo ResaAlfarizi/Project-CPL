@@ -59,15 +59,17 @@ export default function DosenMainScreen() {
     const [dashboardData, setDashboardData] = useState({});
     const [dosenNidn, setDosenNidn]       = useState('-');
     const [dosenProdi, setDosenProdi]     = useState('-');
+    const [dosenNama, setDosenNama]       = useState(user?.nama || user?.name || '');
 
     useEffect(() => { loadAllData(); }, []);
 
     const loadAllData = async () => {
+        let kelasList_local = [];
         try {
             const [dashRes, kelasRes, subRes, profileRes] = await Promise.allSettled([
                 dashboardApi.getDosen(),
                 kelasApi.getMyClasses(),
-                subCpmkApi.getAll(),
+                subCpmkApi.getMySubCpmk(),
                 profileApi.getMyProfile(),
             ]);
             if (dashRes.status === 'fulfilled') {
@@ -75,25 +77,27 @@ export default function DosenMainScreen() {
                 setDashboardData(d.statistik ? { ...d.statistik, kelas: d.kelas || [] } : d);
             }
             if (kelasRes.status === 'fulfilled') {
-                const list = kelasRes.value?.data || [];
-                setKelasList(list);
-                // Ambil NIDN dari detail kelas pertama jika belum dapat dari profile
-                if (list.length > 0) {
-                    try {
-                        const detailJson = await kelasApi.getById(list[0].id);
-                        const detail = detailJson.data || {};
-                        if (detail.nidn) setDosenNidn(detail.nidn);
-                        if (detail.nama_prodi) setDosenProdi(detail.nama_prodi);
-                    } catch {}
-                }
+                kelasList_local = kelasRes.value?.data || [];
+                setKelasList(kelasList_local);
             }
             if (subRes.status === 'fulfilled')   setSubCpmkList(subRes.value?.data || []);
             if (profileRes.status === 'fulfilled') {
                 const pData = profileRes.value?.data || {};
-                // nama_prodi dari /profile/me sudah benar
+                // Nama dan prodi dari database via /profile/me
+                if (pData.nama) setDosenNama(pData.nama);
                 if (pData.nama_prodi && pData.nama_prodi !== 'Program Studi') {
                     setDosenProdi(pData.nama_prodi);
                 }
+            }
+        } catch {}
+
+        // Ambil NIDN dari detail kelas pertama
+        try {
+            if (kelasList_local.length > 0) {
+                const detailJson = await kelasApi.getById(kelasList_local[0].id);
+                const detail = detailJson.data || {};
+                if (detail.nidn) setDosenNidn(detail.nidn);
+                // nama_prodi TIDAK diambil dari kelas — prodi dosen sudah benar dari /profile/me
             }
         } catch {}
     };
@@ -147,7 +151,9 @@ export default function DosenMainScreen() {
         total_mahasiswa: k.total_mahasiswa ?? k.jumlah_mahasiswa ?? (k.mahasiswa || []).length ?? 0,
     }));
 
-    const enrichedUser = user ? { ...user } : user;
+    const enrichedUser = user
+        ? { ...user, name: dosenNama || user?.nama || user?.name || 'Dosen' }
+        : { name: dosenNama || 'Dosen' };
 
     const renderActiveScreen = () => {
         switch (currentScreen) {
@@ -177,7 +183,7 @@ export default function DosenMainScreen() {
                                 Portal Dosen
                             </Text>
                             <Text style={[styles.subtitle, { color: isScrolled ? '#A1A1AA' : COLORS.textMuted }]} numberOfLines={1}>
-                                {user?.name || 'Dosen Pengajar'}
+                                {dosenNama || user?.nama || user?.name || 'Dosen Pengajar'}
                             </Text>
                             {user?.email ? (
                                 <View style={styles.emailWrap}>
@@ -285,7 +291,7 @@ export default function DosenMainScreen() {
                         style={styles.profileBtn}
                         onPress={() => setOptionsModalVisible(true)}
                     >
-                        <Text style={styles.avatarText}>{user?.avatar || (user?.name?.[0] || 'D').toUpperCase()}</Text>
+                        <Text style={styles.avatarText}>{user?.avatar || ((dosenNama || user?.nama || user?.name || 'D')?.[0] || 'D').toUpperCase()}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -320,11 +326,11 @@ export default function DosenMainScreen() {
                             <View style={styles.dropdownProfileWrap}>
                                 <View style={styles.dropdownAvatar}>
                                     <Text style={styles.dropdownAvatarText}>
-                                        {(user?.name?.[0] || 'D').toUpperCase()}
+                                        {((dosenNama || user?.nama || user?.name || 'D')?.[0] || 'D').toUpperCase()}
                                     </Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.dropdownName} numberOfLines={1}>{user?.name || 'Dosen'}</Text>
+                                    <Text style={styles.dropdownName} numberOfLines={1}>{dosenNama || user?.nama || user?.name || 'Dosen'}</Text>
                                     <Text style={styles.dropdownEmail} numberOfLines={1}>{user?.email || ''}</Text>
                                     <View style={styles.dropdownBadge}>
                                         <Text style={styles.dropdownBadgeText}>Dosen Pengajar</Text>

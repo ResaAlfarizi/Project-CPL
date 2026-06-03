@@ -28,27 +28,29 @@ export default function CapaianScreen({ kelasList = [] }) {
         setSearchQuery('');
     };
 
-    // Stats
-    const uniqueStudents  = [...new Set(capaianList.map(c => c.mahasiswa_id || c.enrollment_id).filter(Boolean))];
-    const totalMahasiswa  = uniqueStudents.length;
-    const validNilai      = capaianList.map(c => c.nilai_capaian).filter(n => n != null && !isNaN(n));
-    const averageNilai    = validNilai.length > 0
-        ? (validNilai.reduce((s, v) => s + Number(v), 0) / validNilai.length).toFixed(1)
-        : '0.0';
-    const excellenceCount = capaianList.filter(c => (c.status || '').toLowerCase().includes('excellence')).length;
-
-    const getStatusStyle = (status) => {
-        const s = (status || '').toLowerCase();
-        if (s.includes('excellence'))  return { badge: styles.badgeExcellent,    text: styles.badgeExcellentText };
-        if (s.includes('satisfactory')) return { badge: styles.badgeSatisfactory, text: styles.badgeSatisfactoryText };
-        return { badge: styles.badgeNeedsImp, text: styles.badgeNeedsImpText };
-    };
-
     const displayRows = capaianList.filter(c =>
         (c.nama_mahasiswa || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (c.nim || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (c.kode_cpl || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    // Stats dihitung dari displayRows (sama seperti web dosen — dari data yang terfilter)
+    const uniqueStudents  = new Set(
+        displayRows.map(c => c.mahasiswa_id || c.enrollment_id).filter(id => id != null && id !== '')
+    );
+    const totalMahasiswa  = uniqueStudents.size;
+    const validNilai      = displayRows.map(c => c.nilai_capaian).filter(n => n != null && !isNaN(n));
+    const averageNilai    = validNilai.length > 0
+        ? (validNilai.reduce((s, v) => s + Number(v), 0) / validNilai.length).toFixed(1)
+        : '0.0';
+    const excellenceCount = displayRows.filter(c => (c.status || '').toLowerCase().includes('excellence')).length;
+
+    const getStatusStyle = (status) => {
+        const s = (status || '').toLowerCase();
+        if (s.includes('excellence'))   return { badge: styles.badgeExcellent,    text: styles.badgeExcellentText };
+        if (s.includes('satisfactory')) return { badge: styles.badgeSatisfactory, text: styles.badgeSatisfactoryText };
+        return { badge: styles.badgeNeedsImp, text: styles.badgeNeedsImpText };
+    };
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

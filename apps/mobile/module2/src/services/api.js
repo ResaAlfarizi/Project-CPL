@@ -115,6 +115,7 @@ export const dashboardApi = {
 
 export const profileApi = {
     getMyProfile:    ()       => apiFetch('/profile/me'),
+    getDosenProfile: ()       => apiFetch('/profile/dosen/me'),
     getAdmin:        ()       => apiFetch('/profile/me'), 
     updateProfile:   (body)   => apiFetch('/profile/me', { method: 'PUT', body: JSON.stringify(body) }),
     changePassword:  (body)   => apiFetch('/profile/change-password', { method: 'PUT', body: JSON.stringify(body) }),
@@ -147,15 +148,17 @@ export const cplApi = {
 // ─── SUB-CPMK ─────────────────────────────────────────────────────────────────
 
 export const subCpmkApi = {
-    getAll:    ()       => apiFetch('/sub-cpmk'),
-    getByMk:   (mkId)   => apiFetch(`/sub-cpmk/mk/${mkId}`),
-    create: (body)      => apiFetch('/sub-cpmk', { method: 'POST', body: JSON.stringify(body) }),
-    update: (id, body)  => apiFetch(`/sub-cpmk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    getAll:        ()       => apiFetch('/sub-cpmk'),
+    getMySubCpmk:  ()       => apiFetch('/sub-cpmk/dosen/my-sub-cpmk'),
+    getByMk:       (mkId)   => apiFetch(`/sub-cpmk/mk/${mkId}`),
+    create:        (body)   => apiFetch('/sub-cpmk', { method: 'POST', body: JSON.stringify(body) }),
+    update:        (id, body) => apiFetch(`/sub-cpmk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
 };
 
 // ─── MK-CPL ───────────────────────────────────────────────────────────────────
 export const mkCplApi = {
-    getAll: () => apiFetch('/mk-cpl'),
+    getAll:      () => apiFetch('/mk-cpl'),
+    getMyMkCpl:  () => apiFetch('/mk-cpl/dosen/my-mk-cpl'),
 };
 
 // ─── NILAI ────────────────────────────────────────────────────────────────────
