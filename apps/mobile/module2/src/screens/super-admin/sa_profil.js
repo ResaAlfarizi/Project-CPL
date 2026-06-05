@@ -64,7 +64,7 @@ export default function SAProfilScreen({ navigation }) {
               </View>
               <View style={styles.infoTextWrap}>
                 <Text style={styles.infoLabel}>Email Sistem</Text>
-                <Text style={styles.infoValue}>root.superadmin@sistemcpl.ac.id</Text>
+                <Text style={styles.infoValue}>superadmin@kampus.ac.id</Text>
               </View>
             </View>
 
@@ -74,7 +74,7 @@ export default function SAProfilScreen({ navigation }) {
               </View>
               <View style={styles.infoTextWrap}>
                 <Text style={styles.infoLabel}>Pusat Kendali</Text>
-                <Text style={styles.infoValue}>Rektorat / Pusat Data & TI</Text>
+                <Text style={styles.infoValue}>Pusat Data & TI</Text>
               </View>
             </View>
 

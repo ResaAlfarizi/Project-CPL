@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // PENTING: Ganti dengan IP komputer Anda yang menjalankan backend
-const API_BASE = 'http://192.168.1.2:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
+const API_BASE = 'http://192.168.18.252:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
 
 const TOKEN_KEY = 'auth_token';
 
@@ -77,7 +77,6 @@ export const authApi = {
     login: async ({ email, password }) => {
         console.log('🔐 Login attempt:', email);
         const url = `${API_BASE}/auth/login`;
-        console.log('🌐 Login URL:', url);
         
         try {
             const res = await fetch(url, {
@@ -86,15 +85,12 @@ export const authApi = {
                 body: JSON.stringify({ email, password }),
             });
             
-            console.log('📡 Login response status:', res.status);
             const data = await res.json();
             
             if (!res.ok) {
-                console.error('❌ Login failed:', data.message);
                 throw new Error(data.message || 'Login gagal');
             }
             
-            console.log('✅ Login success:', data.user?.nama || data.user?.name);
             return data;
         } catch (error) {
             console.error('❌ Login error:', error.message);
@@ -106,9 +102,10 @@ export const authApi = {
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
 export const dashboardApi = {
-    getDosen: () => apiFetch('/dashboard/dosen'),
-    // Tambahkan baris di bawah ini:
-    getAdmin: (prodiId) => apiFetch(`/dashboard/admin/${prodiId}`),
+    getDosen:       ()          => apiFetch('/dashboard/dosen'),
+    getAdmin:       (prodiId)   => apiFetch(`/dashboard/admin/${prodiId}`),
+    getSuperAdmin:  ()          => apiFetch('/dashboard/superadmin'),
+    getCapaianAgregat:   ()        => apiFetch('/dashboard/capaian-agregat'),
 };
 
 // ─── PROFILE ──────────────────────────────────────────────────────────────────
@@ -123,17 +120,23 @@ export const profileApi = {
 // ─── KELAS ────────────────────────────────────────────────────────────────────
 
 export const kelasApi = {
-    getMyClasses: () => apiFetch('/kelas/dosen/my-classes'),
-    getById:      (id) => apiFetch(`/kelas/${id}`),
+    getAll:       ()    => apiFetch('/kelas'),            // Dipakai sa_input_nilai (daftar semua kelas)
+    getMyClasses: ()    => apiFetch('/kelas/dosen/my-classes'),
+    getById:      (id)  => apiFetch(`/kelas/${id}`),
 };
 
 // ─── PRODI ────────────────────────────────────────────────────────────────────
 
 export const prodiApi = {
-    getAll: () => apiFetch('/prodi'),
+    getAll:  ()             => apiFetch('/prodi'),
+    getById: (id)           => apiFetch(`/prodi/${id}`),
+    // ✅ BARU: Create, Update, Delete untuk Superadmin
+    create:  (body)         => apiFetch('/prodi', { method: 'POST', body: JSON.stringify(body) }),
+    update:  (id, body)     => apiFetch(`/prodi/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:  (id)           => apiFetch(`/prodi/${id}`, { method: 'DELETE' }),
 };
 
-// ─── ✅ CPL (SUDAH DIPERBAIKI SECARA LENGKAP SESUAI BACKEND) ──────────────────
+// ─── CPL ──────────────────────────────────────────────────────────────────────
 
 export const cplApi = {
     getAll:      ()         => apiFetch('/cpl'),
@@ -144,18 +147,63 @@ export const cplApi = {
     delete:      (id)       => apiFetch(`/cpl/${id}`, { method: 'DELETE' }),
 };
 
+// ─── MATA KULIAH (MK) ─────────────────────────────────────────────────────────
+
+export const mkApi = {
+    getAll:      ()             => apiFetch('/mk'),
+    getById:     (id)           => apiFetch(`/mk/${id}`),
+    getByProdi:  (prodiId)      => apiFetch(`/mk/prodi/${prodiId}`),
+    // ✅ BARU: CRUD lengkap untuk Superadmin
+    create:      (body)         => apiFetch('/mk', { method: 'POST', body: JSON.stringify(body) }),
+    update:      (id, body)     => apiFetch(`/mk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:      (id)           => apiFetch(`/mk/${id}`, { method: 'DELETE' }),
+};
+
+// ─── MATA KULIAH SUPERADMIN ───────────────────────────────────────────────────
+// Endpoint /mata-kuliah (terbukti jalan, dipakai SAKelolaMKScreen)
+// mkApi lama tidak disentuh agar screen lain tidak terdampak
+
+export const mkSaApi = {
+    getAll:  ()             => apiFetch('/mata-kuliah'),
+    create:  (body)         => apiFetch('/mata-kuliah', { method: 'POST', body: JSON.stringify(body) }),
+    update:  (id, body)     => apiFetch(`/mata-kuliah/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:  (id)           => apiFetch(`/mata-kuliah/${id}`, { method: 'DELETE' }),
+};
+
 // ─── SUB-CPMK ─────────────────────────────────────────────────────────────────
 
 export const subCpmkApi = {
-    getAll:    ()       => apiFetch('/sub-cpmk'),
-    getByMk:   (mkId)   => apiFetch(`/sub-cpmk/mk/${mkId}`),
-    create: (body)      => apiFetch('/sub-cpmk', { method: 'POST', body: JSON.stringify(body) }),
-    update: (id, body)  => apiFetch(`/sub-cpmk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    getAll:       ()              => apiFetch('/sub-cpmk'),
+    getByMk:      (mkId)          => apiFetch(`/sub-cpmk/mk/${mkId}`),
+    // Sub-CPMK terhubung ke mk_cpl (bukan langsung cpl) — endpoint ini ambil sub_cpmk by mk_cpl_id
+    getByMkCpl:   (mkCplId)       => apiFetch(`/sub-cpmk/mk-cpl/${mkCplId}`),
+    create:       (body)          => apiFetch('/sub-cpmk', { method: 'POST', body: JSON.stringify(body) }),
+    update:       (id, body)      => apiFetch(`/sub-cpmk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    // ✅ BARU: Delete untuk Superadmin
+    delete:       (id)            => apiFetch(`/sub-cpmk/${id}`, { method: 'DELETE' }),
 };
 
 // ─── MK-CPL ───────────────────────────────────────────────────────────────────
+
 export const mkCplApi = {
-    getAll: () => apiFetch('/mk-cpl'),
+    getAll:      ()             => apiFetch('/mk-cpl'),
+    getByMk:     (mkId)         => apiFetch(`/mk-cpl/mk/${mkId}`),
+    // ✅ BARU: CRUD untuk Pemetaan MK-CPL
+    create:      (body)         => apiFetch('/mk-cpl', { method: 'POST', body: JSON.stringify(body) }),
+    update:      (id, body)     => apiFetch(`/mk-cpl/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:      (id)           => apiFetch(`/mk-cpl/${id}`, { method: 'DELETE' }),
+};
+
+// ─── THRESHOLD ────────────────────────────────────────────────────────────────
+// ✅ BARU: Endpoint Threshold untuk Superadmin
+
+export const thresholdApi = {
+    getAll:      ()             => apiFetch('/threshold'),
+    getByProdi:  (prodiId)      => apiFetch(`/threshold/prodi/${prodiId}`),
+    create:      (body)         => apiFetch('/threshold', { method: 'POST', body: JSON.stringify(body) }),
+    update:      (id, body)     => apiFetch(`/threshold/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:      (id)           => apiFetch(`/threshold/${id}`, { method: 'DELETE' }),
+    resetDefault: (prodiId)     => apiFetch(`/threshold/reset/${prodiId}`, { method: 'POST' }),
 };
 
 // ─── NILAI ────────────────────────────────────────────────────────────────────
@@ -165,6 +213,8 @@ export const nilaiApi = {
     getByKelas:      (kelasId)      => apiFetch(`/nilai/kelas/${kelasId}`),
     create:          (body)         => apiFetch('/nilai', { method: 'POST', body: JSON.stringify(body) }),
     update:          (id, body)     => apiFetch(`/nilai/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    // ✅ BARU: Delete nilai
+    delete:          (id)           => apiFetch(`/nilai/${id}`, { method: 'DELETE' }),
 };
 
 // ─── ENROLLMENT ───────────────────────────────────────────────────────────────
@@ -176,10 +226,37 @@ export const enrollmentApi = {
 // ─── CAPAIAN ──────────────────────────────────────────────────────────────────
 
 export const capaianApi = {
-    getByKelas: (kelasId) => apiFetch(`/capaian/kelas/${kelasId}`),
+    getByKelas:     (kelasId)   => apiFetch(`/capaian/kelas/${kelasId}`),
+    getAll:         ()          => apiFetch('/capaian'),
+    getByProdi:     (prodiId)   => apiFetch(`/capaian/prodi/${prodiId}`),
+    // ✅ BARU: Input manual capaian
+    create:         (body)      => apiFetch('/capaian', { method: 'POST', body: JSON.stringify(body) }),
+    update:         (id, body)  => apiFetch(`/capaian/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:         (id)        => apiFetch(`/capaian/${id}`, { method: 'DELETE' }),
 };
 
-// ─── USER API (KELOLA USER ADMIN) ─────────────────────────────────────────────
+// ─── CAPAIAN CPL MAHASISWA ─────────────────────────────────────────────────────
+// Backend endpoint ini harus membaca dari view v_capaian_cpl_mahasiswa
+// (JOIN mahasiswa, cpl, program_studi, threshold_status via get_status_cpl())
+// Dipakai sa_monitoring_cpl untuk monitoring lintas prodi
+
+export const capaianMhsApi = {
+    getAll:         ()              => apiFetch('/capaian-mahasiswa'),
+    getByProdi:     (prodiId)       => apiFetch(`/capaian-mahasiswa/prodi/${prodiId}`),
+    getByMahasiswa: (mahasiswaId)   => apiFetch(`/capaian-mahasiswa/${mahasiswaId}`),
+    create:         (body)          => apiFetch('/capaian-mahasiswa', { method: 'POST', body: JSON.stringify(body) }),
+    update:         (id, body)      => apiFetch(`/capaian-mahasiswa/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:         (id)            => apiFetch(`/capaian-mahasiswa/${id}`, { method: 'DELETE' }),
+};
+
+// ─── ROLES API ────────────────────────────────────────────────────────────────
+// Dipakai sa_hak_user untuk resolve nama_role → role_id (UUID) sesuai tabel roles di DB
+
+export const rolesApi = {
+    getAll: () => apiFetch('/roles'),
+};
+
+// ─── USER API ─────────────────────────────────────────────────────────────────
 
 export const userApi = {
     getAll:       ()             => apiFetch('/users'),
@@ -190,78 +267,49 @@ export const userApi = {
     delete:       (id)           => apiFetch(`/users/${id}`, { method: 'DELETE' }),
 };
 
-// ─── AUDIT LOG API ────────────────────────────────────────────────────────────
+// ─── DOSEN API ────────────────────────────────────────────────────────────────
+// ✅ BARU: Endpoint khusus dosen
 
-export const auditLogApi = {
-    getAll: async () => {
-        const token = await tokenStorage.get();
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const variations = [
-            '/auth-audit-log',
-            '/auth-audit-logs',
-            '/audit-log',
-            '/audit-logs',
-            '/audit'
-        ];
-
-        for (const path of variations) {
-            try {
-                const url = `${API_BASE}${path}`;
-                const res = await fetch(url, { method: 'GET', headers });
-                if (res.ok) {
-                    return await res.json();
-                }
-                if (res.status === 403 || res.status === 401) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.message || `Akses log ditolak role Anda (Status: ${res.status})`);
-                }
-            } catch (e) {
-                if (e.message.includes('ditolak')) throw e;
-            }
-        }
-        throw new Error("Endpoint Audit log tidak ditemukan di server (404).");
-    }
+export const dosenApi = {
+    getAll:       ()             => apiFetch('/dosen'),
+    getById:      (id)           => apiFetch(`/dosen/${id}`),
+    create:       (body)         => apiFetch('/dosen', { method: 'POST', body: JSON.stringify(body) }),
+    update:       (id, body)     => apiFetch(`/dosen/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:       (id)           => apiFetch(`/dosen/${id}`, { method: 'DELETE' }),
 };
 
 // ─── MAHASISWA API ────────────────────────────────────────────────────────────
 
 export const mahasiswaApi = {
+    getAll:         ()           => apiFetch('/mahasiswa'),
+    getById:        (id)         => apiFetch(`/mahasiswa/${id}`),
+    create:         (body)       => apiFetch('/mahasiswa', { method: 'POST', body: JSON.stringify(body) }),
+    update:         (id, body)   => apiFetch(`/mahasiswa/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:         (id)         => apiFetch(`/mahasiswa/${id}`, { method: 'DELETE' }),
+    
     getMyProfile: async () => {
         try {
-            console.log('📡 Calling: /profile/mahasiswa/me');
-            const result = await apiFetch('/profile/mahasiswa/me');
-            console.log('✅ Success: /profile/mahasiswa/me');
-            return result;
+            return await apiFetch('/profile/mahasiswa/me');
         } catch (error) {
-            console.error('❌ API Error:', error.message);
             return {
                 success: true,
                 data: {
-                    id: '1',
-                    nim: '123456789',
-                    nama: 'Mahasiswa Demo',
-                    email: 'mahasiswa@example.com',
-                    prodi_id: '1',
-                    nama_prodi: 'S1 Informatika',
-                    kode_prodi: 'IF',
-                    jenjang: 'S1',
-                    angkatan: 2021,
-                    total_kelas: 8,
-                    total_nilai: 24,
+                    id: '1', nim: '123456789', nama: 'Mahasiswa Demo',
+                    email: 'mahasiswa@example.com', prodi_id: '1',
+                    nama_prodi: 'S1 Informatika', kode_prodi: 'IF',
+                    jenjang: 'S1', angkatan: 2021, total_kelas: 8, total_nilai: 24,
                 }
             };
         }
     },
     
-    getAllProdi:         ()       => apiFetch('/prodi'),
-    getAllCPL:           ()       => apiFetch('/cpl'),
-    getCPLByProdi:       (prodiId) => apiFetch(`/cpl/prodi/${prodiId}`),
-    getAllKelas:         ()       => apiFetch('/kelas'),
-    getMyKelas:          ()       => apiFetch('/kelas'),
-    getAllSubCpmk:       ()       => apiFetch('/sub-cpmk'),
-    getSubCpmkByMk:      (mkId)   => apiFetch(`/sub-cpmk/mk/${mkId}`),
+    getAllProdi:         ()          => apiFetch('/prodi'),
+    getAllCPL:           ()          => apiFetch('/cpl'),
+    getCPLByProdi:       (prodiId)   => apiFetch(`/cpl/prodi/${prodiId}`),
+    getAllKelas:         ()          => apiFetch('/kelas'),
+    getMyKelas:         ()          => apiFetch('/kelas'),
+    getAllSubCpmk:       ()          => apiFetch('/sub-cpmk'),
+    getSubCpmkByMk:     (mkId)      => apiFetch(`/sub-cpmk/mk/${mkId}`),
     
     getMyCapaian: async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -290,4 +338,39 @@ export const mahasiswaApi = {
             ]
         };
     },
+};
+
+// ─── AUDIT LOG API ────────────────────────────────────────────────────────────
+
+export const auditLogApi = {
+    getAll: async () => {
+        const token = await tokenStorage.get();
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const variations = [
+            '/auth-audit-log',
+            '/auth-audit-logs',
+            '/audit-log',
+            '/audit-logs',
+            '/audit'
+        ];
+
+        for (const path of variations) {
+            try {
+                const url = `${API_BASE}${path}`;
+                const res = await fetch(url, { method: 'GET', headers });
+                if (res.ok) {
+                    return await res.json();
+                }
+                if (res.status === 403 || res.status === 401) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.message || `Akses log ditolak (Status: ${res.status})`);
+                }
+            } catch (e) {
+                if (e.message.includes('ditolak')) throw e;
+            }
+        }
+        throw new Error("Endpoint Audit log tidak ditemukan di server (404).");
+    }
 };
