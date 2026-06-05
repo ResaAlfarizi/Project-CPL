@@ -202,7 +202,7 @@ export default function InputNilaiScreen({
                                 <View style={styles.classInfoBadge}>
                                     <Text style={styles.classInfoBadgeText}>{selectedKelas.mk_kode}</Text>
                                 </View>
-                                <Text style={styles.classInfoName}>{selectedKelas.mk_nama} {selectedKelas.kelas}</Text>
+                                <Text style={styles.classInfoName} numberOfLines={2}>{selectedKelas.mk_nama} {selectedKelas.kelas}</Text>
                             </View>
                             {!showAddForm && (
                                 <TouchableOpacity activeOpacity={0.8} style={styles.addNilaiBtn} onPress={handleOpenAddForm}>
@@ -216,61 +216,53 @@ export default function InputNilaiScreen({
                         {showAddForm && (
                             <View style={styles.addFormCard}>
                                 <Text style={styles.formCardTitle}>Input Nilai Baru</Text>
-                                
-                                <View style={styles.formGrid}>
-                                    {/* Mahasiswa Selector */}
-                                    <View style={styles.gridCol}>
-                                        <Text style={styles.gridLabel}>Mahasiswa</Text>
-                                        <TouchableOpacity 
-                                            activeOpacity={0.8} 
-                                            style={styles.miniSelectBtn}
-                                            onPress={() => setShowMhsModal(true)}
-                                        >
-                                            <Text style={styles.miniSelectBtnText} numberOfLines={1}>
-                                                {selectedEnrollment
-                                                    ? (() => { const en = enrollments.find(e => e.id === selectedEnrollment); return en ? `${en.nim || ''} - ${en.nama_mahasiswa || ''}` : selectedEnrollment; })()
-                                                    : '-- Pilih --'}
-                                            </Text>
-                                            <MaterialCommunityIcons name="menu-down" size={16} color="#64748B" />
-                                        </TouchableOpacity>
-                                    </View>
 
-                                    {/* Sub-CPMK Selector */}
-                                    <View style={styles.gridCol}>
-                                        <Text style={styles.gridLabel}>Sub-CPMK</Text>
-                                        <TouchableOpacity 
-                                            activeOpacity={0.8} 
-                                            style={styles.miniSelectBtn}
-                                            onPress={() => setShowSubCpmkModal(true)}
-                                        >
-                                            <Text style={styles.miniSelectBtnText} numberOfLines={1}>
-                                                {selectedSubCpmkId
-                                                    ? (() => {
-                                                        const sc = kelasSubCpmk.find(s => s.id === selectedSubCpmkId);
-                                                        if (!sc) return selectedSubCpmkId;
-                                                        return sc.kode_cpl
-                                                            ? `${sc.kode_sub_cpmk} → CPL: ${sc.kode_cpl}`
-                                                            : sc.kode_sub_cpmk;
-                                                      })()
-                                                    : '-- Pilih --'}
-                                            </Text>
-                                            <MaterialCommunityIcons name="menu-down" size={16} color="#64748B" />
-                                        </TouchableOpacity>
-                                    </View>
+                                {/* Mahasiswa Selector */}
+                                <Text style={styles.gridLabel}>Mahasiswa</Text>
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    style={styles.fullSelectBtn}
+                                    onPress={() => setShowMhsModal(true)}
+                                >
+                                    <Text style={styles.fullSelectBtnText} numberOfLines={2}>
+                                        {selectedEnrollment
+                                            ? (() => { const en = enrollments.find(e => e.id === selectedEnrollment); return en ? `${en.nim || ''} — ${en.nama_mahasiswa || ''}` : selectedEnrollment; })()
+                                            : '-- Pilih Mahasiswa --'}
+                                    </Text>
+                                    <MaterialCommunityIcons name="menu-down" size={18} color="#64748B" />
+                                </TouchableOpacity>
 
-                                    {/* Nilai Input */}
-                                    <View style={styles.gridCol}>
-                                        <Text style={styles.gridLabel}>Nilai (0-100)</Text>
-                                        <TextInput 
-                                            style={styles.miniInput}
-                                            value={nilaiInput}
-                                            onChangeText={setNilaiInput}
-                                            keyboardType="numeric"
-                                            placeholder="0 - 100"
-                                            placeholderTextColor="#94A3B8"
-                                        />
-                                    </View>
-                                </View>
+                                {/* Sub-CPMK Selector */}
+                                <Text style={[styles.gridLabel, { marginTop: 10 }]}>Sub-CPMK</Text>
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    style={styles.fullSelectBtn}
+                                    onPress={() => setShowSubCpmkModal(true)}
+                                >
+                                    <Text style={styles.fullSelectBtnText} numberOfLines={2}>
+                                        {selectedSubCpmkId
+                                            ? (() => {
+                                                const sc = kelasSubCpmk.find(s => s.id === selectedSubCpmkId);
+                                                if (!sc) return selectedSubCpmkId;
+                                                return sc.kode_cpl
+                                                    ? `${sc.kode_sub_cpmk} → CPL: ${sc.kode_cpl}`
+                                                    : sc.kode_sub_cpmk;
+                                              })()
+                                            : '-- Pilih Sub-CPMK --'}
+                                    </Text>
+                                    <MaterialCommunityIcons name="menu-down" size={18} color="#64748B" />
+                                </TouchableOpacity>
+
+                                {/* Nilai Input */}
+                                <Text style={[styles.gridLabel, { marginTop: 10 }]}>Nilai (0–100)</Text>
+                                <TextInput
+                                    style={styles.fullInput}
+                                    value={nilaiInput}
+                                    onChangeText={setNilaiInput}
+                                    keyboardType="numeric"
+                                    placeholder="Masukkan nilai 0 - 100"
+                                    placeholderTextColor="#94A3B8"
+                                />
 
                                 <View style={styles.formActions}>
                                     <TouchableOpacity activeOpacity={0.8} style={styles.btnFormSave} onPress={handleSaveNewGrade}>
@@ -313,7 +305,9 @@ export default function InputNilaiScreen({
                                             <View style={styles.gradeCardBody}>
                                                 <View style={styles.bodyDetails}>
                                                     <Text style={styles.tglText}>
-                                                        Tgl Input: {n.input_at ? new Date(n.input_at).toLocaleDateString('id-ID') : '-'}
+                                                        Tgl Input: {n.input_at
+                                                            ? new Date(n.input_at).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                                            : new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                     </Text>
                                                 </View>
 
@@ -550,6 +544,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
+        flex: 1,           // ambil sisa ruang, bukan dorong tombol
+        marginRight: 8,    // jarak minimal ke tombol
     },
     classInfoBadge: {
         backgroundColor: '#212121',
@@ -568,15 +564,17 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '800',
         color: '#212121',
+        flexShrink: 1,     // boleh menyusut saat nama panjang
     },
     addNilaiBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#EFF0A3', // Vanilla accent style
+        backgroundColor: '#EFF0A3',
         borderRadius: 10,
         paddingVertical: 6,
         paddingHorizontal: 10,
         gap: 4,
+        flexShrink: 0,     // tombol tidak boleh menyusut
     },
     addNilaiBtnText: {
         fontFamily: 'Urbanist-Bold',
@@ -634,6 +632,7 @@ const styles = StyleSheet.create({
     formActions: {
         flexDirection: 'row',
         gap: 8,
+        marginTop: 14,
     },
     btnFormSave: {
         backgroundColor: '#212121',
@@ -733,6 +732,21 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Medium',
         fontSize: 11,
         color: '#64748B',
+        marginTop: 4,
+    },
+    cplInfoBadge: {
+        backgroundColor: '#D8DFE9',
+        borderRadius: 6,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        alignSelf: 'flex-start',
+        marginBottom: 4,
+    },
+    cplInfoText: {
+        fontFamily: 'Urbanist-Bold',
+        fontSize: 10,
+        color: '#212121',
+        fontWeight: '700',
     },
     scoreRow: {
         flexDirection: 'row',
@@ -836,6 +850,40 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: '#212121',
         flex: 1,
+    },
+    // Full-width selector untuk form Input Nilai (mengganti grid 3 kolom)
+    fullSelectBtn: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        minHeight: 44,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        marginBottom: 2,
+    },
+    fullSelectBtnText: {
+        fontFamily: 'Urbanist-Bold',
+        fontSize: 12,
+        color: '#212121',
+        flex: 1,
+        marginRight: 8,
+        lineHeight: 18,
+    },
+    fullInput: {
+        height: 44,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        paddingHorizontal: 14,
+        fontFamily: 'Urbanist-Bold',
+        fontSize: 13,
+        color: '#212121',
+        marginBottom: 2,
     },
     modalBackdrop: {
         flex: 1,

@@ -112,6 +112,7 @@ export const dashboardApi = {
 
 export const profileApi = {
     getMyProfile:    ()       => apiFetch('/profile/me'),
+    getDosenProfile: ()       => apiFetch('/profile/dosen/me'),
     getAdmin:        ()       => apiFetch('/profile/me'), 
     updateProfile:   (body)   => apiFetch('/profile/me', { method: 'PUT', body: JSON.stringify(body) }),
     changePassword:  (body)   => apiFetch('/profile/change-password', { method: 'PUT', body: JSON.stringify(body) }),
