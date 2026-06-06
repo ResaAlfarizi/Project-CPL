@@ -30,7 +30,7 @@ export default function SuperAdminDashboardScreen({ navigation }) {
     totalProdi: 0,      
     totalDosen: 0,    
     totalMahasiswa: 0,
-    totalCPL: 0,       
+    totalCPL: 0,        
     totalMK: 0,
     totalPemetaan: 0,
     totalSubCpmk: 0,
@@ -41,7 +41,6 @@ export default function SuperAdminDashboardScreen({ navigation }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  // State untuk expand/collapse menu kelola universitas
   const [menuExpanded, setMenuExpanded] = useState(false);
 
   useEffect(() => {
@@ -65,7 +64,7 @@ export default function SuperAdminDashboardScreen({ navigation }) {
             totalProdi:     statistik.total_prodi      ?? 3,      
             totalDosen:     statistik.total_dosen      ?? 2,
             totalMahasiswa: statistik.total_mahasiswa  ?? 45,
-            totalCPL:       statistik.total_cpl        ?? 9,       
+            totalCPL:       statistik.total_cpl        ?? 9,        
             totalMK:        statistik.total_mk         ?? 9,
             totalPemetaan:  statistik.total_mk_cpl     ?? 27,
             totalSubCpmk:   statistik.total_sub_cpmk   ?? 81,
@@ -78,7 +77,6 @@ export default function SuperAdminDashboardScreen({ navigation }) {
           });
         }
 
-        // Fetch 4 aktivitas terbaru dari audit log
         try {
           const logRes = await auditLogApi.getAll();
           const logData = logRes?.data || logRes || [];
@@ -94,7 +92,6 @@ export default function SuperAdminDashboardScreen({ navigation }) {
           if (mapped.length > 0) setRecentLogs(mapped);
         } catch (logErr) {
           console.warn("Gagal menarik audit log untuk dashboard:", logErr.message);
-          // Tetap tampilkan tabel kosong; user bisa buka SA_AuditLog untuk detail
         }
 
       } catch (error) {
@@ -120,7 +117,6 @@ export default function SuperAdminDashboardScreen({ navigation }) {
     setIsScrolled(offsetY > 20);
   };
 
-  // ─── RINGKASAN AKADEMIK (7 item sesuai dokumen) ───
   const summaryItems = [
     { id: '1', title: 'Program Studi',  value: summary.totalProdi.toString(),     icon: 'business',     bgColor: COLORS.aliceBlue },
     { id: '2', title: 'CPL Terdaftar',  value: summary.totalCPL.toString(),       icon: 'analytics',    bgColor: COLORS.aliceBlue },
@@ -131,7 +127,6 @@ export default function SuperAdminDashboardScreen({ navigation }) {
     { id: '7', title: 'Sub-CPMK',       value: summary.totalSubCpmk.toString(),    icon: 'list-circle',  bgColor: COLORS.aliceBlue },
   ];
 
-  // ─── MENU KELOLA UNIVERSITAS (8 item) ───
   const menuItems = [
     { id: '1', title: 'Program Studi',    desc: 'Kelola data Program Studi',               icon: 'business',       route: 'SA_KelolaProdi' },
     { id: '2', title: 'Kelola CPL',    desc: 'Kelola data CPL Program Studi',               icon: 'business',       route: 'SA_KelolaCPL' },
@@ -142,11 +137,8 @@ export default function SuperAdminDashboardScreen({ navigation }) {
     { id: '7', title: 'Threshold',         desc: 'Atur batas nilai ambang CPL',             icon: 'options',        route: 'SA_Threshold' },
     { id: '8', title: 'Pantau Capaian',   desc: 'Pantau dan Kelola Capaian Mahasiswa',       icon: 'analytics',      route: 'SA_PantauCapaian' },
     { id: '9', title: 'Pantau Nilai',   desc: 'Kelola dan Input Nilai Mahasiswa',       icon: 'analytics',      route: 'SA_InputNilai' },
-    { id: '10', title: 'Manajemen User',    desc: 'Kelola hak akses & kredensial',           icon: 'shield-half',    route: 'SA_KelolaUser' },
+    { id: '10', title: 'Manajemen User',    desc: 'Kelola hak akses & kredensial',            icon: 'shield-half',    route: 'SA_KelolaUser' },
   ];
-
-  // Item yang ditampilkan: saat collapsed hanya 4 teratas, saat expanded semua
-  const visibleMenuItems = menuExpanded ? menuItems : menuItems.slice(0, 4);
 
   return (
     <ImageBackground 
@@ -253,7 +245,6 @@ export default function SuperAdminDashboardScreen({ navigation }) {
 
             {/* 2. MENU KELOLA UNIVERSITAS */}
             <View style={styles.sectionContainer}>
-              {/* Tombol utama pembuka menu */}
               <TouchableOpacity
                 style={styles.menuMasterBtn}
                 onPress={() => setMenuExpanded(!menuExpanded)}
@@ -279,7 +270,6 @@ export default function SuperAdminDashboardScreen({ navigation }) {
                 </View>
               </TouchableOpacity>
 
-              {/* Grid menu yang muncul setelah tombol ditekan */}
               {menuExpanded && (
                 <View style={styles.menuGrid}>
                   {menuItems.map((item) => (
@@ -302,7 +292,6 @@ export default function SuperAdminDashboardScreen({ navigation }) {
                 </View>
               )}
 
-              {/* Shortcut 4 item terpenting saat menu collapsed */}
               {!menuExpanded && (
                 <View style={styles.shortcutRow}>
                   {menuItems.slice(0, 4).map((item) => (
@@ -324,77 +313,73 @@ export default function SuperAdminDashboardScreen({ navigation }) {
 
             {/* 3. AKTIVITAS TERBARU */}
             <View style={styles.sectionContainer}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 12 }}>
-                <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('SA_AuditLog')}>
-                  <Text style={{ fontFamily: 'Urbanist-Medium', fontSize: 13, color: COLORS.primary }}>Lihat Semua</Text>
+              <View style={styles.sectionHeaderWrap}>
+                <Text style={styles.sectionTitleStyle}>Aktivitas Terbaru</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('SA_AuditLog')} style={styles.seeAllBtn}>
+                  <Text style={styles.seeAllText}>Lihat Semua</Text>
+                  <Ionicons name="arrow-forward" size={14} color={COLORS.primary} style={{ marginLeft: 4 }} />
                 </TouchableOpacity>
               </View>
-              <View style={styles.logTableWrap}>
-                <View style={styles.tableHeaderRow}>
-                  <Text style={[styles.tableHeaderCell, { flex: 1.2 }]}>AKTOR</Text>
-                  <Text style={[styles.tableHeaderCell, { flex: 1.5 }]}>DETAIL TINDAKAN</Text>
-                  <Text style={[styles.tableHeaderCell, { flex: 1.3 }]}>MODUL</Text>
-                </View>
-                
-                {recentLogs.map((log) => (
-                  <View key={log.id} style={styles.tableBodyRow}>
-                    <Text style={[styles.tableBodyCell, styles.userCell, { flex: 1.2 }]} numberOfLines={1}>
-                      {log.user}
-                    </Text>
-                    <View style={{ flex: 1.5, flexDirection: 'row', alignItems: 'center' }}>
-                      <View style={styles.badgeSuccess}>
-                        <Text style={styles.badgeSuccessText}>{log.status}</Text>
+              
+              <View style={styles.logCard}>
+                {recentLogs.length > 0 ? (
+                  recentLogs.map((log, index) => {
+                    const isLast = index === recentLogs.length - 1;
+                    return (
+                      <View key={log.id} style={[styles.logItemRow, isLast && styles.logItemRowLast]}>
+                        {/* Ikon Status dengan Background Rounded */}
+                        <View style={[
+                          styles.logIconWrap, 
+                          { backgroundColor: log.status === 'SUCCESS' ? COLORS.honeydew : COLORS.pinky }
+                        ]}>
+                          <Ionicons 
+                            name={log.status === 'SUCCESS' ? "shield-checkmark-outline" : "warning-outline"} 
+                            size={20} 
+                            color={log.status === 'SUCCESS' ? '#3B5935' : COLORS.danger} 
+                          />
+                        </View>
+                        
+                        {/* Konten Log */}
+                        <View style={styles.logContent}>
+                          <Text style={styles.logTextMain} numberOfLines={2}>
+                            <Text style={styles.logUser}>{log.user}</Text>
+                            <Text style={styles.logAction}> {log.action}</Text>
+                          </Text>
+                          <View style={styles.logResourceWrap}>
+                            <Ionicons name="folder-open-outline" size={12} color={COLORS.textMuted} style={{marginRight: 5}} />
+                            <Text style={styles.logResource} numberOfLines={1}>
+                              {log.resource}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {/* Label Status Kecil di Kanan */}
+                        <View style={[
+                          styles.logStatusBadge, 
+                          { backgroundColor: log.status === 'SUCCESS' ? 'rgba(220, 234, 215, 0.4)' : 'rgba(244, 214, 214, 0.4)' }
+                        ]}>
+                          <Text style={[
+                            styles.logStatusText, 
+                            { color: log.status === 'SUCCESS' ? '#3B5935' : COLORS.danger }
+                          ]}>
+                            {log.status === 'SUCCESS' ? 'Sukses' : 'Gagal'}
+                          </Text>
+                        </View>
                       </View>
-                      <Text style={[styles.tableBodyCell, styles.actionCell]} numberOfLines={1}>
-                        {log.action}
-                      </Text>
-                    </View>
-                    <Text style={[styles.tableBodyCell, styles.resourceCell, { flex: 1.3 }]} numberOfLines={1}>
-                      {log.resource}
-                    </Text>
+                    );
+                  })
+                ) : (
+                  <View style={styles.emptyLogWrap}>
+                    <Ionicons name="receipt-outline" size={32} color={COLORS.border} />
+                    <Text style={styles.emptyLogText}>Belum ada aktivitas tercatat.</Text>
                   </View>
-                ))}
+                )}
               </View>
             </View>
+
           </ScrollView>
         </>
       )}
-
-      {/* MODAL OPSI DROPDOWN */}
-      <Modal visible={optionsModalVisible} animationType="fade" transparent onRequestClose={() => setOptionsModalVisible(false)}>
-        <TouchableOpacity style={styles.dropdownOverlay} activeOpacity={1} onPress={() => setOptionsModalVisible(false)}>
-          <TouchableWithoutFeedback>
-            <View style={styles.dropdownBox}>
-              <View style={styles.dropdownProfileWrap}>
-                <View style={styles.dropdownAvatar}>
-                  <Text style={styles.dropdownAvatarText}>{adminName.charAt(0).toUpperCase()}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.dropdownName} numberOfLines={1}>{adminName}</Text>
-                  <Text style={styles.dropdownEmail} numberOfLines={1}>{adminEmail}</Text>
-                  <View style={[styles.dropdownBadge, { backgroundColor: COLORS.aliceBlue }]}>
-                    <Text style={[styles.dropdownBadgeText, { color: COLORS.primary }]}>Super Admin</Text>
-                  </View>
-                </View>
-              </View>
-              <View style={styles.dropdownDivider} />
-              <TouchableOpacity style={styles.dropdownMenuBtn} onPress={() => { setOptionsModalVisible(false); navigation.navigate('SA_Profil'); }}>
-                <Ionicons name="person-outline" size={20} color={COLORS.textMain} />
-                <Text style={styles.dropdownMenuText}>Profil Utama</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dropdownMenuBtn} onPress={() => { setOptionsModalVisible(false); navigation.navigate('SA_AuditLog'); }}>
-                <Ionicons name="document-text-outline" size={20} color={COLORS.textMain} />
-                <Text style={styles.dropdownMenuText}>Audit Log</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.dropdownMenuBtn, { marginTop: 8 }]} onPress={() => { setOptionsModalVisible(false); setLogoutModalVisible(true); }}>
-                <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
-                <Text style={[styles.dropdownMenuText, { color: COLORS.danger }]}>Keluar Sistem</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
-        </TouchableOpacity>
-      </Modal>
 
       {/* MODAL KONFIRMASI LOGOUT */}
       <Modal visible={logoutModalVisible} animationType="fade" transparent onRequestClose={() => setLogoutModalVisible(false)}>
@@ -454,7 +439,6 @@ const styles = StyleSheet.create({
   summaryValue: { fontFamily: 'Urbanist-Bold', fontSize: 28, color: COLORS.textMain },
   summaryTitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: COLORS.textMain, opacity: 0.7, marginTop: -2 },
 
-  // ─── TOMBOL UTAMA MENU KELOLA UNIVERSITAS ───
   menuMasterBtn: {
     marginHorizontal: 24,
     marginBottom: 16,
@@ -489,7 +473,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.9)',
   },
 
-  // ─── GRID MENU (saat expanded) ───
   menuGrid: {
     marginHorizontal: 24,
     flexDirection: 'row',
@@ -519,7 +502,6 @@ const styles = StyleSheet.create({
   menuGridTitle: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: COLORS.textMain, marginBottom: 4 },
   menuGridDesc: { fontFamily: 'Urbanist-Regular', fontSize: 11, color: COLORS.textMuted, lineHeight: 15 },
 
-  // ─── SHORTCUT 4 ITEM (saat collapsed) ───
   shortcutRow: {
     flexDirection: 'row',
     paddingHorizontal: 24,
@@ -543,19 +525,115 @@ const styles = StyleSheet.create({
   },
   shortcutLabel: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: COLORS.textMain, textAlign: 'center', lineHeight: 13 },
 
-  // ─── TABEL LOG ───
-  logTableWrap: { marginHorizontal: 24, backgroundColor: COLORS.surface, borderRadius: 24, padding: 16, borderWidth: 1, borderColor: COLORS.border, elevation: 2 },
-  tableHeaderRow: { flexDirection: 'row', paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  tableHeaderCell: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: COLORS.textMuted, letterSpacing: 0.5 },
-  tableBodyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  tableBodyCell: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: COLORS.textMain },
-  userCell: { fontFamily: 'Urbanist-SemiBold', color: COLORS.textMain },
-  actionCell: { marginLeft: 6, color: COLORS.textMuted, fontSize: 12, fontFamily: 'monospace' },
-  resourceCell: { color: COLORS.textMuted, textAlign: 'right' },
-  badgeSuccess: { backgroundColor: '#DEF7EC', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  badgeSuccessText: { color: '#03543F', fontFamily: 'Urbanist-Bold', fontSize: 10 },
+  // ─── STYLE AKTIVITAS TERBARU (ESTETIK & COHESIVE) ───
+  sectionHeaderWrap: {
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 24, 
+    marginBottom: 14,
+  },
+  sectionTitleStyle: {
+    fontFamily: 'Urbanist-Bold', 
+    fontSize: 18, 
+    color: COLORS.textMain,
+  },
+  seeAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.aliceBlue,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  seeAllText: { 
+    fontFamily: 'Urbanist-Bold', 
+    fontSize: 12, 
+    color: COLORS.primary 
+  },
+  logCard: {
+    backgroundColor: COLORS.surface,
+    marginHorizontal: 24,
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    elevation: 4, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  logItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(226, 232, 240, 0.6)', 
+  },
+  logItemRowLast: {
+    borderBottomWidth: 0,
+    paddingBottom: 4,
+  },
+  logIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  logContent: {
+    flex: 1,
+    marginRight: 10,
+  },
+  logTextMain: {
+    fontFamily: 'Urbanist-Regular',
+    fontSize: 14,
+    color: COLORS.textMain,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  logUser: {
+    fontFamily: 'Urbanist-Bold',
+    color: COLORS.primary,
+  },
+  logAction: {
+    color: COLORS.textMain,
+  },
+  logResourceWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logResource: {
+    fontFamily: 'Urbanist-Medium',
+    fontSize: 12,
+    color: COLORS.textMuted,
+    flex: 1,
+  },
+  logStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  logStatusText: {
+    fontFamily: 'Urbanist-Bold',
+    fontSize: 10,
+    textTransform: 'uppercase',
+  },
+  emptyLogWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  emptyLogText: {
+    fontFamily: 'Urbanist-Medium',
+    fontSize: 13,
+    color: COLORS.textMuted,
+    marginTop: 8,
+  },
 
-  // ─── MODAL ───
+  // MODAL STYLES
   alertOverlay: { flex: 1, backgroundColor: 'rgba(33, 44, 33, 0.5)', justifyContent: 'center', alignItems: 'center' },
   alertBox: { backgroundColor: '#FFF', borderRadius: 35, padding: 30, width: '85%', alignItems: 'center', elevation: 20 },
   alertIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#ffebee', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
@@ -566,16 +644,4 @@ const styles = StyleSheet.create({
   btnCancelTextFit: { color: '#64748B', fontFamily: 'Urbanist-Bold', fontSize: 15 },
   btnSubmitFit: { flex: 0.48, backgroundColor: COLORS.danger, borderRadius: 20, paddingVertical: 14, alignItems: 'center', elevation: 3 },
   btnSubmitTextFit: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 15 },
-  dropdownOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.1)', alignItems: 'flex-end', paddingTop: 100, paddingRight: 24 },
-  dropdownBox: { backgroundColor: '#FFF', borderRadius: 24, width: 260, padding: 20, elevation: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 15 },
-  dropdownProfileWrap: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  dropdownAvatar: { width: 50, height: 50, borderRadius: 18, backgroundColor: COLORS.honeydew, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  dropdownAvatarText: { fontFamily: 'Urbanist-Bold', fontSize: 24, color: COLORS.primary },
-  dropdownName: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: COLORS.textMain, marginBottom: 2 },
-  dropdownEmail: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: COLORS.textMuted, marginBottom: 6 },
-  dropdownBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start' },
-  dropdownBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10 },
-  dropdownDivider: { height: 1, backgroundColor: COLORS.border, marginBottom: 15 },
-  dropdownMenuBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
-  dropdownMenuText: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: COLORS.textMain, marginLeft: 15 },
 });

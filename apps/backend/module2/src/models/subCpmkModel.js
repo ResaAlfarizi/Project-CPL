@@ -22,12 +22,17 @@ const getAllSubCPMK = async () => {
       mk.nama_mk,
       mk.sks,
       mk.semester,
+      mk.prodi_id,
+      ps.nama_prodi,
+      ps.kode_prodi,
+      ps.jenjang,
       cpl.kode_cpl,
       cpl.deskripsi as deskripsi_cpl
     FROM sub_cpmk sc
     JOIN mk_cpl mc ON sc.mk_cpl_id = mc.id
     JOIN mata_kuliah mk ON mc.mk_id = mk.id
     JOIN cpl ON mc.cpl_id = cpl.id
+    JOIN program_studi ps ON mk.prodi_id = ps.id
     ORDER BY sc.kode_sub_cpmk ASC
   `;
 
@@ -51,12 +56,17 @@ const getSubCPMKById = async (id) => {
       mk.nama_mk,
       mk.sks,
       mk.semester,
+      mk.prodi_id,
+      ps.nama_prodi,
+      ps.kode_prodi,
+      ps.jenjang,
       cpl.kode_cpl,
       cpl.deskripsi as deskripsi_cpl
     FROM sub_cpmk sc
     JOIN mk_cpl mc ON sc.mk_cpl_id = mc.id
     JOIN mata_kuliah mk ON mc.mk_id = mk.id
     JOIN cpl ON mc.cpl_id = cpl.id
+    JOIN program_studi ps ON mk.prodi_id = ps.id
     WHERE sc.id = $1
   `;
 

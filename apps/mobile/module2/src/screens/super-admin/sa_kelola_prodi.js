@@ -15,10 +15,10 @@ const DANGER       = '#c62828';
 const JENJANG_OPTIONS = ['D3', 'S1', 'S2', 'S3'];
 
 const JENJANG_STYLE = {
-  D3: { bg: '#dbeafe', color: '#1d4ed8' },
-  S1: { bg: '#bfdbfe', color: '#1e40af' },
-  S2: { bg: '#93c5fd', color: '#1e3a8a' },
-  S3: { bg: '#60a5fa', color: '#1e3a8a' },
+  D3: { bg: '#dbeafe', color: '#1e3a8a' },
+  S1: { bg: '#dbeafe', color: '#1e3a8a' },
+  S2: { bg: '#dbeafe', color: '#1e3a8a' },
+  S3: { bg: '#dbeafe', color: '#1e3a8a' },
 };
 
 // ─── CUSTOM ALERT MODAL ──────────────────────────────────────────────────────
@@ -83,6 +83,7 @@ export default function SAKelolaProdiScreen({ navigation }) {
   const [prodiData,   setProdiData]   = useState([]);
   const [isLoading,   setIsLoading]   = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterJenjang, setFilterJenjang] = useState('');
 
   // Detail modal
   const [detailVisible,  setDetailVisible]  = useState(false);
@@ -146,12 +147,15 @@ export default function SAKelolaProdiScreen({ navigation }) {
   // ─── FILTER ──────────────────────────────────────────────────────
   const filteredData = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    if (!q) return prodiData;
-    return prodiData.filter(p =>
-      (p.nama_prodi || '').toLowerCase().includes(q) ||
-      (p.kode_prodi || '').toLowerCase().includes(q)
-    );
-  }, [prodiData, searchQuery]);
+    return prodiData.filter(p => {
+      const matchSearch = !q ||
+        (p.nama_prodi || '').toLowerCase().includes(q) ||
+        (p.kode_prodi || '').toLowerCase().includes(q);
+      const matchJenjang = !filterJenjang ||
+        (p.jenjang || '').toUpperCase() === filterJenjang;
+      return matchSearch && matchJenjang;
+    });
+  }, [prodiData, searchQuery, filterJenjang]);
 
   // ─── FORMAT DATE ─────────────────────────────────────────────────
   const formatDate = (val) => {
@@ -310,6 +314,11 @@ export default function SAKelolaProdiScreen({ navigation }) {
 
   const onPickJenjang = (val) => {
     if (pickerCtx === 'edit') setJenjang(val);
+    else if (pickerCtx === 'filter') {
+      setFilterJenjang(prev => prev === val ? '' : val);
+      setPickerVisible(false);
+      return;
+    }
     else setAddJenjang(val);
     setPickerVisible(false);
   };
@@ -395,7 +404,7 @@ export default function SAKelolaProdiScreen({ navigation }) {
                 })}
               </View>
 
-              {/* SEARCH BAR (full width, tanpa tombol Tambah) */}
+              {/* SEARCH BAR + FILTER JENJANG */}
               <View style={styles.controlRow}>
                 <View style={styles.searchBox}>
                   <Ionicons name="search" size={16} color="#94A3B8" style={{ marginRight: 8 }} />
@@ -412,6 +421,25 @@ export default function SAKelolaProdiScreen({ navigation }) {
                     </TouchableOpacity>
                   )}
                 </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.filterBtn,
+                    filterJenjang ? styles.filterBtnActive : null,
+                  ]}
+                  onPress={() => openPicker('filter')}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name="filter"
+                    size={14}
+                    color={filterJenjang ? '#FFF' : PRIMARY_BLUE}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={[styles.filterBtnText, filterJenjang && { color: '#FFF' }]}>
+                    {filterJenjang || 'Jenjang'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </>
           }
@@ -419,7 +447,7 @@ export default function SAKelolaProdiScreen({ navigation }) {
             <View style={styles.emptyWrap}>
               <Ionicons name="folder-open-outline" size={48} color="#cbd5e1" />
               <Text style={styles.emptyText}>
-                {searchQuery ? 'Tidak ada prodi yang cocok.' : 'Belum ada program studi terdaftar.'}
+                {searchQuery || filterJenjang ? 'Tidak ada prodi yang cocok.' : 'Belum ada program studi terdaftar.'}
               </Text>
             </View>
           }
@@ -614,7 +642,9 @@ export default function SAKelolaProdiScreen({ navigation }) {
             <Text style={styles.pickerTitle}>Pilih Jenjang</Text>
             {JENJANG_OPTIONS.map(j => {
               const js    = JENJANG_STYLE[j];
-              const active = pickerCtx === 'edit' ? jenjang === j : addJenjang === j;
+              const active = pickerCtx === 'edit' ? jenjang === j
+                           : pickerCtx === 'filter' ? filterJenjang === j
+                           : addJenjang === j;
               return (
                 <TouchableOpacity
                   key={j}
@@ -660,7 +690,7 @@ const styles = StyleSheet.create({
   headerSubtitle:   { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B' },
 
   // ── LIST ──
-  listContent:      { paddingHorizontal: 16, paddingBottom: 100 }, // extra agar FAB tidak nutup item terakhir
+  listContent:      { paddingHorizontal: 16, paddingBottom: 100 },
 
   // ── SUMMARY CARDS ──
   summaryRow:       { flexDirection: 'row', gap: 10, marginTop: 20, marginBottom: 16 },
@@ -669,9 +699,12 @@ const styles = StyleSheet.create({
   summaryLabel:     { fontFamily: 'Urbanist-Medium', fontSize: 11, marginTop: 2 },
 
   // ── CONTROL ROW ──
-  controlRow:       { marginBottom: 14 },
-  searchBox:        { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#E2E8F0' },
+  controlRow:       { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+  searchBox:        { flex: 3, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#E2E8F0' },
   searchInput:      { flex: 1, fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#212121', paddingVertical: 0 },
+  filterBtn:        { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+  filterBtnActive:  { backgroundColor: PRIMARY_BLUE, borderColor: PRIMARY_BLUE },
+  filterBtnText:    { fontFamily: 'Urbanist-Bold', fontSize: 12, color: PRIMARY_BLUE },
 
   // ── FAB ──
   fab: {

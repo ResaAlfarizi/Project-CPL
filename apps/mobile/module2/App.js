@@ -1,5 +1,7 @@
+import 'react-native-gesture-handler';
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
     useFonts,
     Urbanist_300Light,
@@ -32,7 +34,12 @@ export default function App() {
         );
     }
 
-    return <AppNavigator />;
+    // BUNGKUS NAVIGATOR UTAMA DI SINI
+    return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <AppNavigator />
+        </GestureHandlerRootView>
+    );
 }
 
 const styles = StyleSheet.create({

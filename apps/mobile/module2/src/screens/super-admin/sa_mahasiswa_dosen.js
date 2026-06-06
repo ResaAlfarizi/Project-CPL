@@ -5,7 +5,7 @@ import {
   Keyboard, FlatList, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dosenApi, mahasiswaApi, prodiApi } from '../../services/api';
+import { dosenApi, mahasiswaApi, prodiApi, userApi } from '../../services/api';
 
 const THEME_COLOR  = '#cdddf4';
 const PRIMARY_DARK = '#24354a';
@@ -102,6 +102,7 @@ export default function SAKelolapenggunaScreen({ navigation }) {
   const [dosenData,    setDosenData]    = useState([]);
   const [mhsData,      setMhsData]      = useState([]);
   const [prodiList,    setProdiList]    = useState([]);
+  const [allMhsM1Data, setAllMhsM1Data] = useState([]); // ✅ Simpan semua data mahasiswa M1 untuk angkatan
   const [isLoading,    setIsLoading]    = useState(true);
 
   // ── Filter / search ──
@@ -127,6 +128,7 @@ export default function SAKelolapenggunaScreen({ navigation }) {
   const [fNIDN,       setFNIDN]       = useState('');
   const [fNamaDosen,  setFNamaDosen]  = useState('');
   const [fEmailDosen, setFEmailDosen] = useState('');
+  const [fProdiDosen, setFProdiDosen] = useState(null); // Tambah prodi untuk dosen
 
   // Form fields — Mahasiswa
   const [fNIM,       setFNIM]       = useState('');
@@ -137,6 +139,7 @@ export default function SAKelolapenggunaScreen({ navigation }) {
 
   // Picker di dalam form
   const [formProdiPickerVisible,    setFormProdiPickerVisible]    = useState(false);
+  const [formProdiDosenPickerVisible, setFormProdiDosenPickerVisible] = useState(false); // Tambah picker prodi dosen
   const [formAngkatanPickerVisible, setFormAngkatanPickerVisible] = useState(false);
 
   // ── Alert ──
@@ -146,23 +149,76 @@ export default function SAKelolapenggunaScreen({ navigation }) {
 
   // ─── FETCH ─────────────────────────────────────────────────────────
 const fetchAll = async () => {
-  // Cek token dulu
-  const { tokenStorage } = require('../../services/api');
-  const token = await tokenStorage.get();
-  console.log('🔑 Token saat fetchAll:', token ? `ADA: ${token.substring(0, 30)}...` : '❌ TIDAK ADA');
-
   setIsLoading(true);
   try {
-      const [resDosen, resMhs, resProdi] = await Promise.all([
-        dosenApi.getAll(),
-        mahasiswaApi.getAll(),
-        prodiApi.getAll(),
+      // ✅ STRATEGI HYBRID:
+      // - Ambil users dari M2 (untuk email)
+      // - Ambil mahasiswa dari M1 (untuk angkatan)
+      // - Ambil prodi dari M1
+      const [resUsers, resMahasiswa, resProdi] = await Promise.all([
+        userApi.getAll(),       // Module 2: JOIN untuk email
+        mahasiswaApi.getAll(),  // Module 1: Untuk angkatan
+        prodiApi.getAll(),      // Module 1: List prodi
       ]);
-      setDosenData((resDosen?.data || resDosen || []).map(d => ({ ...d, _role: 'dosen' })));
-      setMhsData((resMhs?.data || resMhs || []).map(m => ({ ...m, _role: 'mahasiswa' })));
+      
+      console.log('📦 Response Users (M2):', resUsers);
+      console.log('📦 Response Mahasiswa (M1):', resMahasiswa);
+      
+      // Extract users data
+      const usersData = resUsers?.data || resUsers || [];
+      const mhsM1Data = resMahasiswa?.data || resMahasiswa || [];
+      
+      // ✅ Simpan semua data mahasiswa M1 untuk filter angkatan
+      setAllMhsM1Data(mhsM1Data);
+      
+      // Parse DOSEN dari users M2
+      const dosenList = usersData
+        .filter(u => u.role === 'dosen')
+        .map(u => ({
+          id: u.entity_id,        // ID dari tabel dosen
+          id_dosen: u.entity_id,  // Alias untuk compatibility
+          nidn: u.identifier,      // NIDN
+          nama: u.nama,            // Nama dosen
+          nama_dosen: u.nama,      // Alias
+          email: u.email,          // ✅ Email dari users table
+          prodi_id: u.prodi_id,    // Prodi ID
+          _role: 'dosen',
+          _user_id: u.id           // ID di tabel users
+        }));
+      
+      // Parse MAHASISWA: merge M2 (email) + M1 (angkatan)
+      const mhsList = usersData
+        .filter(u => u.role === 'mahasiswa')
+        .map(u => {
+          // Cari data lengkap dari M1 berdasarkan entity_id
+          const mhsDetail = mhsM1Data.find(m => m.id === u.entity_id);
+          
+          return {
+            id: u.entity_id,        // ID dari tabel mahasiswa
+            id_mahasiswa: u.entity_id, // Alias
+            nim: u.identifier,       // NIM
+            nama: u.nama,            // Nama mahasiswa
+            nama_mahasiswa: u.nama,  // Alias
+            email: u.email,          // ✅ Email dari users M2
+            prodi_id: u.prodi_id,    // Prodi ID
+            id_prodi: u.prodi_id,    // Alias
+            angkatan: mhsDetail?.angkatan || '(tidak tersedia)', // ✅ Angkatan dari M1
+            _role: 'mahasiswa',
+            _user_id: u.id           // ID di tabel users
+          };
+        });
+      
+      console.log('✅ Parsed Dosen:', dosenList.length, 'items');
+      console.log('✅ Parsed Mahasiswa:', mhsList.length, 'items');
+      console.log('📊 Sample Dosen:', dosenList[0]);
+      console.log('📊 Sample Mahasiswa:', mhsList[0]);
+      
+      setDosenData(dosenList);
+      setMhsData(mhsList);
       setProdiList(resProdi?.data || resProdi || []);
-    } catch {
-      showAlert({ type: 'info', title: 'Gagal Memuat', message: 'Tidak dapat terhubung ke server.', confirmText: 'OK', onConfirm: hideAlert });
+    } catch (error) {
+      console.error('❌ fetchAll error:', error);
+      showAlert({ type: 'info', title: 'Gagal Memuat', message: error.message || 'Tidak dapat terhubung ke server.', confirmText: 'OK', onConfirm: hideAlert });
     } finally {
       setIsLoading(false);
     }
@@ -199,11 +255,12 @@ const fetchAll = async () => {
     return list;
   }, [combined, searchQuery, filterProdi, filterAngkatan]);
 
-  // Angkatan unik dari data mhs
+  // Angkatan: Generate fixed range 2018-2026 (tidak dari database)
   const angkatanList = useMemo(() => {
-    const set = new Set(mhsData.map(m => String(m.angkatan)).filter(Boolean));
-    return [...set].sort((a, b) => b - a);
-  }, [mhsData]);
+    // Generate array dari 2026 sampai 2018 (descending)
+    return Array.from({ length: 9 }, (_, i) => String(2026 - i));
+    // Hasil: ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018']
+  }, []);
 
   // ─── HELPERS ───────────────────────────────────────────────────
   const getProdiNama = (id) => prodiList.find(p => p.id === id || p.id_prodi === id)?.nama_prodi || '-';
@@ -223,24 +280,67 @@ const fetchAll = async () => {
     showAlert({
       type: 'danger',
       title: `Hapus ${label}`,
-      message: `Hapus "${name}" secara permanen dari sistem?`,
+      message: `Hapus "${name}" secara permanen dari sistem?\n\nData audit log terkait juga akan dihapus.`,
       confirmText: 'Ya, Hapus', cancelText: 'Batal',
       onCancel: hideAlert,
       onConfirm: async () => {
         hideAlert();
         try {
-          const id = item.id || item.id_dosen || item.id_mahasiswa;
-          if (item._role === 'dosen') await dosenApi.delete(id);
-          else await mahasiswaApi.delete(id);
+          const entityId = item.id || item.id_dosen || item.id_mahasiswa;
+          const userId = item._user_id;
+          
+          console.log(`🗑️ Deleting ${label} with CASCADE:`, { entityId, userId });
+          
+          // ✅ CASCADE DELETE - URUTAN PENTING:
+          
+          // 1. HAPUS AUDIT LOG TERLEBIH DAHULU (foreign key constraint)
+          if (userId) {
+            try {
+              console.log('🗑️ Step 1: Deleting audit logs for user_id:', userId);
+              await userApi.deleteAuditLogs(userId);
+              console.log('✅ Audit logs deleted successfully');
+            } catch (auditErr) {
+              console.warn('⚠️ Audit log delete warning (continuing):', auditErr.message);
+              // Lanjutkan delete meskipun audit log gagal dihapus
+              // Ini untuk backward compatibility jika endpoint belum tersedia
+            }
+          }
+          
+          // 2. Hapus dari tabel dosen/mahasiswa (Module 1)
+          console.log(`🗑️ Step 2: Deleting ${item._role} entity:`, entityId);
+          if (item._role === 'dosen') {
+            await dosenApi.delete(entityId);
+            console.log('✅ Dosen entity deleted');
+          } else {
+            await mahasiswaApi.delete(entityId);
+            console.log('✅ Mahasiswa entity deleted');
+          }
+          
+          // 3. Hapus dari tabel users (Module 2) - TERAKHIR
+          if (userId) {
+            console.log('🗑️ Step 3: Deleting user:', userId);
+            await userApi.delete(userId);
+            console.log('✅ User deleted');
+          }
+          
           setDetailVisible(false);
           fetchAll();
           setTimeout(() => showAlert({
-            type: 'success', title: 'Berhasil Dihapus',
-            message: `"${name}" telah dihapus.`,
-            confirmText: 'OK', onConfirm: hideAlert,
+            type: 'success', 
+            title: 'Berhasil Dihapus',
+            message: `"${name}" dan semua data terkait telah dihapus dari sistem.`,
+            confirmText: 'OK', 
+            onConfirm: hideAlert,
           }), 350);
         } catch (e) {
-          showAlert({ type: 'info', title: 'Gagal Menghapus', message: e.message || 'Terjadi kesalahan.', confirmText: 'OK', onConfirm: hideAlert });
+          console.error('❌ Delete error:', e);
+          showAlert({ 
+            type: 'error', 
+            title: 'Gagal Menghapus', 
+            message: e.message || 'Terjadi kesalahan saat menghapus data. Pastikan tidak ada data yang masih berelasi.', 
+            confirmText: 'OK', 
+            onConfirm: hideAlert 
+          });
         }
       }
     });
@@ -262,6 +362,7 @@ const fetchAll = async () => {
       setFNIDN(item.nidn || '');
       setFNamaDosen(item.nama || item.nama_dosen || '');
       setFEmailDosen(item.email || '');
+      setFProdiDosen(item.prodi_id || null); // Load prodi dosen
     } else {
       setFNIM(item.nim || '');
       setFNamaMhs(item.nama || item.nama_mahasiswa || '');
@@ -273,21 +374,36 @@ const fetchAll = async () => {
   };
 
   const resetFormFields = () => {
-    setFNIDN(''); setFNamaDosen(''); setFEmailDosen('');
+    setFNIDN(''); setFNamaDosen(''); setFEmailDosen(''); setFProdiDosen(null);
     setFNIM(''); setFNamaMhs(''); setFEmailMhs(''); setFProdiId(null); setFAngkatan('');
   };
 
   // ─── SUBMIT FORM ───────────────────────────────────────────────
   const handleSubmit = async () => {
     if (formRole === 'dosen') {
-      if (!fNIDN.trim() || !fNamaDosen.trim() || !fEmailDosen.trim()) {
-        return showAlert({ type: 'error', title: 'Data Tidak Lengkap', message: 'Harap isi semua kolom dosen.', confirmText: 'Mengerti', onConfirm: hideAlert });
+      if (!fNIDN.trim() || !fNamaDosen.trim() || !fEmailDosen.trim() || !fProdiDosen) {
+        return showAlert({ type: 'error', title: 'Data Tidak Lengkap', message: 'Harap isi semua kolom dosen termasuk Program Studi.', confirmText: 'Mengerti', onConfirm: hideAlert });
       }
       try {
-        const payload = { nidn: fNIDN.trim(), nama: fNamaDosen.trim(), email: fEmailDosen.trim() };
-        if (editItem) await dosenApi.update(editItem.id || editItem.id_dosen, payload);
-        else await dosenApi.create(payload);
+        const payload = { 
+          nidn: fNIDN.trim(), 
+          nama: fNamaDosen.trim(), 
+          email: fEmailDosen.trim(),
+          prodi_id: fProdiDosen // Backend butuh prodi_id untuk create user
+        };
+        console.log('📤 Dosen Payload:', payload);
+        
+        if (editItem) {
+          // Update hanya mengirim nidn dan nama (tidak ada email/prodi_id)
+          await dosenApi.update(editItem.id || editItem.id_dosen, {
+            nidn: payload.nidn,
+            nama: payload.nama
+          });
+        } else {
+          await dosenApi.create(payload);
+        }
       } catch (e) {
+        console.error('❌ Error submit dosen:', e);
         return showAlert({ type: 'info', title: 'Gagal Menyimpan', message: e.message || 'Terjadi kesalahan.', confirmText: 'OK', onConfirm: hideAlert });
       }
     } else {
@@ -295,10 +411,22 @@ const fetchAll = async () => {
         return showAlert({ type: 'error', title: 'Data Tidak Lengkap', message: 'Harap isi semua kolom mahasiswa.', confirmText: 'Mengerti', onConfirm: hideAlert });
       }
       try {
-        const payload = { nim: fNIM.trim(), nama: fNamaMhs.trim(), email: fEmailMhs.trim(), prodi_id: fProdiId, angkatan: fAngkatan.trim() };
-        if (editItem) await mahasiswaApi.update(editItem.id || editItem.id_mahasiswa, payload);
-        else await mahasiswaApi.create(payload);
+        const payload = { 
+          nim: fNIM.trim(), 
+          nama: fNamaMhs.trim(), 
+          email: fEmailMhs.trim(), 
+          prodi_id: fProdiId, 
+          angkatan: fAngkatan.trim() 
+        };
+        console.log('📤 Mahasiswa Payload:', payload);
+        
+        if (editItem) {
+          await mahasiswaApi.update(editItem.id || editItem.id_mahasiswa, payload);
+        } else {
+          await mahasiswaApi.create(payload);
+        }
       } catch (e) {
+        console.error('❌ Error submit mahasiswa:', e);
         return showAlert({ type: 'info', title: 'Gagal Menyimpan', message: e.message || 'Terjadi kesalahan.', confirmText: 'OK', onConfirm: hideAlert });
       }
     }
@@ -558,7 +686,7 @@ const fetchAll = async () => {
                     style={[styles.pickerOption, active && styles.pickerOptionActive]}
                     onPress={() => { setFilterAngkatan(a); setAngkatanPickerVisible(false); }}
                   >
-                    <Text style={[styles.pickerOptionText, active && { color: PRIMARY_BLUE, fontFamily: 'Urbanist-Bold' }]}>Angkatan {a}</Text>
+                    <Text style={[styles.pickerOptionText, active && { color: PRIMARY_BLUE, fontFamily: 'Urbanist-Bold' }]}>{a}</Text>
                     {active && <Ionicons name="checkmark-circle" size={18} color={PRIMARY_BLUE} />}
                   </TouchableOpacity>
                 );
@@ -597,6 +725,16 @@ const fetchAll = async () => {
                 <Ionicons name="mail-outline" size={13} color="#64748B" style={{ marginRight: 5 }} />
                 <Text style={styles.detailInfoChipText}>{getEmail(selectedItem)}</Text>
               </View>
+
+              {/* Extra info untuk Dosen - tampilkan prodi */}
+              {selectedItem._role === 'dosen' && selectedItem.prodi_id && (
+                <View style={styles.detailInfoChip}>
+                  <Ionicons name="business-outline" size={13} color="#64748B" style={{ marginRight: 5 }} />
+                  <Text style={styles.detailInfoChipText}>
+                    {getProdiNama(selectedItem.prodi_id)} ({getProdiKode(selectedItem.prodi_id)})
+                  </Text>
+                </View>
+              )}
 
               {/* Extra info untuk Mahasiswa */}
               {selectedItem._role === 'mahasiswa' && (
@@ -671,6 +809,15 @@ const fetchAll = async () => {
                   <Ionicons name="mail-outline" size={18} color={PRIMARY_BLUE} style={styles.inputIcon} />
                   <TextInput style={styles.input} placeholder="email@institusi.ac.id" placeholderTextColor="#94A3B8" value={fEmailDosen} onChangeText={setFEmailDosen} keyboardType="email-address" autoCapitalize="none" />
                 </View>
+
+                <Text style={styles.fieldLabel}>Program Studi</Text>
+                <TouchableOpacity style={styles.inputWrap} onPress={() => { Keyboard.dismiss(); setFormProdiDosenPickerVisible(true); }}>
+                  <Ionicons name="business-outline" size={18} color={PRIMARY_BLUE} style={styles.inputIcon} />
+                  <Text style={[styles.input, !fProdiDosen && { color: '#94A3B8' }]}>
+                    {fProdiDosen ? (prodiList.find(p => p.id === fProdiDosen || p.id_prodi === fProdiDosen)?.nama_prodi || 'Pilih Program Studi') : 'Pilih Program Studi'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={18} color="#94A3B8" />
+                </TouchableOpacity>
               </>
             )}
 
@@ -705,7 +852,7 @@ const fetchAll = async () => {
                 <Text style={styles.fieldLabel}>Angkatan</Text>
                 <TouchableOpacity style={styles.inputWrap} onPress={() => { Keyboard.dismiss(); setFormAngkatanPickerVisible(true); }}>
                   <Ionicons name="calendar-outline" size={18} color={GREEN} style={styles.inputIcon} />
-                  <Text style={[styles.input, !fAngkatan && { color: '#94A3B8' }]}>{fAngkatan ? `Angkatan ${fAngkatan}` : 'Pilih Angkatan'}</Text>
+                  <Text style={[styles.input, !fAngkatan && { color: '#94A3B8' }]}>{fAngkatan || 'Pilih Angkatan'}</Text>
                   <Ionicons name="chevron-down" size={18} color="#94A3B8" />
                 </TouchableOpacity>
               </>
@@ -721,6 +868,33 @@ const fetchAll = async () => {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* ══ PICKER PRODI DOSEN DALAM FORM ══ */}
+      <Modal visible={formProdiDosenPickerVisible} animationType="fade" transparent statusBarTranslucent>
+        <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setFormProdiDosenPickerVisible(false)}>
+          <View style={styles.pickerBox}>
+            <Text style={styles.pickerTitle}>Pilih Program Studi Dosen</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {prodiList.map(p => {
+                const pid = getProdiId(p);
+                const active = fProdiDosen === pid;
+                return (
+                  <TouchableOpacity
+                    key={pid}
+                    style={[styles.pickerOption, active && styles.pickerOptionActive]}
+                    onPress={() => { setFProdiDosen(pid); setFormProdiDosenPickerVisible(false); }}
+                  >
+                    <Text style={[styles.pickerOptionText, active && { color: PRIMARY_BLUE, fontFamily: 'Urbanist-Bold' }]}>
+                      {p.kode_prodi} — {p.nama_prodi}
+                    </Text>
+                    {active && <Ionicons name="checkmark-circle" size={18} color={PRIMARY_BLUE} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
       </Modal>
 
       {/* ══ PICKER PRODI DALAM FORM ══ */}
@@ -768,7 +942,7 @@ const fetchAll = async () => {
                     style={[styles.pickerOption, active && styles.pickerOptionActive]}
                     onPress={() => { setFAngkatan(a); setFormAngkatanPickerVisible(false); }}
                   >
-                    <Text style={[styles.pickerOptionText, active && { color: PRIMARY_BLUE, fontFamily: 'Urbanist-Bold' }]}>Angkatan {a}</Text>
+                    <Text style={[styles.pickerOptionText, active && { color: PRIMARY_BLUE, fontFamily: 'Urbanist-Bold' }]}>{a}</Text>
                     {active && <Ionicons name="checkmark-circle" size={18} color={PRIMARY_BLUE} />}
                   </TouchableOpacity>
                 );

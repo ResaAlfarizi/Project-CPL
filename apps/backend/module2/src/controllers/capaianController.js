@@ -1,4 +1,5 @@
 const {
+  getAllCapaian, 
   getCapaianByMahasiswaId,
   getCapaianByProdiId,
   getCapaianByKelasId,
@@ -17,6 +18,17 @@ const { successResponse, errorResponse } = require("../utils/response");
  * CAPAIAN CONTROLLER
  * Mengatur logika bisnis untuk analisis capaian CPL
  */
+
+// ✅ BARU: GET semua capaian CPL mahasiswa (untuk superadmin monitoring global)
+const getAllCapaianHandler = async (req, res) => {
+  try {
+    const { limit = 1000, offset = 0 } = req.query;
+    const capaianList = await getAllCapaian(parseInt(limit), parseInt(offset));
+    return successResponse(res, capaianList, "Berhasil mengambil semua data capaian CPL");
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
 
 // GET capaian CPL mahasiswa (untuk mahasiswa melihat capaiannya)
 const getCapaianMahasiswaHandler = async (req, res) => {
@@ -109,7 +121,7 @@ const getMahasiswaBelumCapaiHandler = async (req, res) => {
 // CREATE - Tambah capaian manual
 const createCapaianHandler = async (req, res) => {
   try {
-    const { mahasiswa_id, cpl_id, nilai_cpl_total } = req.body;
+    const { mahasiswa_id, cpl_id, nilai_cpl_total, tahun_akademik } = req.body;
 
     // Validasi input
     if (!mahasiswa_id || !cpl_id || nilai_cpl_total === undefined) {
@@ -127,7 +139,8 @@ const createCapaianHandler = async (req, res) => {
       return errorResponse(res, "Capaian untuk mahasiswa dan CPL ini sudah ada. Gunakan fitur edit untuk mengubah.", 409);
     }
 
-    const capaian = await createCapaian(mahasiswa_id, cpl_id, nilai_cpl_total);
+    // ✅ Kirim nilai_cpl_total sebagai nilaiCapaian ke model dengan tahun akademik
+    const capaian = await createCapaian(mahasiswa_id, cpl_id, nilai_cpl_total, tahun_akademik);
     return successResponse(res, capaian, "Berhasil menambahkan capaian", 201);
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -138,7 +151,13 @@ const createCapaianHandler = async (req, res) => {
 const updateCapaianHandler = async (req, res) => {
   try {
     const { mahasiswa_id, cpl_id } = req.params;
-    const { nilai_cpl_total } = req.body;
+    const { nilai_cpl_total, tahun_akademik } = req.body;
+
+    console.log('🔧 Update Request Debug:', {
+      mahasiswa_id,
+      cpl_id,
+      body: req.body
+    });
 
     // Validasi input
     if (nilai_cpl_total === undefined) {
@@ -152,13 +171,22 @@ const updateCapaianHandler = async (req, res) => {
 
     // Cek apakah capaian ada
     const existing = await checkCapaianExists(mahasiswa_id, cpl_id);
+    console.log('🔍 Existing capaian check result:', existing);
+    
     if (!existing) {
+      console.log('❌ Capaian tidak ditemukan untuk:', { mahasiswa_id, cpl_id });
       return errorResponse(res, "Capaian tidak ditemukan", 404);
     }
 
-    const capaian = await updateCapaian(mahasiswa_id, cpl_id, nilai_cpl_total);
+    console.log('✅ Found existing capaian:', existing);
+
+    // ✅ Kirim nilai_cpl_total sebagai nilaiCapaian ke model
+    const capaian = await updateCapaian(mahasiswa_id, cpl_id, nilai_cpl_total, tahun_akademik);
+    console.log('✅ Update successful:', capaian);
+    
     return successResponse(res, capaian, "Berhasil mengupdate capaian");
   } catch (error) {
+    console.error('❌ Update Error:', error);
     return errorResponse(res, error.message, 500);
   }
 };
@@ -182,6 +210,7 @@ const deleteCapaianHandler = async (req, res) => {
 };
 
 module.exports = {
+  getAllCapaianHandler, // ✅ Export handler baru
   getCapaianMahasiswaHandler,
   getCapaianMahasiswaByIdHandler,
   getCapaianProdiHandler,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, FlatList, StatusBar, 
   ImageBackground, Modal, TextInput, TouchableWithoutFeedback, 
-  Keyboard, ScrollView, ActivityIndicator, Alert
+  Keyboard, ScrollView, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { thresholdApi, prodiApi } from '../../services/api';
@@ -34,24 +34,27 @@ export default function SAThresholdScreen({ navigation }) {
   const [prodiList, setProdiList] = useState([]);
   const [selectedProdi, setSelectedProdi] = useState(null);
   const [thresholdData, setThresholdData] = useState([]);
+  const [allThresholdData, setAllThresholdData] = useState([]); // Data mentah dari API
   const [pickerVisible, setPickerVisible] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editItem, setEditItem] = useState(null);
+  const [editingIndex, setEditingIndex] = useState(null); // Index item yang sedang diedit
   
-  // Form state
-  const [formStatus, setFormStatus] = useState('');
-  const [formMin, setFormMin] = useState('');
-  const [formMax, setFormMax] = useState('');
+  // Form state untuk inline edit
+  const [editMin, setEditMin] = useState('');
+  const [editMax, setEditMax] = useState('');
 
   const [alertConfig, setAlertConfig] = useState({ visible: false, type: '', title: '', message: '' });
+  const [resetConfirmVisible, setResetConfirmVisible] = useState(false);
 
   useEffect(() => {
     loadProdi();
+    loadAllThreshold();
   }, []);
 
   useEffect(() => {
-    if (selectedProdi) loadThreshold(selectedProdi.id);
-  }, [selectedProdi]);
+    if (selectedProdi && allThresholdData.length > 0) {
+      filterThresholdByProdi(selectedProdi.id);
+    }
+  }, [selectedProdi, allThresholdData]);
 
   const loadProdi = async () => {
     try {
@@ -64,150 +67,262 @@ export default function SAThresholdScreen({ navigation }) {
     }
   };
 
-  const loadThreshold = async (prodiId) => {
+  const loadAllThreshold = async () => {
     setIsLoading(true);
     try {
-      const res = await thresholdApi.getByProdi(prodiId);
+      const res = await thresholdApi.getAll();
       const data = res?.data || [];
-      setThresholdData(data);
+      console.log('📊 All Threshold Data:', data);
+      setAllThresholdData(data);
     } catch (err) {
-      // Tampilkan default jika belum ada konfigurasi
-      setThresholdData([]);
+      console.error('❌ Error loading threshold:', err);
+      setAllThresholdData([]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const filterThresholdByProdi = (prodiId) => {
+    const filtered = allThresholdData.filter(item => String(item.prodi_id) === String(prodiId));
+    
+    if (filtered.length === 0) {
+      // Jika belum ada data, gunakan default dengan nilai 0-100
+      const defaultData = DEFAULT_THRESHOLDS.map((d, i) => ({
+        ...d,
+        id: `default-${i}`,
+        isDefault: true,
+        status: d.status,
+        nama_status: d.status,
+        min_nilai: 0,
+        max_nilai: 100,
+        nilai_min: 0,
+        nilai_max: 100
+      }));
+      setThresholdData(defaultData);
+    } else {
+      setThresholdData(filtered);
+    }
+  };
+
   const showAlert = (type, title, message) => setAlertConfig({ visible: true, type, title, message });
 
-  const handleSave = async () => {
-    if (!formStatus || !formMin || !formMax || !selectedProdi) {
-      showAlert('error', 'Data Tidak Lengkap', 'Harap isi semua kolom.');
+  const handleSaveAll = async () => {
+    if (!selectedProdi) {
+      showAlert('error', 'Pilih Prodi', 'Harap pilih program studi terlebih dahulu.');
       return;
     }
-    const min = parseFloat(formMin);
-    const max = parseFloat(formMax);
-    if (isNaN(min) || isNaN(max) || min < 0 || max > 100 || min >= max) {
-      showAlert('error', 'Nilai Tidak Valid', 'Nilai harus antara 0-100 dan min < maks.');
-      return;
-    }
-    try {
-      const payload = { 
-        prodi_id: selectedProdi.id, 
-        nama_status: formStatus,
-        nilai_min: min,
-        nilai_max: max
-      };      
-      if (editItem) {
-        await thresholdApi.update(editItem.id, payload);
-      } else {
-        await thresholdApi.create(payload);
+
+    // Validasi semua threshold
+    for (const item of thresholdData) {
+      const min = item.nilai_min ?? item.min_nilai ?? 0;
+      const max = item.nilai_max ?? item.max_nilai ?? 100;
+      
+      if (min >= max) {
+        showAlert('error', 'Nilai Tidak Valid', `Nilai min harus lebih kecil dari max pada status "${item.status || item.nama_status}"`);
+        return;
       }
-      setModalVisible(false);
-      resetForm();
-      loadThreshold(selectedProdi.id);
-      setTimeout(() => showAlert('success', 'Berhasil!', 'Threshold berhasil disimpan.'), 300);
+    }
+
+    try {
+      const payload = {
+        prodi_id: selectedProdi.id,
+        thresholds: thresholdData.map(item => ({
+          nama_status: item.status || item.nama_status,
+          nilai_min: parseFloat(item.nilai_min ?? item.min_nilai ?? 0),
+          nilai_max: parseFloat(item.nilai_max ?? item.max_nilai ?? 100)
+        }))
+      };
+
+      console.log('💾 Saving threshold:', payload);
+      await thresholdApi.create(payload); // Backend menggunakan endpoint POST /threshold
+      
+      setEditingIndex(null);
+      await loadAllThreshold();
+      setTimeout(() => showAlert('success', 'Berhasil!', 'Threshold berhasil disimpan ke database.'), 300);
     } catch (err) {
+      console.error('❌ Save error:', err);
       showAlert('error', 'Gagal Simpan', err.message || 'Terjadi kesalahan server.');
     }
   };
 
-  const handleDelete = (item) => {
-    Alert.alert('Hapus Threshold', `Hapus threshold "${item.status}"?`, [
-      { text: 'Batal', style: 'cancel' },
-      {
-        text: 'Ya, Hapus', style: 'destructive',
-        onPress: async () => {
-          try {
-            await thresholdApi.delete(item.id);
-            loadThreshold(selectedProdi.id);
-          } catch (err) {
-            showAlert('error', 'Gagal', err.message);
-          }
-        }
-      }
-    ]);
-  };
-
   const handleReset = () => {
-    Alert.alert('Reset Default', 'Kembalikan ke pengaturan threshold standar?', [
-      { text: 'Batal', style: 'cancel' },
-      {
-        text: 'Ya, Reset',
-        onPress: async () => {
-          try {
-            await thresholdApi.resetDefault(selectedProdi.id);
-            loadThreshold(selectedProdi.id);
-            showAlert('success', 'Direset!', 'Threshold berhasil dikembalikan ke default.');
-          } catch (err) {
-            showAlert('error', 'Gagal', err.message);
-          }
-        }
-      }
-    ]);
+    setResetConfirmVisible(true);
   };
 
-  const openEditModal = (item) => {
-    setEditItem(item);
-    setFormStatus(item.status);
-    setFormMin(String(item.nilai_min ?? item.min_nilai ?? ''));
-    setFormMax(String(item.nilai_max ?? item.max_nilai ?? ''));
-    setModalVisible(true);
+  const confirmReset = () => {
+    const resetData = DEFAULT_THRESHOLDS.map((d, i) => ({
+      ...d,
+      id: `default-${i}`,
+      isDefault: true,
+      status: d.status,
+      nama_status: d.status,
+      min_nilai: 0,
+      max_nilai: 100,
+      nilai_min: 0,
+      nilai_max: 100
+    }));
+    setThresholdData(resetData);
+    setEditingIndex(null);
+    setResetConfirmVisible(false);
+    showAlert('success', 'Direset!', 'Threshold dikembalikan ke default (0-100). Klik Simpan untuk menyimpan ke database.');
   };
 
-  const resetForm = () => {
-    setEditItem(null);
-    setFormStatus('');
-    setFormMin('');
-    setFormMax('');
+  const handleEdit = (index) => {
+    const item = thresholdData[index];
+    setEditingIndex(index);
+    setEditMin(String(item.nilai_min ?? item.min_nilai ?? 0));
+    setEditMax(String(item.nilai_max ?? item.max_nilai ?? 100));
   };
 
-  // Tampilan data (gabungan DB + default jika kosong)
-  const displayData = thresholdData.length > 0 ? thresholdData : DEFAULT_THRESHOLDS.map((d, i) => ({ ...d, id: `default-${i}`, isDefault: true, min_nilai: d.min, max_nilai: d.max }));
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditMin('');
+    setEditMax('');
+  };
+
+  const handleApplyEdit = () => {
+    const min = parseFloat(editMin);
+    const max = parseFloat(editMax);
+
+    if (isNaN(min) || isNaN(max)) {
+      showAlert('error', 'Input Tidak Valid', 'Harap masukkan angka yang valid.');
+      return;
+    }
+
+    if (min < 0 || max > 100 || min >= max) {
+      showAlert('error', 'Nilai Tidak Valid', 'Nilai harus 0-100 dan min < max.');
+      return;
+    }
+
+    const updatedData = [...thresholdData];
+    updatedData[editingIndex] = {
+      ...updatedData[editingIndex],
+      nilai_min: min,
+      min_nilai: min,
+      nilai_max: max,
+      max_nilai: max,
+      isDefault: false // Tandai sudah dimodifikasi
+    };
+
+    setThresholdData(updatedData);
+    setEditingIndex(null);
+    setEditMin('');
+    setEditMax('');
+  };
+
+  // Tampilan data
+  const displayData = thresholdData.length > 0 ? thresholdData : DEFAULT_THRESHOLDS.map((d, i) => ({ 
+    ...d, 
+    id: `default-${i}`, 
+    isDefault: true, 
+    status: d.status,
+    nama_status: d.status,
+    min_nilai: 0, 
+    max_nilai: 100,
+    nilai_min: 0,
+    nilai_max: 100
+  }));
 
   const renderItem = ({ item, index }) => {
-    const cfg = PREDIKAT_CONFIG[item.status] || { color: '#64748B', bg: '#f1f5f9', icon: 'ellipse' };
-    const minVal = item.min_nilai ?? item.min ?? 0;
-    const maxVal = item.max_nilai ?? item.max ?? 100;
-    const rangeWidth = `${maxVal - minVal}%`;
+    const cfg = PREDIKAT_CONFIG[item.status || item.nama_status] || { color: '#64748B', bg: '#f1f5f9', icon: 'ellipse' };
+    const isEditing = editingIndex === index;
+    
+    const minVal = isEditing ? parseFloat(editMin) || 0 : (item.nilai_min ?? item.min_nilai ?? 0);
+    const maxVal = isEditing ? parseFloat(editMax) || 100 : (item.nilai_max ?? item.max_nilai ?? 100);
+    
+    // Hitung posisi dan lebar bar dalam skala 0-100
+    const barLeftPosition = `${minVal}%`;
+    const barWidth = `${maxVal - minVal}%`;
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, isEditing && styles.cardEditing]}>
         <View style={styles.cardHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
             <Text style={styles.cardNo}>{index + 1}</Text>
             <View style={[styles.statusBadge, { backgroundColor: cfg.bg }]}>
               <Ionicons name={cfg.icon} size={14} color={cfg.color} style={{ marginRight: 5 }} />
-              <Text style={[styles.statusText, { color: cfg.color }]}>{item.status}</Text>
+              <Text style={[styles.statusText, { color: cfg.color }]}>{item.status || item.nama_status}</Text>
             </View>
           </View>
-          {!item.isDefault && (
-            <View style={styles.actionBtns}>
-              <TouchableOpacity style={styles.btnEdit} onPress={() => openEditModal(item)}>
-                <Ionicons name="pencil" size={15} color="#0284c7" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnDelete} onPress={() => handleDelete(item)}>
-                <Ionicons name="trash" size={15} color={DANGER_COLOR} />
-              </TouchableOpacity>
-            </View>
-          )}
+          <TouchableOpacity 
+            style={[styles.btnEdit, isEditing && { backgroundColor: '#fef3c7' }]} 
+            onPress={() => isEditing ? handleCancelEdit() : handleEdit(index)}
+          >
+            <Ionicons name={isEditing ? "close" : "pencil"} size={15} color={isEditing ? "#92400e" : "#0284c7"} />
+          </TouchableOpacity>
         </View>
 
+        {/* Inline Edit Form */}
+        {isEditing && (
+          <View style={styles.editForm}>
+            <View style={styles.editInputRow}>
+              <View style={styles.editInputWrap}>
+                <Text style={styles.editLabel}>Min</Text>
+                <TextInput
+                  style={styles.editInput}
+                  value={editMin}
+                  onChangeText={setEditMin}
+                  keyboardType="decimal-pad"
+                  placeholder="0"
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+              <View style={styles.editInputWrap}>
+                <Text style={styles.editLabel}>Max</Text>
+                <TextInput
+                  style={styles.editInput}
+                  value={editMax}
+                  onChangeText={setEditMax}
+                  keyboardType="decimal-pad"
+                  placeholder="100"
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+              <TouchableOpacity style={styles.btnApply} onPress={handleApplyEdit}>
+                <Ionicons name="checkmark" size={18} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Bar dengan skala 0-100 penuh */}
         <View style={styles.rangeRow}>
           <View style={styles.rangeCell}>
             <Text style={styles.rangeCellLabel}>Min</Text>
             <Text style={styles.rangeCellValue}>{parseFloat(minVal).toFixed(2)}</Text>
           </View>
-          <View style={styles.rangeBarWrap}>
-            <View style={[styles.rangeBarFill, { width: rangeWidth, backgroundColor: cfg.bg, borderColor: cfg.color }]} />
+          
+          {/* Bar Container dengan skala 0-100 */}
+          <View style={styles.fullRangeBarWrap}>
+            <View style={[styles.fullRangeBarFill, { 
+              left: barLeftPosition, 
+              width: barWidth, 
+              backgroundColor: cfg.bg, 
+              borderColor: cfg.color 
+            }]} />
+            {/* Grid lines untuk referensi visual */}
+            <View style={styles.gridLine25} />
+            <View style={styles.gridLine50} />
+            <View style={styles.gridLine75} />
           </View>
+          
           <View style={styles.rangeCell}>
             <Text style={styles.rangeCellLabel}>Maks</Text>
             <Text style={styles.rangeCellValue}>{parseFloat(maxVal).toFixed(2)}</Text>
           </View>
         </View>
+        
+        {/* Scale labels */}
+        <View style={styles.scaleLabels}>
+          <Text style={styles.scaleLabel}>0</Text>
+          <Text style={styles.scaleLabel}>25</Text>
+          <Text style={styles.scaleLabel}>50</Text>
+          <Text style={styles.scaleLabel}>75</Text>
+          <Text style={styles.scaleLabel}>100</Text>
+        </View>
+        
         <Text style={styles.rangeLabel}>{parseFloat(minVal).toFixed(2)} – {parseFloat(maxVal).toFixed(2)}</Text>
-        {item.isDefault && <Text style={styles.defaultHint}>* Tampilan default (belum disimpan)</Text>}
+        {item.isDefault && <Text style={styles.defaultHint}>* Belum disimpan (default: 0-100)</Text>}
       </View>
     );
   };
@@ -243,17 +358,11 @@ export default function SAThresholdScreen({ navigation }) {
             <Ionicons name="refresh" size={16} color={DANGER_COLOR} />
             <Text style={styles.resetBtnText}>Reset</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.addBtn} onPress={() => { resetForm(); setModalVisible(true); }}>
-            <Ionicons name="add" size={16} color={PRIMARY_DARK} />
-            <Text style={styles.addBtnText}>Tambah</Text>
+          <TouchableOpacity style={styles.saveBtn} onPress={handleSaveAll}>
+            <Ionicons name="save" size={16} color="#FFF" />
+            <Text style={styles.saveBtnText}>Simpan</Text>
           </TouchableOpacity>
         </View>
-      </View>
-
-      {/* INFO BANNER */}
-      <View style={styles.infoBanner}>
-        <Ionicons name="information-circle" size={18} color="#1d4ed8" style={{ marginRight: 8 }} />
-        <Text style={styles.infoBannerText}>Nilai harus 0–100 dan antar rentang tidak boleh tumpang tindih (overlapping).</Text>
       </View>
 
       {isLoading ? (
@@ -267,79 +376,15 @@ export default function SAThresholdScreen({ navigation }) {
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           refreshing={isLoading}
-          onRefresh={() => selectedProdi && loadThreshold(selectedProdi.id)}
+          onRefresh={loadAllThreshold}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <Ionicons name="options-outline" size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>Belum ada konfigurasi threshold.</Text>
+              <Text style={styles.emptyText}>Tidak ada data threshold.</Text>
             </View>
           }
         />
       )}
-
-      {/* MODAL FORM */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={StyleSheet.absoluteFillObject} />
-          </TouchableWithoutFeedback>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>{editItem ? 'Edit Threshold' : 'Tambah Threshold'}</Text>
-
-            {/* Pilih Status/Predikat */}
-            <Text style={styles.fieldLabel}>Status / Predikat</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-              {Object.keys(PREDIKAT_CONFIG).map((s) => {
-                const cfg = PREDIKAT_CONFIG[s];
-                return (
-                  <TouchableOpacity 
-                    key={s} 
-                    style={[styles.predikatBtn, { backgroundColor: formStatus === s ? cfg.bg : '#f1f5f9', borderColor: formStatus === s ? cfg.color : '#e2e8f0' }]} 
-                    onPress={() => setFormStatus(s)}
-                  >
-                    <Text style={[styles.predikatBtnText, { color: formStatus === s ? cfg.color : '#94A3B8' }]}>{s}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            <Text style={styles.fieldLabel}>Nilai Minimum</Text>
-            <View style={styles.inputRow}>
-              <TextInput 
-                style={styles.input} 
-                placeholder="Contoh: 70" 
-                placeholderTextColor="#94A3B8" 
-                value={formMin} 
-                onChangeText={setFormMin} 
-                keyboardType="decimal-pad"
-              />
-            </View>
-
-            <Text style={styles.fieldLabel}>Nilai Maksimum</Text>
-            <View style={styles.inputRow}>
-              <TextInput 
-                style={styles.input} 
-                placeholder="Contoh: 84.99" 
-                placeholderTextColor="#94A3B8" 
-                value={formMax} 
-                onChangeText={setFormMax} 
-                keyboardType="decimal-pad"
-              />
-            </View>
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.btnCancel} onPress={() => { setModalVisible(false); resetForm(); }}>
-                <Text style={styles.btnCancelText}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnSubmit} onPress={handleSave}>
-                <Ionicons name="save" size={16} color="#FFF" style={{ marginRight: 6 }} />
-                <Text style={styles.btnSubmitText}>Simpan Threshold</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* MODAL PICKER PRODI */}
       <Modal visible={pickerVisible} transparent animationType="fade">
@@ -348,7 +393,7 @@ export default function SAThresholdScreen({ navigation }) {
             <Text style={styles.pickerTitle}>Pilih Program Studi</Text>
             <ScrollView>
               {prodiList.map((prodi) => (
-                <TouchableOpacity key={prodi.id} style={[styles.pickerOption, selectedProdi?.id === prodi.id && styles.pickerOptionActive]} onPress={() => { setSelectedProdi(prodi); setPickerVisible(false); }}>
+                <TouchableOpacity key={prodi.id} style={[styles.pickerOption, selectedProdi?.id === prodi.id && styles.pickerOptionActive]} onPress={() => { setSelectedProdi(prodi); setPickerVisible(false); setEditingIndex(null); }}>
                   <Text style={[styles.pickerOptionText, selectedProdi?.id === prodi.id && styles.pickerOptionTextActive]}>
                     {prodi.kode_prodi} - {prodi.nama_prodi}
                   </Text>
@@ -361,6 +406,36 @@ export default function SAThresholdScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* MODAL KONFIRMASI RESET */}
+      <Modal visible={resetConfirmVisible} animationType="fade" transparent>
+        <View style={styles.alertOverlay}>
+          <View style={styles.alertBox}>
+            <View style={[styles.alertIconWrap, { backgroundColor: '#fff3cd' }]}>
+              <Ionicons name="refresh-circle" size={50} color="#f59e0b" />
+            </View>
+            <Text style={styles.alertTitle}>Reset ke Default?</Text>
+            <Text style={styles.alertMessage}>
+              Semua threshold akan dikembalikan ke nilai default (0-100) untuk semua kategori. Perubahan harus disimpan untuk efek permanen.
+            </Text>
+            <View style={styles.confirmButtonRow}>
+              <TouchableOpacity 
+                style={[styles.btnConfirm, { backgroundColor: '#f1f5f9', flex: 1 }]} 
+                onPress={() => setResetConfirmVisible(false)}
+              >
+                <Text style={[styles.btnConfirmText, { color: '#64748B' }]}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.btnConfirm, { backgroundColor: DANGER_COLOR, flex: 1 }]} 
+                onPress={confirmReset}
+              >
+                <Ionicons name="refresh" size={16} color="#FFF" style={{ marginRight: 6 }} />
+                <Text style={[styles.btnConfirmText, { color: '#FFF' }]}>Ya, Reset</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* MODAL ALERT */}
@@ -394,13 +469,14 @@ const styles = StyleSheet.create({
   prodiSelectorText: { flex: 1, fontFamily: 'Urbanist-Bold', fontSize: 13, color: PRIMARY_DARK },
   resetBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffebee', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, gap: 4, borderWidth: 1, borderColor: '#ffcdd2' },
   resetBtnText: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: DANGER_COLOR },
-  addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME_COLOR, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, gap: 4 },
-  addBtnText: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: PRIMARY_DARK },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: PRIMARY_DARK, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, gap: 4 },
+  saveBtnText: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: '#FFF' },
   infoBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#dbeafe', marginHorizontal: 20, marginBottom: 8, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: '#bfdbfe' },
   infoBannerText: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#1d4ed8', flex: 1 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContainer: { padding: 20, paddingBottom: 40 },
   card: { backgroundColor: '#FFF', padding: 16, borderRadius: 20, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0', elevation: 1 },
+  cardEditing: { borderColor: PRIMARY_BLUE, borderWidth: 2, elevation: 3 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   cardNo: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#94A3B8', width: 24 },
   statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
@@ -408,30 +484,51 @@ const styles = StyleSheet.create({
   actionBtns: { flexDirection: 'row', gap: 8 },
   btnEdit: { padding: 8, backgroundColor: '#e0f2fe', borderRadius: 10 },
   btnDelete: { padding: 8, backgroundColor: '#ffebee', borderRadius: 10 },
-  rangeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  
+  // Edit Form Inline Styles
+  editForm: { marginBottom: 12, backgroundColor: '#f8fafc', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0' },
+  editInputRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
+  editInputWrap: { flex: 1 },
+  editLabel: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: '#64748B', marginBottom: 4, textTransform: 'uppercase' },
+  editInput: { backgroundColor: '#FFF', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontFamily: 'Urbanist-Bold', fontSize: 14, borderWidth: 1, borderColor: '#cbd5e1', color: PRIMARY_DARK },
+  btnApply: { backgroundColor: PRIMARY_DARK, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  
+  rangeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   rangeCell: { alignItems: 'center', width: 55 },
   rangeCellLabel: { fontFamily: 'Urbanist-Regular', fontSize: 11, color: '#94A3B8' },
   rangeCellValue: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: PRIMARY_DARK },
-  rangeBarWrap: { flex: 1, height: 12, backgroundColor: '#f1f5f9', borderRadius: 6, overflow: 'hidden' },
-  rangeBarFill: { height: '100%', borderRadius: 6, borderWidth: 1 },
-  rangeLabel: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#64748B', textAlign: 'center', marginTop: 8 },
+  
+  // Bar dengan skala 0-100 penuh
+  fullRangeBarWrap: { 
+    flex: 1, 
+    height: 16, 
+    backgroundColor: '#f1f5f9', 
+    borderRadius: 8, 
+    overflow: 'visible',
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: '#e2e8f0'
+  },
+  fullRangeBarFill: { 
+    position: 'absolute',
+    height: '100%', 
+    borderRadius: 6, 
+    borderWidth: 2,
+    top: -1,
+    bottom: -1
+  },
+  gridLine25: { position: 'absolute', left: '25%', top: 0, bottom: 0, width: 1, backgroundColor: '#cbd5e1', opacity: 0.3 },
+  gridLine50: { position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, backgroundColor: '#cbd5e1', opacity: 0.5 },
+  gridLine75: { position: 'absolute', left: '75%', top: 0, bottom: 0, width: 1, backgroundColor: '#cbd5e1', opacity: 0.3 },
+  
+  scaleLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, paddingHorizontal: 60 },
+  scaleLabel: { fontFamily: 'Urbanist-Regular', fontSize: 10, color: '#94A3B8' },
+  
+  rangeLabel: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#64748B', textAlign: 'center', marginTop: 4 },
   defaultHint: { fontFamily: 'Urbanist-Regular', fontSize: 11, color: '#94A3B8', fontStyle: 'italic', marginTop: 4 },
   emptyWrap: { alignItems: 'center', paddingTop: 50 },
   emptyText: { fontFamily: 'Urbanist-Regular', fontSize: 14, color: '#94A3B8', marginTop: 12 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(36,53,74,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFF', borderTopLeftRadius: 35, borderTopRightRadius: 35, padding: 24, paddingBottom: 40 },
-  modalHandle: { width: 40, height: 5, backgroundColor: '#E2E8F0', borderRadius: 10, alignSelf: 'center', marginBottom: 15 },
-  modalTitle: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: PRIMARY_DARK, textAlign: 'center', marginBottom: 20 },
-  fieldLabel: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: '#64748B', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  predikatBtn: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 14, borderWidth: 1.5, marginRight: 10 },
-  predikatBtnText: { fontFamily: 'Urbanist-Bold', fontSize: 12 },
-  inputRow: { marginBottom: 16 },
-  input: { backgroundColor: '#f8fafc', borderRadius: 18, paddingHorizontal: 15, paddingVertical: 14, fontFamily: 'Urbanist-Regular', fontSize: 15, borderWidth: 1, borderColor: '#e2e8f0', color: '#212121' },
-  buttonRow: { flexDirection: 'row', gap: 12, marginTop: 4 },
-  btnCancel: { flex: 1, backgroundColor: '#ffebee', borderRadius: 20, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#ffcdd2' },
-  btnCancelText: { color: DANGER_COLOR, fontFamily: 'Urbanist-Bold', fontSize: 15 },
-  btnSubmit: { flex: 1, backgroundColor: PRIMARY_DARK, borderRadius: 20, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  btnSubmitText: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 15 },
+  
   pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 },
   pickerBox: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, maxHeight: '60%' },
   pickerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 18, color: PRIMARY_DARK, textAlign: 'center', marginBottom: 15 },
@@ -448,4 +545,9 @@ const styles = StyleSheet.create({
   alertMessage: { fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 25, lineHeight: 22 },
   btnAlertOK: { borderRadius: 20, paddingVertical: 14, paddingHorizontal: 30, alignItems: 'center', elevation: 3 },
   btnAlertOKText: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 16 },
+  
+  // Konfirmasi Reset Styles
+  confirmButtonRow: { flexDirection: 'row', gap: 12, width: '100%' },
+  btnConfirm: { borderRadius: 18, paddingVertical: 14, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', elevation: 2 },
+  btnConfirmText: { fontFamily: 'Urbanist-Bold', fontSize: 15 },
 });

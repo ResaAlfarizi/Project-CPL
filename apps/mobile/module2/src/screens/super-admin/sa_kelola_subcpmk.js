@@ -68,12 +68,29 @@ export default function SAKelolaSubCpmkScreen({ navigation }) {
         mkCplApi.getAll().catch(() => [])
       ]);
 
-      setData(resSub?.data || (Array.isArray(resSub) ? resSub : []));
-      setProdiList(resProdi?.data || (Array.isArray(resProdi) ? resProdi : []));
-      setCplList(resCpl?.data || (Array.isArray(resCpl) ? resCpl : []));
-      setMkCplList(resMkCpl?.data || (Array.isArray(resMkCpl) ? resMkCpl : []));
+      console.log('📦 Response Sub-CPMK:', resSub);
+      console.log('📦 Response Prodi:', resProdi);
+      console.log('📦 Response CPL:', resCpl);
+      console.log('📦 Response MK-CPL:', resMkCpl);
+      console.log('📊 Sample MK-CPL item:', resMkCpl?.data?.[0] || resMkCpl?.[0]);
+
+      const subData = resSub?.data || (Array.isArray(resSub) ? resSub : []);
+      const prodiData = resProdi?.data || (Array.isArray(resProdi) ? resProdi : []);
+      const cplData = resCpl?.data || (Array.isArray(resCpl) ? resCpl : []);
+      const mkCplData = resMkCpl?.data || (Array.isArray(resMkCpl) ? resMkCpl : []);
+
+      console.log('✅ Parsed Sub-CPMK:', subData.length, 'items');
+      console.log('✅ Parsed Prodi:', prodiData.length, 'items');
+      console.log('✅ Parsed CPL:', cplData.length, 'items');
+      console.log('✅ Parsed MK-CPL:', mkCplData.length, 'items');
+      console.log('📊 Sample MK-CPL Item:', mkCplData[0]); // ← TAMBAH INI
+
+      setData(subData);
+      setProdiList(prodiData);
+      setCplList(cplData);
+      setMkCplList(mkCplData);
     } catch (error) {
-      console.error("Gagal sinkronisasi data API:", error);
+      console.error("❌ Gagal sinkronisasi data API:", error);
       setAlertConfig({ visible: true, type: 'error', title: 'Gagal Memuat!', message: 'Tidak dapat terhubung ke server database.' });
     } finally {
       setLoading(false);
@@ -261,24 +278,37 @@ export default function SAKelolaSubCpmkScreen({ navigation }) {
 
   const renderItem = ({ item }) => {
     const kodeText = item.kode_sub_cpmk || item.kode || 'SUB-CPMK';
-    const cplText = item.cpl || item.kode_cpl || 'CPL';
-    const avatarLabel = kodeText.replace(/[^0-9]/g, '').slice(0,2) || kodeText.slice(0,2);
+    const prodiText = item.nama_prodi || item.prodi || 'Prodi';
+    const mkText = item.nama_mk || item.mk || 'MK';
+    const cplText = item.kode_cpl || item.cpl || 'CPL';
     
     return (
       <TouchableOpacity 
-        style={styles.card} activeOpacity={0.7}
+        style={styles.card} 
+        activeOpacity={0.7}
         onPress={() => { setSelectedSubCpmk(item); setDetailVisible(true); }}
       >
-        <View style={styles.cardAvatar}>
-          <Text style={styles.avatarText}>{avatarLabel}</Text>
+        <View style={styles.cardLeft}>
+          {/* Header: Prodi - Matkul - CPL */}
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardProdiMk} numberOfLines={1}>
+              {prodiText} - {mkText} - {cplText}
+            </Text>
+            <View style={styles.bobotBadge}>
+              <Text style={styles.bobotText}>{formatBobotDisplay(item.bobot)}</Text>
+            </View>
+          </View>
+          
+          {/* Kode Sub-CPMK */}
+          <Text style={styles.cardKode}>{kodeText}</Text>
+          
+          {/* Deskripsi */}
+          <Text style={styles.cardDesc} numberOfLines={2}>{item.deskripsi || 'Tidak ada deskripsi'}</Text>
         </View>
-        <View style={styles.cardContent}>
-          <Text style={styles.cardProdi}>{item.prodi || item.nama_prodi || 'Program Studi'}</Text>
-          <Text style={styles.cardTitle}>{kodeText} • {cplText}</Text>
-          <Text style={styles.cardSubtitle} numberOfLines={2}>MK: {item.mk || item.nama_mk}</Text>
-          <Text style={[styles.cardSubtitle, { marginTop: 4, color: PRIMARY_BLUE, fontFamily: 'Urbanist-Bold' }]}>
-            Bobot: {formatBobotDisplay(item.bobot)}
-          </Text>
+        
+        {/* Chevron Button */}
+        <View style={styles.cardChevron}>
+          <Ionicons name="chevron-forward" size={24} color={PRIMARY_BLUE} />
         </View>
       </TouchableOpacity>
     );
@@ -380,7 +410,7 @@ export default function SAKelolaSubCpmkScreen({ navigation }) {
                 <Ionicons name="business-outline" size={20} color={PRIMARY_BLUE} style={styles.inputIcon} />
                 <TouchableOpacity style={styles.dropdownTrigger} onPress={() => { Keyboard.dismiss(); setPickerConfig({visible: true, type: 'prodi', context: 'form'}); }}>
                   <Text style={[styles.dropdownValue, !formProdi && {color: '#94A3B8'}]} numberOfLines={1}>
-                    {formProdi ? formProdi.nama : 'Pilih Program Studi'}
+                    {formProdi ? (formProdi.nama_prodi || formProdi.nama) : 'Pilih Program Studi'}
                   </Text>
                   <Ionicons name="chevron-down-outline" size={20} color="#64748B" />
                 </TouchableOpacity>
@@ -390,7 +420,7 @@ export default function SAKelolaSubCpmkScreen({ navigation }) {
                 <Ionicons name="library-outline" size={20} color={PRIMARY_BLUE} style={styles.inputIcon} />
                 <TouchableOpacity style={styles.dropdownTrigger} disabled={!formProdi} onPress={() => { Keyboard.dismiss(); setPickerConfig({visible: true, type: 'mk', context: 'form'}); }}>
                   <Text style={[styles.dropdownValue, !formMk && {color: '#94A3B8'}]} numberOfLines={1}>
-                    {formMk ? formMk.nama : 'Pilih Mata Kuliah'}
+                    {formMk ? (formMk.nama || formMk.nama_mk) : 'Pilih Mata Kuliah'}
                   </Text>
                   <Ionicons name="chevron-down-outline" size={20} color="#64748B" />
                 </TouchableOpacity>
@@ -400,7 +430,7 @@ export default function SAKelolaSubCpmkScreen({ navigation }) {
                 <Ionicons name="bookmark-outline" size={20} color={PRIMARY_BLUE} style={styles.inputIcon} />
                 <TouchableOpacity style={styles.dropdownTrigger} disabled={!formMk} onPress={() => { Keyboard.dismiss(); setPickerConfig({visible: true, type: 'cpl', context: 'form'}); }}>
                   <Text style={[styles.dropdownValue, !formCpl && {color: '#94A3B8'}]} numberOfLines={1}>
-                    {formCpl ? (formCpl.kode_cpl || formCpl.cpl) : 'Pilih CPL'}
+                    {formCpl ? (formCpl.kode_cpl || formCpl.cpl || formCpl.nama) : 'Pilih CPL'}
                   </Text>
                   <Ionicons name="chevron-down-outline" size={20} color="#64748B" />
                 </TouchableOpacity>
@@ -436,27 +466,45 @@ export default function SAKelolaSubCpmkScreen({ navigation }) {
       </Modal>
 
       {/* MODAL PICKER REUSABLE */}
-      {pickerConfig.visible && (
-        <View style={styles.pickerOverlay}>
-          <View style={styles.pickerBox}>
-            <Text style={styles.pickerTitle}>Pilih Data</Text>
-            <FlatList
-              data={getPickerOptions()} 
-              keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
-              showsVerticalScrollIndicator={true}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.pickerOption} onPress={() => handleSelectPicker(item)}>
-                  <Text style={styles.pickerOptionText}>{item.nama || item.kode_cpl || item.cpl || item.kode}</Text>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={<Text style={{textAlign: 'center', marginVertical: 20, color: '#94A3B8'}}>Data tidak tersedia di API.</Text>}
-            />
-            <TouchableOpacity style={styles.pickerCloseBtnSmall} onPress={() => setPickerConfig({ visible: false, type: '', context: '' })}>
-              <Text style={styles.pickerCloseText}>Batal</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      <Modal visible={pickerConfig.visible} animationType="fade" transparent onRequestClose={() => setPickerConfig({ visible: false, type: '', context: '' })}>
+        <TouchableOpacity 
+          style={styles.pickerOverlay} 
+          activeOpacity={1} 
+          onPress={() => setPickerConfig({ visible: false, type: '', context: '' })}
+        >
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={styles.pickerBox}>
+              <Text style={styles.pickerTitle}>
+                {pickerConfig.type === 'prodi' ? 'Pilih Program Studi' : 
+                 pickerConfig.type === 'mk' ? 'Pilih Mata Kuliah' : 
+                 'Pilih CPL'}
+              </Text>
+              <FlatList
+                data={getPickerOptions()} 
+                keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+                showsVerticalScrollIndicator={true}
+                renderItem={({ item }) => {
+                  const displayText = item.nama_prodi || item.nama || item.kode_cpl || item.cpl || item.kode || 'Data';
+                  console.log('📋 Rendering picker item:', displayText, item);
+                  
+                  return (
+                    <TouchableOpacity style={styles.pickerOption} onPress={() => handleSelectPicker(item)}>
+                      <Text style={styles.pickerOptionText}>{displayText}</Text>
+                    </TouchableOpacity>
+                  );
+                }}
+                ListEmptyComponent={<Text style={{textAlign: 'center', marginVertical: 20, color: '#94A3B8', fontFamily: 'Urbanist-Regular'}}>Data tidak tersedia.</Text>}
+              />
+              <TouchableOpacity 
+                style={styles.pickerCloseBtnSmall} 
+                onPress={() => setPickerConfig({ visible: false, type: '', context: '' })}
+              >
+                <Text style={styles.pickerCloseText}>Batal</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      </Modal>
 
       {/* MODAL ALERT */}
       <Modal visible={alertConfig.visible} animationType="fade" transparent onRequestClose={() => setAlertConfig({...alertConfig, visible: false})}>
@@ -538,12 +586,17 @@ const styles = StyleSheet.create({
 
   listContainer: { padding: 24, paddingBottom: 100 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 16, borderRadius: 24, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0', elevation: 2 },
-  cardAvatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: THEME_COLOR, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  avatarText: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121' },
-  cardContent: { flex: 1 },
-  cardProdi: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#64748B', marginBottom: 2, textTransform: 'uppercase' },
-  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: PRIMARY_BLUE, marginBottom: 4 },
-  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B', paddingRight: 10, lineHeight: 18 },
+  
+  // New Card Layout Styles
+  cardLeft: { flex: 1, paddingRight: 10 },
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  cardProdiMk: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: PRIMARY_BLUE, flex: 1, marginRight: 8 },
+  bobotBadge: { backgroundColor: '#e0f2f1', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  bobotText: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: '#00796b', textAlign: 'center' },
+  cardKode: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: '#212121', marginBottom: 6 },
+  cardDesc: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B', lineHeight: 18 },
+  cardChevron: { paddingLeft: 8, justifyContent: 'center', alignItems: 'center' },
+  
   fab: { position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 20, backgroundColor: THEME_COLOR, justifyContent: 'center', alignItems: 'center', elevation: 5 },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(33, 44, 33, 0.5)', justifyContent: 'flex-end' },
@@ -567,7 +620,7 @@ const styles = StyleSheet.create({
   btnSubmitFit: { flex: 0.48, backgroundColor: PRIMARY_BLUE, borderRadius: 20, paddingVertical: 14, alignItems: 'center', elevation: 3 },
   btnSubmitTextFit: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 15 },
   
-  pickerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 999, padding: 24 },
+  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   pickerBox: { backgroundColor: '#FFF', width: '100%', borderRadius: 24, maxHeight: '70%', padding: 20, elevation: 10 },
   pickerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 18, color: PRIMARY_BLUE, textAlign: 'center', marginBottom: 15 },
   pickerOption: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },

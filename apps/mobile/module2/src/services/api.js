@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // PENTING: Ganti dengan IP komputer Anda yang menjalankan backend
 const API_BASE = 'http://192.168.18.252:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
+const API_BASE_M1 = 'http://192.168.18.252:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
 
 const TOKEN_KEY = 'auth_token';
 
@@ -52,7 +53,8 @@ async function apiFetch(endpoint, options = {}) {
     }
 
     const url = `${API_BASE}${endpoint}`;
-    console.log('🌐 API Call:', url);
+    const timestamp = new Date().toISOString();
+    console.log(`🌐 [M2] ${timestamp} - ${url}`);
 
     try {
         const res = await fetch(url, { ...options, headers });
@@ -63,10 +65,42 @@ async function apiFetch(endpoint, options = {}) {
             throw new Error(data.message || 'Request gagal');
         }
         
-        console.log('✅ API Success:', endpoint);
+        console.log(`✅ [M2] Success: ${endpoint}`);        
         return data;
     } catch (error) {
         console.error('❌ Fetch Error:', error.message);
+        throw error;
+    }
+}
+
+// ─── Base fetch untuk Module 1 (dosen, mahasiswa, prodi) ─────────────────────
+
+async function apiFetchModule1(endpoint, options = {}) {
+    const token = await tokenStorage.get();
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const url = `${API_BASE_M1}${endpoint}`;
+    console.log('🌐 API Call (M1):', url);
+
+    try {
+        const res = await fetch(url, { ...options, headers });
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.error('❌ API Error (M1):', res.status, data.message);
+            throw new Error(data.message || 'Request gagal');
+        }
+        
+        console.log('✅ API Success (M1):', endpoint);
+        return data;
+    } catch (error) {
+        console.error('❌ Fetch Error (M1):', error.message);
         throw error;
     }
 }
@@ -129,12 +163,14 @@ export const kelasApi = {
 // ─── PRODI ────────────────────────────────────────────────────────────────────
 
 export const prodiApi = {
-    getAll:  ()             => apiFetch('/prodi'),
-    getById: (id)           => apiFetch(`/prodi/${id}`),
-    // ✅ BARU: Create, Update, Delete untuk Superadmin
-    create:  (body)         => apiFetch('/prodi', { method: 'POST', body: JSON.stringify(body) }),
-    update:  (id, body)     => apiFetch(`/prodi/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    delete:  (id)           => apiFetch(`/prodi/${id}`, { method: 'DELETE' }),
+    getAll:  ()             => {
+        console.log('🔥 prodiApi.getAll() called - using Module 1');
+        return apiFetchModule1('/prodi');
+    },
+    getById: (id)           => apiFetchModule1(`/prodi/${id}`),
+    create:  (body)         => apiFetchModule1('/prodi', { method: 'POST', body: JSON.stringify(body) }),
+    update:  (id, body)     => apiFetchModule1(`/prodi/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:  (id)           => apiFetchModule1(`/prodi/${id}`, { method: 'DELETE' }),
 };
 
 // ─── CPL ──────────────────────────────────────────────────────────────────────
@@ -166,6 +202,7 @@ export const mkApi = {
 
 export const mkSaApi = {
     getAll:  ()             => apiFetch('/mata-kuliah'),
+    getById: (id)           => apiFetch(`/mata-kuliah/${id}`),
     create:  (body)         => apiFetch('/mata-kuliah', { method: 'POST', body: JSON.stringify(body) }),
     update:  (id, body)     => apiFetch(`/mata-kuliah/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     delete:  (id)           => apiFetch(`/mata-kuliah/${id}`, { method: 'DELETE' }),
@@ -199,12 +236,14 @@ export const mkCplApi = {
 // ✅ BARU: Endpoint Threshold untuk Superadmin
 
 export const thresholdApi = {
-    getAll:      ()             => apiFetch('/threshold'),
-    getByProdi:  (prodiId)      => apiFetch(`/threshold/prodi/${prodiId}`),
-    create:      (body)         => apiFetch('/threshold', { method: 'POST', body: JSON.stringify(body) }),
-    update:      (id, body)     => apiFetch(`/threshold/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    delete:      (id)           => apiFetch(`/threshold/${id}`, { method: 'DELETE' }),
-    resetDefault: (prodiId)     => apiFetch(`/threshold/reset/${prodiId}`, { method: 'POST' }),
+    getAll:      ()             => apiFetchModule1('/threshold'),
+    // create digunakan untuk save batch (menerima prodi_id + array thresholds)
+    create:      (body)         => apiFetchModule1('/threshold', { method: 'POST', body: JSON.stringify(body) }),
+    // Endpoint individual tidak tersedia di backend, gunakan batch save
+    update:      (id, body)     => Promise.reject(new Error('Update individual tidak tersedia. Gunakan batch save.')),
+    delete:      (id)           => Promise.reject(new Error('Delete individual tidak tersedia. Gunakan batch save.')),
+    getByProdi:  (prodiId)      => Promise.reject(new Error('getByProdi tidak tersedia. Gunakan getAll() dan filter di frontend.')),
+    resetDefault: (prodiId)     => Promise.reject(new Error('resetDefault tidak tersedia. Reset di frontend lalu save.')),
 };
 
 // ─── NILAI ────────────────────────────────────────────────────────────────────
@@ -228,12 +267,11 @@ export const enrollmentApi = {
 
 export const capaianApi = {
     getByKelas:     (kelasId)   => apiFetch(`/capaian/kelas/${kelasId}`),
-    getAll:         ()          => apiFetch('/capaian'),
+    getAll:         ()          => apiFetch('/capaian'), 
     getByProdi:     (prodiId)   => apiFetch(`/capaian/prodi/${prodiId}`),
-    // ✅ BARU: Input manual capaian
     create:         (body)      => apiFetch('/capaian', { method: 'POST', body: JSON.stringify(body) }),
-    update:         (id, body)  => apiFetch(`/capaian/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    delete:         (id)        => apiFetch(`/capaian/${id}`, { method: 'DELETE' }),
+    update: (mahasiswa_id, cpl_id, body) => apiFetch(`/capaian/${mahasiswa_id}/${cpl_id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete: (mahasiswa_id, cpl_id)           => apiFetch(`/capaian/${mahasiswa_id}/${cpl_id}`, { method: 'DELETE' }),
 };
 
 // ─── CAPAIAN CPL MAHASISWA ─────────────────────────────────────────────────────
@@ -260,33 +298,40 @@ export const rolesApi = {
 // ─── USER API ─────────────────────────────────────────────────────────────────
 
 export const userApi = {
-    getAll:       ()             => apiFetch('/users'),
-    getById:      (id)           => apiFetch(`/users/${id}`),
-    getByEmail:   (email)        => apiFetch(`/users/email/${email}`),
-    create:       (body)         => apiFetch('/users', { method: 'POST', body: JSON.stringify(body) }),
-    update:       (id, body)     => apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    delete:       (id)           => apiFetch(`/users/${id}`, { method: 'DELETE' }),
+    getAll:          ()             => apiFetch('/users'),
+    getById:         (id)           => apiFetch(`/users/${id}`),
+    getByEmail:      (email)        => apiFetch(`/users/email/${email}`),
+    create:          (body)         => apiFetch('/users', { method: 'POST', body: JSON.stringify(body) }),
+    update:          (id, body)     => apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:          (id)           => apiFetch(`/users/${id}`, { method: 'DELETE' }),
+    // ✅ BARU: Delete audit logs untuk cascade delete user
+    deleteAuditLogs: (userId)       => apiFetch(`/auth-audit-log/user/${userId}`, { method: 'DELETE' }),
 };
 
 // ─── DOSEN API ────────────────────────────────────────────────────────────────
 // ✅ BARU: Endpoint khusus dosen
 
 export const dosenApi = {
-    getAll:       ()             => apiFetch('/dosen'),
-    getById:      (id)           => apiFetch(`/dosen/${id}`),
-    create:       (body)         => apiFetch('/dosen', { method: 'POST', body: JSON.stringify(body) }),
-    update:       (id, body)     => apiFetch(`/dosen/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    delete:       (id)           => apiFetch(`/dosen/${id}`, { method: 'DELETE' }),
+    getAll:       ()             => {
+        console.log('🔥 dosenApi.getAll() called - using Module 1');
+        return apiFetchModule1('/dosen');
+    },
+    getById:      (id)           => apiFetchModule1(`/dosen/${id}`),
+    create:       (body)         => apiFetchModule1('/dosen', { method: 'POST', body: JSON.stringify(body) }),
+    update:       (id, body)     => apiFetchModule1(`/dosen/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:       (id)           => apiFetchModule1(`/dosen/${id}`, { method: 'DELETE' }),
 };
-
 // ─── MAHASISWA API ────────────────────────────────────────────────────────────
 
 export const mahasiswaApi = {
-    getAll:         ()           => apiFetch('/mahasiswa'),
-    getById:        (id)         => apiFetch(`/mahasiswa/${id}`),
-    create:         (body)       => apiFetch('/mahasiswa', { method: 'POST', body: JSON.stringify(body) }),
-    update:         (id, body)   => apiFetch(`/mahasiswa/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    delete:         (id)         => apiFetch(`/mahasiswa/${id}`, { method: 'DELETE' }),
+    getAll:         ()           => {
+        console.log('🔥 mahasiswaApi.getAll() called - using Module 1');
+        return apiFetchModule1('/mahasiswa');
+    },
+    getById:        (id)         => apiFetchModule1(`/mahasiswa/${id}`),
+    create:         (body)       => apiFetchModule1('/mahasiswa', { method: 'POST', body: JSON.stringify(body) }),
+    update:         (id, body)   => apiFetchModule1(`/mahasiswa/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:         (id)         => apiFetchModule1(`/mahasiswa/${id}`, { method: 'DELETE' }),
     
     getMyProfile: async () => {
         try {
@@ -304,7 +349,7 @@ export const mahasiswaApi = {
         }
     },
     
-    getAllProdi:         ()          => apiFetch('/prodi'),
+    getAllProdi:         ()          => apiFetchModule1('/prodi'),
     getAllCPL:           ()          => apiFetch('/cpl'),
     getCPLByProdi:       (prodiId)   => apiFetch(`/cpl/prodi/${prodiId}`),
     getAllKelas:         ()          => apiFetch('/kelas'),

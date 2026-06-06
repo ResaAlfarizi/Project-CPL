@@ -5,8 +5,7 @@ import {
   Keyboard, ActivityIndicator, ScrollView, Animated, Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { mkSaApi, prodiApi } from '../../services/api';
-
+import { mkSaApi, prodiApi, cplApi } from '../../services/api'; // Ditambahkan cplApi
 
 // ─── Normalisasi: handle semua kemungkinan field dari BE ─────────────────────
 function normalizeMk(item) {
@@ -17,7 +16,8 @@ function normalizeMk(item) {
     prodi_id : item.prodi_id || item.prodiId || '',
     sks      : item.sks ?? item.bobot_sks ?? 0,
     semester : item.semester ?? 0,
-    cpl_count: item.cpl_count ?? item.total_cpl ?? item.jumlah_cpl ?? 0,
+    // PERBAIKAN: Menghitung jumlah dari array cpl_ids atau cpls jika cpl_count dari database kosong
+    cpl_count: item.cpl_count ?? item.total_cpl ?? item.jumlah_cpl ?? item.cpls?.length ?? item.cpl_ids?.length ?? 0,
   };
 }
 
@@ -32,59 +32,75 @@ function extractArray(res) {
 }
 
 const { width: SW } = Dimensions.get('window');
-const THEME_COLOR   = '#a3c1e5';
-const PRIMARY_DARK  = '#24354a';
-const PRIMARY_BLUE  = '#577590';
-const DANGER_COLOR  = '#c62828';
-const SUCCESS_COLOR = '#16a34a';
+const THEME_COLOR   = '#cdddf4'; 
+const PRIMARY_DARK  = '#24354a';  // ← Update warna sesuai CPL
+const PRIMARY_BLUE  = '#577590';  // ← Update warna sesuai CPL
+const DANGER_COLOR  = '#c62828'; 
+const SUCCESS_COLOR = '#16a34a'; 
+const FAB_COLOR     = THEME_COLOR;
 
-// ─── Toast ───────────────────────────────────────────────────────────────────
-function Toast({ visible, type, title, message, onHide }) {
-  const anim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (visible) {
-      Animated.spring(anim, { toValue: 1, useNativeDriver: true, tension: 80, friction: 10 }).start();
-      const t = setTimeout(onHide, 3200);
-      return () => clearTimeout(t);
-    } else {
-      Animated.timing(anim, { toValue: 0, duration: 200, useNativeDriver: true }).start();
-    }
-  }, [visible]);
-
-  const isSuccess = type === 'success';
-  const bg        = isSuccess ? '#dcfce7' : '#fee2e2';
-  const border    = isSuccess ? SUCCESS_COLOR : DANGER_COLOR;
-  const icon      = isSuccess ? 'checkmark-circle' : 'close-circle';
-  const iconColor = isSuccess ? SUCCESS_COLOR : DANGER_COLOR;
-
+// ─── CUSTOM ALERT MODAL (sama seperti CPL) ───────────────────────────────────
+function CustomAlert({ visible, type, title, message, onConfirm, onCancel, confirmText, cancelText }) {
   if (!visible) return null;
 
+  const isSuccess = type === 'success';
+  const isDanger  = type === 'danger';
+  const isError   = type === 'error';
+
+  const iconName  = isSuccess ? 'checkmark-circle' : isDanger ? 'trash' : isError ? 'close-circle' : 'alert-circle';
+  const iconColor = isSuccess ? '#16a34a' : (isDanger || isError) ? DANGER_COLOR : PRIMARY_BLUE;
+  const iconBg    = isSuccess ? '#dcfce7' : (isDanger || isError) ? '#fee2e2' : '#dbeafe';
+
   return (
-    <Animated.View style={[
-      styles.toast,
-      { backgroundColor: bg, borderLeftColor: border },
-      {
-        opacity: anim,
-        transform: [{ translateY: anim.interpolate({ inputRange: [0,1], outputRange: [-30, 0] }) }],
-      },
-    ]}>
-      <Ionicons name={icon} size={26} color={iconColor} />
-      <View style={{ flex: 1, marginLeft: 10 }}>
-        <Text style={[styles.toastTitle, { color: border }]}>{title}</Text>
-        {!!message && <Text style={styles.toastMsg}>{message}</Text>}
+    <Modal visible={visible} animationType="fade" transparent statusBarTranslucent>
+      <View style={alertStyles.overlay}>
+        <View style={alertStyles.box}>
+          <View style={[alertStyles.iconCircle, { backgroundColor: iconBg }]}>
+            <Ionicons name={iconName} size={34} color={iconColor} />
+          </View>
+          <Text style={alertStyles.title}>{title}</Text>
+          {!!message && <Text style={alertStyles.message}>{message}</Text>}
+          <View style={alertStyles.btnRow}>
+            {!!onCancel && (
+              <TouchableOpacity style={alertStyles.btnCancel} onPress={onCancel}>
+                <Text style={alertStyles.btnCancelText}>{cancelText || 'Batal'}</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[
+                alertStyles.btnConfirm,
+                { backgroundColor: isSuccess ? '#16a34a' : (isDanger || isError) ? DANGER_COLOR : PRIMARY_BLUE },
+                !onCancel && { flex: 1 }
+              ]}
+              onPress={onConfirm}
+            >
+              <Text style={alertStyles.btnConfirmText}>{confirmText || 'OK'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
-      <TouchableOpacity onPress={onHide}>
-        <Ionicons name="close" size={18} color="#94A3B8" />
-      </TouchableOpacity>
-    </Animated.View>
+    </Modal>
   );
 }
+
+const alertStyles = StyleSheet.create({
+  overlay:        { flex: 1, backgroundColor: 'rgba(36,53,74,0.55)', justifyContent: 'center', alignItems: 'center', padding: 32 },
+  box:            { backgroundColor: '#FFF', borderRadius: 28, padding: 28, width: '100%', alignItems: 'center', elevation: 24 },
+  iconCircle:     { width: 72, height: 72, borderRadius: 36, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+  title:          { fontFamily: 'Urbanist-Bold', fontSize: 18, color: PRIMARY_DARK, textAlign: 'center', marginBottom: 8 },
+  message:        { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 20, marginBottom: 4 },
+  btnRow:         { flexDirection: 'row', gap: 12, marginTop: 22, width: '100%' },
+  btnCancel:      { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 16, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  btnCancelText:  { fontFamily: 'Urbanist-Bold', fontSize: 14, color: '#64748B' },
+  btnConfirm:     { flex: 1, borderRadius: 16, paddingVertical: 14, alignItems: 'center' },
+  btnConfirmText: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: '#FFF' },
+});
 
 // ─── Komponen utama ──────────────────────────────────────────────────────────
 export default function SAKelolaMKScreen({ navigation }) {
   const [data, setData]           = useState([]);
   const [prodiList, setProdiList] = useState([]);
+  const [cplList, setCplList]     = useState([]); // Ditambahkan state list CPL dari server
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
 
@@ -104,13 +120,18 @@ export default function SAKelolaMKScreen({ navigation }) {
   const [formNama, setFormNama]           = useState('');
   const [formSks, setFormSks]             = useState('');
   const [formSemester, setFormSemester]   = useState('');
+  const [formCplIds, setFormCplIds]       = useState([]); // State penampung CPL terpilih
 
   const [deleteConfirm, setDeleteConfirm] = useState({ visible: false, id: null, nama: '' });
-  const [toast, setToast] = useState({ visible: false, type: '', title: '', message: '' });
+  
+  // Custom alert (ganti Toast dengan CustomAlert seperti CPL)
+  const [alert, setAlert] = useState({
+    visible: false, type: 'info', title: '', message: '',
+    onConfirm: null, onCancel: null, confirmText: '', cancelText: ''
+  });
 
-  const showToast = (type, title, message = '') =>
-    setToast({ visible: true, type, title, message });
-  const hideToast = () => setToast(t => ({ ...t, visible: false }));
+  const showAlert = (opts) => setAlert({ visible: true, ...opts });
+  const hideAlert = () => setAlert(a => ({ ...a, visible: false }));
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -118,7 +139,7 @@ export default function SAKelolaMKScreen({ navigation }) {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [resMk, resProdi] = await Promise.all([
+      const [resMk, resProdi, resCpl] = await Promise.all([
         mkSaApi.getAll().catch(e => {
           console.log('❌ mkSaApi.getAll() error:', e?.message);
           return null;
@@ -127,24 +148,36 @@ export default function SAKelolaMKScreen({ navigation }) {
           console.log('❌ prodiApi.getAll() error:', e?.message);
           return null;
         }),
+        cplApi.getAll().catch(e => {
+          console.log('❌ cplApi.getAll() error:', e?.message);
+          return null;
+        }),
       ]);
 
-      console.log('📦 resMk raw:', JSON.stringify(resMk)?.slice(0, 300));
-
       if (resMk === null) {
-        showToast('error', 'Gagal memuat MK', 'Cek console untuk detail error.');
+        showAlert({
+          type: 'error', title: 'Gagal Memuat MK',
+          message: 'Cek console untuk detail error.',
+          confirmText: 'OK', onConfirm: hideAlert,
+        });
       } else {
         const arr = extractArray(resMk);
-        console.log('📋 Jumlah MK:', arr.length, '| Contoh:', JSON.stringify(arr[0]));
         setData(arr.map(normalizeMk));
       }
 
       if (resProdi !== null) {
         setProdiList(extractArray(resProdi));
       }
+
+      if (resCpl !== null) {
+        setCplList(extractArray(resCpl));
+      }
     } catch (err) {
-      console.log('❌ fetchAll catch:', err?.message);
-      showToast('error', 'Koneksi gagal', err.message || 'Tidak dapat terhubung ke server.');
+      showAlert({
+        type: 'error', title: 'Koneksi Gagal',
+        message: err.message || 'Tidak dapat terhubung ke server.',
+        confirmText: 'OK', onConfirm: hideAlert,
+      });
     } finally {
       setLoading(false);
     }
@@ -153,7 +186,11 @@ export default function SAKelolaMKScreen({ navigation }) {
   // ── Simpan ────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!formProdiId || !formKode || !formNama || !formSks || !formSemester) {
-      showToast('error', 'Form tidak lengkap', 'Harap isi semua kolom.');
+      showAlert({
+        type: 'error', title: 'Form Tidak Lengkap',
+        message: 'Harap isi semua kolom sebelum menyimpan.',
+        confirmText: 'Mengerti', onConfirm: hideAlert,
+      });
       return;
     }
     setSaving(true);
@@ -166,7 +203,10 @@ export default function SAKelolaMKScreen({ navigation }) {
         title    : formNama,
         sks      : parseInt(formSks),
         semester : parseInt(formSemester),
+        cpl_ids  : formCplIds, // Mengirimkan UUID asli string array ke Backend
       };
+
+      console.log("Payload Siap Dikirim:", JSON.stringify(payload, null, 2));
 
       if (editId) {
         await mkSaApi.update(editId, payload);
@@ -174,17 +214,39 @@ export default function SAKelolaMKScreen({ navigation }) {
         await mkSaApi.create(payload);
       }
 
-      showToast('success', editId ? 'Berhasil diperbarui' : 'MK ditambahkan',
-        `${payload.kode_mk} berhasil disimpan.`);
       setFormVisible(false);
       resetForm();
       fetchAll();
+      
+      const namaAksi = editId ? 'diperbarui' : 'ditambahkan';
+      setTimeout(() => showAlert({
+        type: 'success',
+        title: editId ? 'Perubahan Disimpan' : 'MK Ditambahkan',
+        message: `Mata kuliah "${payload.kode_mk}" berhasil ${namaAksi}.`,
+        confirmText: 'OK', onConfirm: hideAlert,
+      }), 350);
     } catch (err) {
-      showToast('error', 'Gagal menyimpan', err.message || 'Terjadi kesalahan server.');
+      showAlert({
+        type: 'error', title: 'Gagal Menyimpan',
+        message: err.message || 'Terjadi kesalahan saat menyimpan data.',
+        confirmText: 'OK', onConfirm: hideAlert,
+      });
     } finally {
       setSaving(false);
     }
   };
+
+  // Toggle Pilihan CPL (Checkbox handler)
+  const toggleCplSelection = (id) => {
+    if (formCplIds.includes(id)) {
+      setFormCplIds(formCplIds.filter(item => item !== id));
+    } else {
+      setFormCplIds([...formCplIds, id]);
+    }
+  };
+
+  // Filter list CPL berdasarkan program studi yang sedang dipilih di form
+  const filteredCplsByProdi = cplList.filter(cpl => String(cpl.prodi_id) === String(formProdiId));
 
   // ── Hapus ─────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
@@ -194,25 +256,52 @@ export default function SAKelolaMKScreen({ navigation }) {
     try {
       await mkSaApi.delete(id);
       fetchAll();
-      showToast('success', 'MK dihapus', `"${nama}" berhasil dihapus.`);
+      setTimeout(() => showAlert({
+        type: 'success',
+        title: 'Berhasil Dihapus',
+        message: `Mata kuliah "${nama}" telah dihapus dari daftar.`,
+        confirmText: 'OK', onConfirm: hideAlert,
+      }), 350);
     } catch (err) {
-      showToast('error', 'Gagal menghapus', err.message || 'Terjadi kesalahan server.');
+      showAlert({
+        type: 'error', title: 'Gagal Menghapus',
+        message: err.message || 'Terjadi kesalahan server.',
+        confirmText: 'OK', onConfirm: hideAlert,
+      });
     }
   };
 
-  const openEditModal = (item) => {
+  const openEditModal = async (item) => {
     setDetailVisible(false);
-    setTimeout(() => {
-      setEditId(item.id);
-      setFormProdiId(item.prodi_id || '');
-      const prodi = prodiList.find(p => String(p.id) === String(item.prodi_id));
-      setFormProdiName(prodi?.nama_prodi || item.nama_prodi || '');
-      setFormKode(item.kode_mk || '');
-      setFormNama(item.nama_mk || '');
-      setFormSks(String(item.sks || ''));
-      setFormSemester(String(item.semester || ''));
-      setFormVisible(true);
-    }, 250);
+    
+    // Fetch detail MK untuk mendapatkan cpl_ids yang lengkap
+    try {
+      const detailResponse = await mkSaApi.getById(item.id);
+      const detailData = detailResponse?.data || detailResponse;
+      
+      setTimeout(() => {
+        setEditId(detailData.id);
+        setFormProdiId(detailData.prodi_id || '');
+        const prodi = prodiList.find(p => String(p.id) === String(detailData.prodi_id));
+        setFormProdiName(prodi?.nama_prodi || detailData.nama_prodi || '');
+        setFormKode(detailData.kode_mk || '');
+        setFormNama(detailData.nama_mk || '');
+        setFormSks(String(detailData.sks || ''));
+        setFormSemester(String(detailData.semester || ''));
+        
+        // Mengambil data relasi CPL yang sudah tersimpan sebelumnya saat edit
+        const existingCplIds = detailData.cpl_ids || detailData.cpls?.map(c => c.id) || [];
+        setFormCplIds(existingCplIds);
+        
+        setFormVisible(true);
+      }, 250);
+    } catch (err) {
+      showAlert({
+        type: 'error', title: 'Gagal Memuat Detail',
+        message: err.message || 'Tidak dapat memuat data mata kuliah.',
+        confirmText: 'OK', onConfirm: hideAlert,
+      });
+    }
   };
 
   const resetForm = () => {
@@ -220,6 +309,7 @@ export default function SAKelolaMKScreen({ navigation }) {
     setFormProdiId(''); setFormProdiName('');
     setFormKode('');    setFormNama('');
     setFormSks('');     setFormSemester('');
+    setFormCplIds([]);
   };
 
   const getProdiKode = (prodiId) =>
@@ -232,53 +322,48 @@ export default function SAKelolaMKScreen({ navigation }) {
     return matchProdi && matchSem;
   });
 
-  const semesterCounts = filteredData.reduce((acc, item) => {
-    const sem = parseInt(item.semester);
-    if (!isNaN(sem)) acc[sem] = (acc[sem] || 0) + 1;
-    return acc;
-  }, {});
+  // ── Fungsi Singkatan/Inisial Profil Dinamis ───────────────────────────────
+  const getInitials = (name) => {
+    if (!name) return 'MK';
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
 
-  // ── Render baris ──────────────────────────────────────────────────────────
-  const renderItem = ({ item, index }) => {
+  // ── Render kartu ──────────────────────────────────────────────────────────
+  const renderItem = ({ item }) => {
     const cplCount = item.cpl_count ?? 0;
+    const badgeText = getInitials(item.nama_mk);
+
     return (
-      <View style={[styles.tableRow, index % 2 === 0 ? styles.rowEven : styles.rowOdd]}>
-        <Text style={[styles.cell, styles.cellNo]}>{index + 1}</Text>
-
-        <View style={[styles.cell, styles.cellKode]}>
-          <View style={styles.kodeBadge}>
-            <Text style={styles.kodeText}>{item.kode_mk}</Text>
-          </View>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={async () => {
+          // Fetch detail untuk dapat data CPL lengkap
+          try {
+            const detailResponse = await mkSaApi.getById(item.id);
+            const detailData = detailResponse?.data || detailResponse;
+            setDetailItem(detailData);
+            setDetailVisible(true);
+          } catch (err) {
+            // Fallback: gunakan data dari list jika fetch gagal
+            setDetailItem(item);
+            setDetailVisible(true);
+          }
+        }}
+        activeOpacity={0.82}
+      >
+        <View style={styles.leftBadge}>
+          <Text style={styles.leftBadgeText}>{badgeText}</Text>
         </View>
-
-        <Text style={[styles.cell, styles.cellNama]} numberOfLines={2}>{item.nama_mk}</Text>
-
-        <Text style={[styles.cell, styles.cellProdi]}>{getProdiKode(item.prodi_id)}</Text>
-
-        <View style={[styles.cell, styles.cellSks]}>
-          <View style={styles.sksBadge}>
-            <Text style={styles.sksText}>{item.sks}</Text>
-            <Text style={styles.sksLabel}>SKS</Text>
-          </View>
+        <View style={styles.cardContentWrap}>
+          <Text style={styles.cardNamaMain} numberOfLines={1}>{item.kode_mk} - {item.nama_mk}</Text>
+          <Text style={styles.cardSubDetails}>SKS: {item.sks} · Semester {item.semester} · {cplCount} CPL</Text>
         </View>
-
-        <Text style={[styles.cell, styles.cellSem]}>Sem {item.semester}</Text>
-
-        <View style={[styles.cell, styles.cellCpl]}>
-          <View style={styles.cplBadge}>
-            <Text style={styles.cplText}>{cplCount} CPL</Text>
-          </View>
-        </View>
-
-        <View style={[styles.cell, styles.cellAksi]}>
-          <TouchableOpacity
-            style={styles.btnDetail}
-            onPress={() => { setDetailItem(item); setDetailVisible(true); }}
-          >
-            <Ionicons name="chevron-forward" size={16} color={PRIMARY_BLUE} />
-          </TouchableOpacity>
-        </View>
-      </View>
+        <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+      </TouchableOpacity>
     );
   };
 
@@ -287,19 +372,9 @@ export default function SAKelolaMKScreen({ navigation }) {
     <ImageBackground
       source={require('../../../assets/uinsa2.jpeg')}
       style={styles.container}
-      imageStyle={{ opacity: 0.07 }}
+      imageStyle={{ opacity: 0.1 }}
     >
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-
-      <View style={styles.toastWrapper} pointerEvents="box-none">
-        <Toast
-          visible={toast.visible}
-          type={toast.type}
-          title={toast.title}
-          message={toast.message}
-          onHide={hideToast}
-        />
-      </View>
 
       {/* HEADER */}
       <View style={styles.header}>
@@ -308,69 +383,11 @@ export default function SAKelolaMKScreen({ navigation }) {
         </TouchableOpacity>
         <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Mata Kuliah</Text>
-          <Text style={styles.headerSubtitle}>Kelola kurikulum seluruh Program Studi</Text>
+          <Text style={styles.headerSubtitle}>Pemetaan Mata Kuliah Program Studi Sistem Informasi</Text>
         </View>
       </View>
 
-      {/* FILTER BAR */}
-      <View style={styles.controlBar}>
-        <TouchableOpacity
-          style={[styles.filterBtn, filterProdi && styles.filterBtnActive]}
-          onPress={() => { setPickerType('prodi'); setPickerVisible(true); }}
-        >
-          <Text style={[styles.filterBtnText, filterProdi && styles.filterBtnTextActive]} numberOfLines={1}>
-            {filterProdi ? filterProdi.kode_prodi : 'Semua Prodi'}
-          </Text>
-          <Ionicons name="chevron-down" size={13} color={filterProdi ? '#fff' : PRIMARY_BLUE} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterBtn, filterSemester && styles.filterBtnActive]}
-          onPress={() => { setPickerType('semester'); setPickerVisible(true); }}
-        >
-          <Text style={[styles.filterBtnText, filterSemester && styles.filterBtnTextActive]}>
-            {filterSemester ? `Semester ${filterSemester}` : 'Semua Semester'}
-          </Text>
-          <Ionicons name="chevron-down" size={13} color={filterSemester ? '#fff' : PRIMARY_BLUE} />
-        </TouchableOpacity>
-
-        {(filterProdi || filterSemester) && (
-          <TouchableOpacity onPress={() => { setFilterProdi(null); setFilterSemester(null); }}>
-            <Ionicons name="close-circle" size={22} color={DANGER_COLOR} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* DISTRIBUSI SEMESTER */}
-      {Object.keys(semesterCounts).length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.semDistRow}>
-          {Object.entries(semesterCounts)
-            .sort(([a], [b]) => parseInt(a) - parseInt(b))
-            .map(([sem, count]) => {
-              const active = filterSemester === parseInt(sem);
-              return (
-                <TouchableOpacity
-                  key={sem}
-                  style={[styles.semPill, active && styles.semPillActive]}
-                  onPress={() => setFilterSemester(active ? null : parseInt(sem))}
-                >
-                  <Text style={[styles.semPillText, active && { color: '#fff' }]}>
-                    Sem {sem}{'  '}
-                    <Text style={[styles.semPillCount, active && { color: '#c7e6ff' }]}>{count} MK</Text>
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-        </ScrollView>
-      )}
-
-      {/* HEADER DAFTAR */}
-      <View style={styles.listHeaderWrap}>
-        <Text style={styles.listHeaderTitle}>Daftar Mata Kuliah</Text>
-        <Text style={styles.listHeaderSub}>{filteredData.length} dari {data.length} mata kuliah</Text>
-      </View>
-
-      {/* TABEL */}
+      {/* DAFTAR MATA KULIAH */}
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={PRIMARY_DARK} />
@@ -383,34 +400,14 @@ export default function SAKelolaMKScreen({ navigation }) {
           <Text style={styles.emptySubText}>Tekan tombol + untuk menambahkan data baru.</Text>
         </View>
       ) : (
-        <View style={{ flex: 1 }}>
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }}>
-            <View style={styles.tableWrapper}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ minWidth: SW - 24 }}>
-                  <View style={styles.tableHead}>
-                    <Text style={[styles.headCell, styles.cellNo]}>#</Text>
-                    <Text style={[styles.headCell, styles.cellKode]}>KODE MK</Text>
-                    <Text style={[styles.headCell, styles.cellNama]}>NAMA MATA KULIAH</Text>
-                    <Text style={[styles.headCell, styles.cellProdi]}>PRODI</Text>
-                    <Text style={[styles.headCell, styles.cellSks]}>SKS</Text>
-                    <Text style={[styles.headCell, styles.cellSem]}>SEMESTER</Text>
-                    <Text style={[styles.headCell, styles.cellCpl]}>CPL{'\n'}TERPETAKAN</Text>
-                    <Text style={[styles.headCell, styles.cellAksi]}>AKSI</Text>
-                  </View>
-                  <FlatList
-                    data={filteredData}
-                    keyExtractor={(item, i) => (item.id || i).toString()}
-                    renderItem={renderItem}
-                    scrollEnabled={false}
-                    refreshing={loading}
-                    onRefresh={fetchAll}
-                  />
-                </View>
-              </ScrollView>
-            </View>
-          </ScrollView>
-        </View>
+        <FlatList
+          data={filteredData}
+          keyExtractor={(item, i) => (item.id || i).toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          refreshing={loading}
+          onRefresh={fetchAll}
+        />
       )}
 
       {/* FAB */}
@@ -419,58 +416,79 @@ export default function SAKelolaMKScreen({ navigation }) {
         onPress={() => { resetForm(); setFormVisible(true); }}
         activeOpacity={0.85}
       >
-        <Ionicons name="add" size={30} color="#fff" />
+        <Ionicons name="add" size={30} color={PRIMARY_DARK} />
       </TouchableOpacity>
 
       {/* MODAL DETAIL */}
-      <Modal visible={detailVisible} animationType="fade" transparent>
-        <TouchableOpacity style={styles.detailOverlay} activeOpacity={1} onPress={() => setDetailVisible(false)}>
-          <TouchableWithoutFeedback>
-            <View style={styles.detailBox}>
-              {detailItem && (
-                <>
-                  <View style={styles.detailKodeBadge}>
-                    <Text style={styles.detailKodeText}>{detailItem.kode_mk}</Text>
-                  </View>
-                  <Text style={styles.detailNama}>{detailItem.nama_mk}</Text>
-                  <View style={styles.detailInfoRow}>
-                    <View style={styles.detailInfoChip}>
-                      <Ionicons name="business-outline" size={14} color={PRIMARY_BLUE} />
-                      <Text style={styles.detailInfoText}>{getProdiKode(detailItem.prodi_id)}</Text>
-                    </View>
-                    <View style={[styles.detailInfoChip, { backgroundColor: '#dbeafe' }]}>
-                      <Text style={[styles.detailInfoText, { color: '#1d4ed8' }]}>{detailItem.sks} SKS</Text>
-                    </View>
-                    <View style={[styles.detailInfoChip, { backgroundColor: '#f0fdf4' }]}>
-                      <Text style={[styles.detailInfoText, { color: SUCCESS_COLOR }]}>{detailItem.cpl_count ?? 0} CPL</Text>
-                    </View>
-                    <View style={[styles.detailInfoChip, { backgroundColor: '#fef9c3' }]}>
-                      <Text style={[styles.detailInfoText, { color: '#854d0e' }]}>Sem {detailItem.semester}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.detailDivider} />
-                  <View style={styles.detailBtnRow}>
-                    <TouchableOpacity
-                      style={styles.detailBtnHapus}
-                      onPress={() => {
-                        setDetailVisible(false);
-                        setTimeout(() =>
-                          setDeleteConfirm({ visible: true, id: detailItem.id, nama: detailItem.nama_mk }), 200);
-                      }}
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#fff" />
-                      <Text style={styles.detailBtnText}>Hapus</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.detailBtnEdit} onPress={() => openEditModal(detailItem)}>
-                      <Ionicons name="pencil-outline" size={18} color="#fff" />
-                      <Text style={styles.detailBtnText}>Edit</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )}
-            </View>
+      <Modal visible={detailVisible} animationType="fade" transparent statusBarTranslucent>
+        <View style={styles.detailOverlay}>
+          <TouchableWithoutFeedback onPress={() => setDetailVisible(false)}>
+            <View style={StyleSheet.absoluteFillObject} />
           </TouchableWithoutFeedback>
-        </TouchableOpacity>
+          <View style={styles.detailBox}>
+            {detailItem && (
+              <>
+                {/* Kode badge */}
+                <View style={styles.detailKodeBadge}>
+                  <Text style={styles.detailKodeText}>{detailItem.kode_mk}</Text>
+                </View>
+
+                {/* Nama MK - Text biasa, tidak pakai ScrollView */}
+                <Text style={styles.detailNama}>{detailItem.nama_mk}</Text>
+
+                {/* Info chips: prodi, sks, semester */}
+                <View style={styles.detailInfoRow}>
+                  <View style={styles.detailProdiChip}>
+                    <Ionicons name="business-outline" size={12} color={PRIMARY_BLUE} style={{ marginRight: 4 }} />
+                    <Text style={styles.detailProdiText} numberOfLines={1}>{getProdiKode(detailItem.prodi_id)}</Text>
+                  </View>
+                  <View style={styles.detailInfoChip}>
+                    <Text style={styles.detailInfoText}>{detailItem.sks} SKS</Text>
+                  </View>
+                  <View style={styles.detailInfoChip}>
+                    <Text style={styles.detailInfoText}>Semester {detailItem.semester}</Text>
+                  </View>
+                </View>
+
+                {/* Daftar CPL dalam ScrollView */}
+                {detailItem.cpls && detailItem.cpls.length > 0 && (
+                  <>
+                    <Text style={styles.detailCplTitle}>Capaian Pembelajaran Terkait:</Text>
+                    <ScrollView style={styles.detailCplScroll} showsVerticalScrollIndicator={false}>
+                      {detailItem.cpls.map((cpl, idx) => (
+                        <View key={idx} style={styles.detailCplItem}>
+                          <Text style={styles.detailCplKode}>• {cpl.kode_cpl}</Text>
+                          <Text style={styles.detailCplDesc}>{cpl.deskripsi}</Text>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </>
+                )}
+
+                <View style={styles.detailDivider} />
+
+                {/* Aksi */}
+                <View style={styles.detailBtnRow}>
+                  <TouchableOpacity
+                    style={styles.detailBtnHapus}
+                    onPress={() => {
+                      setDetailVisible(false);
+                      setTimeout(() =>
+                        setDeleteConfirm({ visible: true, id: detailItem.id, nama: detailItem.nama_mk }), 200);
+                    }}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
+                    <Text style={styles.detailBtnText}>Hapus</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.detailBtnEdit} onPress={() => openEditModal(detailItem)}>
+                    <Ionicons name="pencil-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
+                    <Text style={styles.detailBtnText}>Edit</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
       </Modal>
 
       {/* MODAL FORM TAMBAH / EDIT */}
@@ -479,55 +497,91 @@ export default function SAKelolaMKScreen({ navigation }) {
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={StyleSheet.absoluteFillObject} />
           </TouchableWithoutFeedback>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { maxHeight: '85%' }]}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{editId ? 'Edit Mata Kuliah' : 'Tambah MK Baru'}</Text>
 
-            <TouchableOpacity
-              style={styles.inputDropdown}
-              onPress={() => { Keyboard.dismiss(); setPickerType('formProdi'); setPickerVisible(true); }}
-            >
-              <Ionicons name="business-outline" size={18} color={PRIMARY_BLUE} style={{ marginRight: 10 }} />
-              <Text style={[styles.dropdownValue, !formProdiName && { color: '#94A3B8' }]} numberOfLines={1}>
-                {formProdiName || 'Pilih Program Studi'}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color="#94A3B8" />
-            </TouchableOpacity>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Kode MK (contoh: IF101)"
-              placeholderTextColor="#94A3B8"
-              value={formKode}
-              onChangeText={setFormKode}
-              autoCapitalize="characters"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Nama Mata Kuliah"
-              placeholderTextColor="#94A3B8"
-              value={formNama}
-              onChangeText={setFormNama}
-            />
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder="SKS"
-                placeholderTextColor="#94A3B8"
-                value={formSks}
-                onChangeText={setFormSks}
-                keyboardType="number-pad"
-              />
+            <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
               <TouchableOpacity
-                style={[styles.inputDropdown, { flex: 1, marginBottom: 12 }]}
-                onPress={() => { Keyboard.dismiss(); setPickerType('formSemester'); setPickerVisible(true); }}
+                style={styles.inputDropdown}
+                onPress={() => { Keyboard.dismiss(); setPickerType('formProdi'); setPickerVisible(true); }}
               >
-                <Text style={[styles.dropdownValue, !formSemester && { color: '#94A3B8' }]}>
-                  {formSemester ? `Semester ${formSemester}` : 'Semester'}
+                <Ionicons name="business-outline" size={18} color={PRIMARY_BLUE} style={{ marginRight: 10 }} />
+                <Text style={[styles.dropdownValue, !formProdiName && { color: '#94A3B8' }]} numberOfLines={1}>
+                  {formProdiName || 'Pilih Program Studi'}
                 </Text>
                 <Ionicons name="chevron-down" size={16} color="#94A3B8" />
               </TouchableOpacity>
-            </View>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Kode MK (contoh: IF101)"
+                placeholderTextColor="#94A3B8"
+                value={formKode}
+                onChangeText={setFormKode}
+                autoCapitalize="characters"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Nama Mata Kuliah"
+                placeholderTextColor="#94A3B8"
+                value={formNama}
+                onChangeText={setFormNama}
+              />
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="SKS"
+                  placeholderTextColor="#94A3B8"
+                  value={formSks}
+                  onChangeText={setFormSks}
+                  keyboardType="number-pad"
+                />
+                <TouchableOpacity
+                  style={[styles.inputDropdown, { flex: 1, marginBottom: 12 }]}
+                  onPress={() => { Keyboard.dismiss(); setPickerType('formSemester'); setPickerVisible(true); }}
+                >
+                  <Text style={[styles.dropdownValue, !formSemester && { color: '#94A3B8' }]}>
+                    {formSemester ? `Semester ${formSemester}` : 'Semester'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+
+              {/* PERBAIKAN SEKSI: CHECKBOX MULTI-SELECT CPL */}
+              {formProdiId ? (
+                <View style={styles.cplSection}>
+                  <Text style={styles.cplSectionTitle}>Pilih Capaian Pembelajaran (CPL):</Text>
+                  {filteredCplsByProdi.length === 0 ? (
+                    <Text style={styles.cplEmptyText}>Belum ada data CPL untuk prodi ini.</Text>
+                  ) : (
+                    filteredCplsByProdi.map((cpl) => {
+                      const isSelected = formCplIds.includes(cpl.id);
+                      return (
+                        <TouchableOpacity
+                          key={cpl.id}
+                          style={[styles.cplItemRow, isSelected && styles.cplItemRowSelected]}
+                          onPress={() => toggleCplSelection(cpl.id)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons
+                            name={isSelected ? "checkbox" : "square-outline"}
+                            size={20}
+                            color={isSelected ? SUCCESS_COLOR : PRIMARY_BLUE}
+                          />
+                          <View style={{ flex: 1, marginLeft: 10 }}>
+                            <Text style={styles.cplItemKode}>{cpl.kode_cpl || cpl.kode || 'CPL'}</Text>
+                            <Text style={styles.cplItemDesc} numberOfLines={2}>{cpl.deskripsi || cpl.nama || ''}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })
+                  )}
+                </View>
+              ) : (
+                <Text style={styles.cplHintText}>Silakan pilih Program Studi terlebih dahulu untuk memuat daftar CPL.</Text>
+              )}
+            </ScrollView>
 
             <View style={styles.buttonRow}>
               <TouchableOpacity style={styles.btnCancel} onPress={() => { setFormVisible(false); resetForm(); }}>
@@ -579,6 +633,7 @@ export default function SAKelolaMKScreen({ navigation }) {
                           if (pickerType === 'formProdi') {
                             setFormProdiId(p.id);
                             setFormProdiName(p.nama_prodi);
+                            setFormCplIds([]); // Reset pilihan CPL ketika ganti Prodi
                           } else {
                             setFilterProdi(p.id === '__all__' ? null : p);
                           }
@@ -624,66 +679,42 @@ export default function SAKelolaMKScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      {/* ══════════════════════════════════════════════
+          CUSTOM ALERT
+      ══════════════════════════════════════════════ */}
+      <CustomAlert
+        visible={alert.visible}
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        confirmText={alert.confirmText}
+        cancelText={alert.cancelText}
+        onConfirm={alert.onConfirm}
+        onCancel={alert.onCancel}
+      />
     </ImageBackground>
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
+// ─── Styles ───
 const styles = StyleSheet.create({
   container : { flex: 1, backgroundColor: '#F6F5FA' },
 
-  toastWrapper : { position: 'absolute', top: 58, left: 16, right: 16, zIndex: 999 },
-  toast        : { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 14, borderLeftWidth: 5, elevation: 10, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8 },
-  toastTitle   : { fontFamily: 'Urbanist-Bold', fontSize: 14 },
-  toastMsg     : { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#475569', marginTop: 2 },
-
-  header         : { backgroundColor: THEME_COLOR, paddingTop: 50, paddingBottom: 22, paddingHorizontal: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, flexDirection: 'row', alignItems: 'center', elevation: 4 },
+  header         : { backgroundColor: THEME_COLOR, paddingTop: 50, paddingBottom: 22, paddingHorizontal: 24, borderBottomLeftRadius: 10, borderBottomRightRadius: 10, flexDirection: 'row', alignItems: 'center', elevation: 2 },
   backBtn        : { padding: 8, marginRight: 12 },
-  headerTextWrap : { flex: 1 },
-  headerTitle    : { fontFamily: 'Urbanist-Bold', fontSize: 22, color: PRIMARY_DARK, marginBottom: 2 },
-  headerSubtitle : { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B' },
+  headerTextWrap : { flex: 1, marginLeft: 10 },
+  headerTitle    : { fontFamily: 'Urbanist-Bold', fontSize: 24, color: PRIMARY_DARK, marginBottom: 2 },
+  headerSubtitle : { fontFamily: 'Urbanist-Regular', fontSize: 14, color: PRIMARY_DARK, opacity: 0.7 },
 
-  controlBar         : { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6, gap: 8 },
-  filterBtn          : { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 22, borderWidth: 1, borderColor: '#E2E8F0', gap: 5, elevation: 1 },
-  filterBtnActive    : { backgroundColor: PRIMARY_DARK, borderColor: PRIMARY_DARK },
-  filterBtnText      : { fontFamily: 'Urbanist-Medium', fontSize: 12, color: PRIMARY_BLUE },
-  filterBtnTextActive: { color: '#FFF' },
+  listContent : { paddingHorizontal: 14, paddingTop: 16, paddingBottom: 100 },
 
-  semDistRow  : { paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
-  semPill     : { backgroundColor: '#dbeafe', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: '#bfdbfe' },
-  semPillActive : { backgroundColor: PRIMARY_DARK, borderColor: PRIMARY_DARK },
-  semPillText   : { fontFamily: 'Urbanist-Bold', fontSize: 12, color: '#1d4ed8' },
-  semPillCount  : { fontFamily: 'Urbanist-Regular', color: '#3b82f6' },
-
-  listHeaderWrap  : { paddingHorizontal: 16, paddingBottom: 6 },
-  listHeaderTitle : { fontFamily: 'Urbanist-Bold', fontSize: 16, color: PRIMARY_DARK },
-  listHeaderSub   : { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#94A3B8', marginTop: 2 },
-
-  tableWrapper : { marginHorizontal: 12, marginTop: 2, backgroundColor: '#FFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', elevation: 2, overflow: 'hidden' },
-  tableHead    : { flexDirection: 'row', backgroundColor: PRIMARY_DARK, paddingVertical: 10, paddingHorizontal: 10 },
-  headCell     : { fontFamily: 'Urbanist-Bold', fontSize: 9, color: '#94A3B8', letterSpacing: 0.4, textAlign: 'center' },
-  tableRow     : { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10 },
-  rowEven      : { backgroundColor: '#fff' },
-  rowOdd       : { backgroundColor: '#F8FAFC' },
-  cell         : { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#334155' },
-
-  cellNo   : { width: 24, textAlign: 'center', color: '#CBD5E1', fontFamily: 'Urbanist-Bold', fontSize: 11 },
-  cellKode : { width: 76 },
-  cellNama : { flex: 1, minWidth: 140, paddingRight: 6, fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#1E293B' },
-  cellProdi: { width: 44, textAlign: 'center', fontFamily: 'Urbanist-Bold', fontSize: 11, color: PRIMARY_BLUE },
-  cellSks  : { width: 48, alignItems: 'center' },
-  cellSem  : { width: 54, textAlign: 'center', fontFamily: 'Urbanist-Medium', fontSize: 11, color: '#475569' },
-  cellCpl  : { width: 72, alignItems: 'center' },
-  cellAksi : { width: 38, alignItems: 'center' },
-
-  kodeBadge : { backgroundColor: PRIMARY_DARK, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8 },
-  kodeText  : { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#FFF' },
-  sksBadge  : { backgroundColor: '#dbeafe', paddingHorizontal: 7, paddingVertical: 4, borderRadius: 10, alignItems: 'center' },
-  sksText   : { fontFamily: 'Urbanist-ExtraBold', fontSize: 11, color: '#1d4ed8', lineHeight: 13 },
-  sksLabel  : { fontFamily: 'Urbanist-Regular', fontSize: 8, color: '#3b82f6', lineHeight: 10 },
-  cplBadge  : { backgroundColor: '#dcfce7', paddingHorizontal: 7, paddingVertical: 4, borderRadius: 10 },
-  cplText   : { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#166534' },
-  btnDetail : { width: 28, height: 28, borderRadius: 8, backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center' },
+  card      : { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10, elevation: 1.5, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4 },
+  leftBadge : { width: 44, height: 44, borderRadius: 22, backgroundColor: THEME_COLOR, justifyContent: 'center', alignItems: 'center' },
+  leftBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: PRIMARY_DARK },
+  cardContentWrap: { flex: 1, marginLeft: 12 },
+  cardNamaMain : { fontFamily: 'Urbanist-Bold', fontSize: 14, color: PRIMARY_DARK, marginBottom: 2 },
+  cardSubDetails: { fontFamily: 'Urbanist-Regular', fontSize: 11, color: PRIMARY_BLUE },
 
   centerContainer : { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText     : { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#94A3B8', marginTop: 10 },
@@ -691,16 +722,26 @@ const styles = StyleSheet.create({
   emptyText       : { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#94A3B8', marginTop: 14 },
   emptySubText    : { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#CBD5E1', marginTop: 6, textAlign: 'center', paddingHorizontal: 40 },
 
-  fab : { position: 'absolute', bottom: 28, right: 22, width: 58, height: 58, borderRadius: 29, backgroundColor: PRIMARY_DARK, justifyContent: 'center', alignItems: 'center', elevation: 8 },
+  fab : { position: 'absolute', bottom: 28, right: 22, width: 58, height: 58, borderRadius: 29, backgroundColor: FAB_COLOR, justifyContent: 'center', alignItems: 'center', elevation: 8 },
 
-  detailOverlay   : { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
-  detailBox       : { backgroundColor: '#FFF', borderRadius: 28, padding: 28, width: SW * 0.84, alignItems: 'center', elevation: 20 },
+  detailOverlay   : { flex: 1, backgroundColor: 'rgba(36,53,74,0.55)', justifyContent: 'center', alignItems: 'center' },
+  detailBox       : { backgroundColor: '#FFF', borderRadius: 28, padding: 28, width: SW * 0.84, maxHeight: '75%', alignItems: 'center', elevation: 20 },
   detailKodeBadge : { backgroundColor: '#dbeafe', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, marginBottom: 14 },
   detailKodeText  : { fontFamily: 'Urbanist-Bold', fontSize: 16, color: PRIMARY_BLUE },
-  detailNama      : { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#1E293B', textAlign: 'center', marginBottom: 16 },
-  detailInfoRow   : { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 20 },
+  detailNama      : { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#1E293B', textAlign: 'center', marginBottom: 16, paddingHorizontal: 8 },
+  detailInfoRow   : { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 16, width: '100%' },
+  detailProdiChip : { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  detailProdiText : { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#475569' },
   detailInfoChip  : { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#f1f5f9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
   detailInfoText  : { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#475569' },
+  
+  // CPL List dalam detail
+  detailCplTitle  : { fontFamily: 'Urbanist-Bold', fontSize: 14, color: '#1E293B', alignSelf: 'flex-start', marginBottom: 8 },
+  detailCplScroll : { maxHeight: 150, width: '100%', marginBottom: 16 },
+  detailCplItem   : { marginBottom: 10, paddingLeft: 4 },
+  detailCplKode   : { fontFamily: 'Urbanist-Bold', fontSize: 13, color: PRIMARY_BLUE, marginBottom: 2 },
+  detailCplDesc   : { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#64748B', lineHeight: 18 },
+  
   detailDivider   : { width: '100%', height: 1, backgroundColor: '#F1F5F9', marginBottom: 20 },
   detailBtnRow    : { flexDirection: 'row', gap: 12, width: '100%' },
   detailBtnHapus  : { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: DANGER_COLOR, paddingVertical: 14, borderRadius: 18, gap: 6 },
@@ -715,16 +756,18 @@ const styles = StyleSheet.create({
   dropdownValue : { flex: 1, fontFamily: 'Urbanist-Regular', fontSize: 14, color: '#212121' },
   input         : { backgroundColor: '#f8fafc', borderRadius: 18, marginBottom: 12, paddingHorizontal: 15, paddingVertical: 14, fontFamily: 'Urbanist-Regular', fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0', color: '#212121' },
   buttonRow     : { flexDirection: 'row', gap: 12, marginTop: 4 },
-  btnCancel     : { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 20, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0' },
-  btnCancelText : { color: '#64748B', fontFamily: 'Urbanist-Bold', fontSize: 14 },
-  btnSubmit     : { flex: 1, backgroundColor: PRIMARY_DARK, borderRadius: 20, paddingVertical: 14, alignItems: 'center' },
+  btnCancel     : { flex: 1, backgroundColor: '#ffebee', borderRadius: 20, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#ffcdd2' },
+  btnCancelText : { color: DANGER_COLOR, fontFamily: 'Urbanist-Bold', fontSize: 15 },
+  btnSubmit     : { flex: 1, backgroundColor: PRIMARY_DARK, borderRadius: 16, paddingVertical: 14, alignItems: 'center' },
   btnSubmitText : { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 14 },
 
   pickerOverlay    : { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 },
   pickerBox        : { backgroundColor: '#FFF', borderRadius: 24, padding: 20, maxHeight: '60%' },
   pickerTitle      : { fontFamily: 'Urbanist-Bold', fontSize: 18, color: PRIMARY_DARK, textAlign: 'center', marginBottom: 12 },
-  pickerOption     : { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  pickerOptionText : { fontFamily: 'Urbanist-Medium', fontSize: 14, color: '#212121', textAlign: 'center' },
+  
+  pickerOption     : { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  pickerOptionText : { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#212121', textAlign: 'center' },
+  
   pickerCloseBtn   : { marginTop: 12, paddingVertical: 10, paddingHorizontal: 30, backgroundColor: '#f1f5f9', borderRadius: 16, alignSelf: 'center' },
   pickerCloseText  : { color: '#64748B', fontFamily: 'Urbanist-Bold', fontSize: 13 },
 
@@ -737,4 +780,14 @@ const styles = StyleSheet.create({
   confirmBtnCancelText : { color: '#64748B', fontFamily: 'Urbanist-Bold', fontSize: 14 },
   confirmBtnHapus      : { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: DANGER_COLOR, borderRadius: 18, paddingVertical: 13, gap: 6 },
   confirmBtnHapusText  : { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 14 },
+
+  // STYLES BARU UNTUK SEKSI CHECKBOX CPL
+  cplSection: { marginTop: 10, marginBottom: 15 },
+  cplSectionTitle: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: '#1E293B', marginBottom: 8 },
+  cplEmptyText: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#94A3B8', style: 'italic', paddingVertical: 5 },
+  cplHintText: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#64748B', backgroundColor: '#f8fafc', padding: 12, borderRadius: 12, textAlign: 'center', marginBottom: 15, borderWidth: 1, borderColor: '#e2e8f0', borderStyle: 'dashed' },
+  cplItemRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', padding: 12, borderRadius: 14, marginBottom: 8, borderWidth: 1, borderColor: '#e2e8f0' },
+  cplItemRowSelected: { backgroundColor: '#f0fdf4', borderColor: SUCCESS_COLOR },
+  cplItemKode: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#1E293B' },
+  cplItemDesc: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#64748B', marginTop: 2 }
 });
