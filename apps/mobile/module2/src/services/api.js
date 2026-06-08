@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // PENTING: Ganti dengan IP komputer Anda yang menjalankan backend
-const API_BASE = 'http://20.5.27.101:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
-const API_BASE_M1 = 'http://20.5.27.101:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
+const API_BASE = 'http://20.5.24.71:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
+const API_BASE_M1 = 'http://20.5.24.71:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
 
 const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -62,7 +62,44 @@ export const tokenStorage = {
     },
 };
 
-// ─── Base fetch dengan JWT ────────────────────────────────────────────────────
+// ─── Token refresh helper ─────────────────────────────────────────────────────
+
+// Callback untuk handle session expired (diset dari AppNavigator)
+let onSessionExpired = null;
+export const setSessionExpiredHandler = (handler) => {
+    onSessionExpired = handler;
+};
+
+async function performTokenRefresh() {
+    const refreshToken = await tokenStorage.getRefresh();
+    if (!refreshToken) throw new Error('Tidak ada refresh token');
+
+    const url = `${API_BASE}/auth/refresh-token`;
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Refresh token gagal');
+
+    // Simpan access token baru
+    await tokenStorage.set(data.access_token);
+    if (data.refresh_token) await tokenStorage.setRefresh(data.refresh_token);
+
+    console.log('🔄 Token berhasil di-refresh');
+    return data.access_token;
+}
+
+async function handleTokenExpired() {
+    await tokenStorage.remove();
+    if (onSessionExpired) {
+        onSessionExpired();
+    }
+    throw new Error('Sesi habis. Silakan login ulang.');
+}
+
+// ─── Base fetch dengan JWT + auto-refresh ────────────────────────────────────
 
 async function apiFetch(endpoint, options = {}) {
     const token = await tokenStorage.get();
@@ -75,19 +112,41 @@ async function apiFetch(endpoint, options = {}) {
     }
 
     const url = `${API_BASE}${endpoint}`;
-    const timestamp = new Date().toISOString();
-    console.log(`🌐 [M2] ${timestamp} - ${url}`);
+    console.log(`🌐 [M2] ${url}`);
 
     try {
         const res = await fetch(url, { ...options, headers });
         const data = await res.json();
 
+        // Auto-refresh jika 401 token kadaluarsa
+        if (res.status === 401) {
+            console.warn('⚠️ Token expired, mencoba refresh...');
+            try {
+                const newToken = await performTokenRefresh();
+                // Retry request dengan token baru
+                const retryRes = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...headers,
+                        'Authorization': `Bearer ${newToken}`,
+                    },
+                });
+                const retryData = await retryRes.json();
+                if (!retryRes.ok) throw new Error(retryData.message || 'Request gagal');
+                console.log(`✅ [M2] Retry sukses: ${endpoint}`);
+                return retryData;
+            } catch (refreshErr) {
+                console.error('❌ Refresh gagal, sesi dihapus:', refreshErr.message);
+                return await handleTokenExpired();
+            }
+        }
+
         if (!res.ok) {
             console.error('❌ API Error:', res.status, data.message);
             throw new Error(data.message || 'Request gagal');
         }
-        
-        console.log(`✅ [M2] Success: ${endpoint}`);        
+
+        console.log(`✅ [M2] Success: ${endpoint}`);
         return data;
     } catch (error) {
         console.error('❌ Fetch Error:', error.message);
@@ -114,11 +173,33 @@ async function apiFetchModule1(endpoint, options = {}) {
         const res = await fetch(url, { ...options, headers });
         const data = await res.json();
 
+        // Auto-refresh jika 401 token kadaluarsa
+        if (res.status === 401) {
+            console.warn('⚠️ [M1] Token expired, mencoba refresh...');
+            try {
+                const newToken = await performTokenRefresh();
+                const retryRes = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...headers,
+                        'Authorization': `Bearer ${newToken}`,
+                    },
+                });
+                const retryData = await retryRes.json();
+                if (!retryRes.ok) throw new Error(retryData.message || 'Request gagal');
+                console.log('✅ API Retry sukses (M1):', endpoint);
+                return retryData;
+            } catch (refreshErr) {
+                console.error('❌ [M1] Refresh gagal, sesi dihapus:', refreshErr.message);
+                return await handleTokenExpired();
+            }
+        }
+
         if (!res.ok) {
             console.error('❌ API Error (M1):', res.status, data.message);
             throw new Error(data.message || 'Request gagal');
         }
-        
+
         console.log('✅ API Success (M1):', endpoint);
         return data;
     } catch (error) {
@@ -368,11 +449,8 @@ export const capaianMhsApi = {
 };
 
 // ─── ROLES API ────────────────────────────────────────────────────────────────
-// Dipakai sa_hak_user untuk resolve nama_role → role_id (UUID) sesuai tabel roles di DB
-
-export const rolesApi = {
-    getAll: () => apiFetch('/roles'),
-};
+// CATATAN: Endpoint /roles tidak tersedia di backend. Sudah tidak dipakai.
+// Hapus referensi ini di masa depan.
 
 // ─── USER API ─────────────────────────────────────────────────────────────────
 
@@ -493,34 +571,5 @@ export const mahasiswaApi = {
 // ─── AUDIT LOG API ────────────────────────────────────────────────────────────
 
 export const auditLogApi = {
-    getAll: async () => {
-        const token = await tokenStorage.get();
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const variations = [
-            '/auth-audit-log',
-            '/auth-audit-logs',
-            '/audit-log',
-            '/audit-logs',
-            '/audit'
-        ];
-
-        for (const path of variations) {
-            try {
-                const url = `${API_BASE}${path}`;
-                const res = await fetch(url, { method: 'GET', headers });
-                if (res.ok) {
-                    return await res.json();
-                }
-                if (res.status === 403 || res.status === 401) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.message || `Akses log ditolak (Status: ${res.status})`);
-                }
-            } catch (e) {
-                if (e.message.includes('ditolak')) throw e;
-            }
-        }
-        throw new Error("Endpoint Audit log tidak ditemukan di server (404).");
-    }
+    getAll: () => apiFetch('/auth-audit-log'),
 };
