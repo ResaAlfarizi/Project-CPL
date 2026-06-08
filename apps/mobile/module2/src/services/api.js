@@ -62,7 +62,44 @@ export const tokenStorage = {
     },
 };
 
-// ─── Base fetch dengan JWT ────────────────────────────────────────────────────
+// ─── Token refresh helper ─────────────────────────────────────────────────────
+
+// Callback untuk handle session expired (diset dari AppNavigator)
+let onSessionExpired = null;
+export const setSessionExpiredHandler = (handler) => {
+    onSessionExpired = handler;
+};
+
+async function performTokenRefresh() {
+    const refreshToken = await tokenStorage.getRefresh();
+    if (!refreshToken) throw new Error('Tidak ada refresh token');
+
+    const url = `${API_BASE}/auth/refresh-token`;
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Refresh token gagal');
+
+    // Simpan access token baru
+    await tokenStorage.set(data.access_token);
+    if (data.refresh_token) await tokenStorage.setRefresh(data.refresh_token);
+
+    console.log('🔄 Token berhasil di-refresh');
+    return data.access_token;
+}
+
+async function handleTokenExpired() {
+    await tokenStorage.remove();
+    if (onSessionExpired) {
+        onSessionExpired();
+    }
+    throw new Error('Sesi habis. Silakan login ulang.');
+}
+
+// ─── Base fetch dengan JWT + auto-refresh ────────────────────────────────────
 
 async function apiFetch(endpoint, options = {}) {
     const token = await tokenStorage.get();
@@ -75,19 +112,41 @@ async function apiFetch(endpoint, options = {}) {
     }
 
     const url = `${API_BASE}${endpoint}`;
-    const timestamp = new Date().toISOString();
-    console.log(`🌐 [M2] ${timestamp} - ${url}`);
+    console.log(`🌐 [M2] ${url}`);
 
     try {
         const res = await fetch(url, { ...options, headers });
         const data = await res.json();
 
+        // Auto-refresh jika 401 token kadaluarsa
+        if (res.status === 401) {
+            console.warn('⚠️ Token expired, mencoba refresh...');
+            try {
+                const newToken = await performTokenRefresh();
+                // Retry request dengan token baru
+                const retryRes = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...headers,
+                        'Authorization': `Bearer ${newToken}`,
+                    },
+                });
+                const retryData = await retryRes.json();
+                if (!retryRes.ok) throw new Error(retryData.message || 'Request gagal');
+                console.log(`✅ [M2] Retry sukses: ${endpoint}`);
+                return retryData;
+            } catch (refreshErr) {
+                console.error('❌ Refresh gagal, sesi dihapus:', refreshErr.message);
+                return await handleTokenExpired();
+            }
+        }
+
         if (!res.ok) {
             console.error('❌ API Error:', res.status, data.message);
             throw new Error(data.message || 'Request gagal');
         }
-        
-        console.log(`✅ [M2] Success: ${endpoint}`);        
+
+        console.log(`✅ [M2] Success: ${endpoint}`);
         return data;
     } catch (error) {
         console.error('❌ Fetch Error:', error.message);
@@ -114,11 +173,33 @@ async function apiFetchModule1(endpoint, options = {}) {
         const res = await fetch(url, { ...options, headers });
         const data = await res.json();
 
+        // Auto-refresh jika 401 token kadaluarsa
+        if (res.status === 401) {
+            console.warn('⚠️ [M1] Token expired, mencoba refresh...');
+            try {
+                const newToken = await performTokenRefresh();
+                const retryRes = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...headers,
+                        'Authorization': `Bearer ${newToken}`,
+                    },
+                });
+                const retryData = await retryRes.json();
+                if (!retryRes.ok) throw new Error(retryData.message || 'Request gagal');
+                console.log('✅ API Retry sukses (M1):', endpoint);
+                return retryData;
+            } catch (refreshErr) {
+                console.error('❌ [M1] Refresh gagal, sesi dihapus:', refreshErr.message);
+                return await handleTokenExpired();
+            }
+        }
+
         if (!res.ok) {
             console.error('❌ API Error (M1):', res.status, data.message);
             throw new Error(data.message || 'Request gagal');
         }
-        
+
         console.log('✅ API Success (M1):', endpoint);
         return data;
     } catch (error) {
@@ -369,11 +450,8 @@ export const capaianMhsApi = {
 };
 
 // ─── ROLES API ────────────────────────────────────────────────────────────────
-// Dipakai sa_hak_user untuk resolve nama_role → role_id (UUID) sesuai tabel roles di DB
-
-export const rolesApi = {
-    getAll: () => apiFetch('/roles'),
-};
+// CATATAN: Endpoint /roles tidak tersedia di backend. Sudah tidak dipakai.
+// Hapus referensi ini di masa depan.
 
 // ─── USER API ─────────────────────────────────────────────────────────────────
 
@@ -438,65 +516,61 @@ export const mahasiswaApi = {
     getSubCpmkByMk:     (mkId)      => apiFetch(`/sub-cpmk/mk/${mkId}`),
     
     getMyCapaian: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return {
-            success: true,
-            data: [
-                { id: 1, kode_cpl: 'CPL-01', nama_cpl: 'Mampu menerapkan pemikiran logis...', nilai: 85.5, persentase: 85.5, status: 'Tercapai', target: 75 },
-                { id: 2, kode_cpl: 'CPL-02', nama_cpl: 'Mampu menunjukkan kinerja mandiri...', nilai: 72.3, persentase: 72.3, status: 'Belum Tercapai', target: 75 },
-                { id: 3, kode_cpl: 'CPL-03', nama_cpl: 'Mampu mengkaji implikasi...', nilai: 88.7, persentase: 88.7, status: 'Tercapai', target: 75 },
-                { id: 4, kode_cpl: 'CPL-04', nama_cpl: 'Mampu menyusun deskripsi saintifik...', nilai: 79.2, persentase: 79.2, status: 'Tercapai', target: 75 },
-            ]
-        };
+        try {
+            // ✅ Gunakan endpoint real dari backend
+            return await apiFetch('/capaian/mahasiswa/my-capaian');
+        } catch (error) {
+            console.error('❌ Error getMyCapaian:', error);
+            // Fallback ke dummy data jika gagal
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return {
+                success: true,
+                data: [
+                    { id: 1, kode_cpl: 'CPL-01', nama_cpl: 'Mampu menerapkan pemikiran logis...', deskripsi_cpl: 'Mampu menerapkan pemikiran logis, kritis, sistematis, dan inovatif dalam konteks pengembangan atau implementasi ilmu pengetahuan dan teknologi.', nilai: 85.5, persentase: 85.5, status: 'Tercapai', target: 75 },
+                    { id: 2, kode_cpl: 'CPL-02', nama_cpl: 'Mampu menunjukkan kinerja mandiri...', deskripsi_cpl: 'Mampu menunjukkan kinerja mandiri, bermutu, dan terukur dalam menyelesaikan tugas.', nilai: 72.3, persentase: 72.3, status: 'Belum Tercapai', target: 75 },
+                    { id: 3, kode_cpl: 'CPL-03', nama_cpl: 'Mampu mengkaji implikasi...', deskripsi_cpl: 'Mampu mengkaji implikasi pengembangan atau implementasi ilmu pengetahuan teknologi.', nilai: 88.7, persentase: 88.7, status: 'Tercapai', target: 75 },
+                    { id: 4, kode_cpl: 'CPL-04', nama_cpl: 'Mampu menyusun deskripsi saintifik...', deskripsi_cpl: 'Mampu menyusun deskripsi saintifik hasil kajian.', nilai: 79.2, persentase: 79.2, status: 'Tercapai', target: 75 },
+                ]
+            };
+        }
     },
     
     getMyCapaianDetail: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return {
-            success: true,
-            data: [
-                { mk_id: 1, kode_mk: 'IF101', nama_mk: 'Pemrograman Dasar', nilai: 85, semester: 'Ganjil 2023/2024' },
-                { mk_id: 2, kode_mk: 'IF102', nama_mk: 'Matematika Diskrit', nilai: 78, semester: 'Ganjil 2023/2024' },
-                { mk_id: 3, kode_mk: 'IF103', nama_mk: 'Algoritma dan Struktur Data', nilai: 90, semester: 'Genap 2023/2024' },
-                { mk_id: 4, kode_mk: 'IF201', nama_mk: 'Basis Data', nilai: 82, semester: 'Genap 2023/2024' },
-                { mk_id: 5, kode_mk: 'IF202', nama_mk: 'Pemrograman Web', nilai: 88, semester: 'Ganjil 2024/2025' },
-                { mk_id: 6, kode_mk: 'IF203', nama_mk: 'Sistem Operasi', nilai: 75, semester: 'Ganjil 2024/2025' },
-            ]
-        };
+        try {
+            // ✅ Gunakan endpoint real dari backend
+            return await apiFetch('/capaian/mahasiswa/my-capaian/detail');
+        } catch (error) {
+            console.error('❌ Error getMyCapaianDetail:', error);
+            // Fallback ke dummy data jika gagal
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return {
+                success: true,
+                data: [
+                    // CPL-01 details
+                    { kode_cpl: 'CPL-01', kode_mk: 'IF101', nama_mk: 'Pemrograman Dasar', nilai: 85, semester_aktif: 1, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-01', kode_mk: 'IF103', nama_mk: 'Algoritma dan Struktur Data', nilai: 90, semester_aktif: 2, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-01', kode_mk: 'IF202', nama_mk: 'Pemrograman Web', nilai: 88, semester_aktif: 3, tahun_akademik: '2024/2025', status: 'Tercapai' },
+                    
+                    // CPL-02 details
+                    { kode_cpl: 'CPL-02', kode_mk: 'IF102', nama_mk: 'Matematika Diskrit', nilai: 78, semester_aktif: 1, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-02', kode_mk: 'IF201', nama_mk: 'Basis Data', nilai: 82, semester_aktif: 2, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-02', kode_mk: 'IF203', nama_mk: 'Sistem Operasi', nilai: 65, semester_aktif: 3, tahun_akademik: '2024/2025', status: 'Belum Tercapai' },
+                    
+                    // CPL-03 details
+                    { kode_cpl: 'CPL-03', kode_mk: 'IF104', nama_mk: 'Pemrograman Berorientasi Objek', nilai: 92, semester_aktif: 2, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-03', kode_mk: 'IF204', nama_mk: 'Rekayasa Perangkat Lunak', nilai: 85, semester_aktif: 3, tahun_akademik: '2024/2025', status: 'Tercapai' },
+                    
+                    // CPL-04 details
+                    { kode_cpl: 'CPL-04', kode_mk: 'IF105', nama_mk: 'Jaringan Komputer', nilai: 80, semester_aktif: 2, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-04', kode_mk: 'IF205', nama_mk: 'Keamanan Informasi', nilai: 78, semester_aktif: 3, tahun_akademik: '2024/2025', status: 'Tercapai' },
+                ]
+            };
+        }
     },
 };
 
 // ─── AUDIT LOG API ────────────────────────────────────────────────────────────
 
 export const auditLogApi = {
-    getAll: async () => {
-        const token = await tokenStorage.get();
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const variations = [
-            '/auth-audit-log',
-            '/auth-audit-logs',
-            '/audit-log',
-            '/audit-logs',
-            '/audit'
-        ];
-
-        for (const path of variations) {
-            try {
-                const url = `${API_BASE}${path}`;
-                const res = await fetch(url, { method: 'GET', headers });
-                if (res.ok) {
-                    return await res.json();
-                }
-                if (res.status === 403 || res.status === 401) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.message || `Akses log ditolak (Status: ${res.status})`);
-                }
-            } catch (e) {
-                if (e.message.includes('ditolak')) throw e;
-            }
-        }
-        throw new Error("Endpoint Audit log tidak ditemukan di server (404).");
-    }
+    getAll: () => apiFetch('/auth-audit-log'),
 };

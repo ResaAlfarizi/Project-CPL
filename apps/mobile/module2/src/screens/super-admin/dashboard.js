@@ -394,6 +394,42 @@ export default function SuperAdminDashboardScreen({ navigation }) {
         </>
       )}
 
+      {/* MODAL OPSI (muncul saat klik ikon profil) */}
+      <Modal visible={optionsModalVisible} animationType="fade" transparent onRequestClose={() => setOptionsModalVisible(false)}>
+        <TouchableOpacity style={styles.dropdownOverlay} activeOpacity={1} onPress={() => setOptionsModalVisible(false)}>
+          <TouchableWithoutFeedback>
+            <View style={styles.dropdownBox}>
+              {/* Info user */}
+              <View style={styles.dropdownProfileWrap}>
+                <View style={styles.dropdownAvatar}>
+                  <Ionicons name="shield-checkmark" size={24} color={COLORS.surface} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.dropdownName} numberOfLines={1}>Portal Super Admin</Text>
+                  <Text style={styles.dropdownEmail} numberOfLines={1}>{adminEmail}</Text>
+                  <View style={styles.dropdownBadge}>
+                    <Text style={styles.dropdownBadgeText}>Superadmin</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.dropdownDivider} />
+              {/* Keluar */}
+              <TouchableOpacity
+                style={styles.dropdownMenuBtn}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setOptionsModalVisible(false);
+                  setTimeout(() => setLogoutModalVisible(true), 200);
+                }}
+              >
+                <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
+                <Text style={[styles.dropdownMenuText, { color: COLORS.danger }]}>Keluar</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      </Modal>
+
       {/* MODAL KONFIRMASI LOGOUT */}
       <Modal visible={logoutModalVisible} animationType="fade" transparent onRequestClose={() => setLogoutModalVisible(false)}>
         <TouchableOpacity style={styles.alertOverlay} activeOpacity={1} onPress={() => setLogoutModalVisible(false)}>
@@ -646,7 +682,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  // MODAL STYLES
+  // MODAL LOGOUT STYLES
   alertOverlay: { flex: 1, backgroundColor: 'rgba(33, 44, 33, 0.5)', justifyContent: 'center', alignItems: 'center' },
   alertBox: { backgroundColor: '#FFF', borderRadius: 35, padding: 30, width: '85%', alignItems: 'center', elevation: 20 },
   alertIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#ffebee', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
@@ -657,4 +693,78 @@ const styles = StyleSheet.create({
   btnCancelTextFit: { color: '#64748B', fontFamily: 'Urbanist-Bold', fontSize: 15 },
   btnSubmitFit: { flex: 0.48, backgroundColor: COLORS.danger, borderRadius: 20, paddingVertical: 14, alignItems: 'center', elevation: 3 },
   btnSubmitTextFit: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 15 },
+
+  // DROPDOWN MODAL (ikon profil kanan atas)
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 70,
+    paddingRight: 16,
+  },
+  dropdownBox: {
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    width: 240,
+    overflow: 'hidden',
+    elevation: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+  },
+  dropdownProfileWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+    backgroundColor: COLORS.primary,
+  },
+  dropdownAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownName: {
+    fontFamily: 'Urbanist-Bold',
+    fontSize: 14,
+    color: COLORS.surface,
+    marginBottom: 2,
+  },
+  dropdownEmail: {
+    fontFamily: 'Urbanist-Regular',
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 4,
+  },
+  dropdownBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  dropdownBadgeText: {
+    fontFamily: 'Urbanist-Bold',
+    fontSize: 10,
+    color: COLORS.surface,
+    textTransform: 'uppercase',
+  },
+  dropdownDivider: { height: 1, backgroundColor: '#F1F5F9' },
+  dropdownMenuBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  dropdownMenuText: {
+    fontFamily: 'Urbanist-Bold',
+    fontSize: 14,
+    color: COLORS.textMain,
+  },
 });

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { prodiApi } from '../../services/api';
+import { prodiApi, mahasiswaApi } from '../../services/api';
 import { BASE, ROLE_THEMES } from '../../theme/colors';
 import { EmptyState, LoadingState } from '../../components';
 
@@ -11,19 +11,42 @@ const THEME = ROLE_THEMES.mahasiswa;
 export default function DashboardScreen({ user, onNavigate }) {
     const [prodiList, setProdiList] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [userProdiId, setUserProdiId] = useState(null);
 
     useEffect(() => {
-        prodiApi.getAll()
-            .then(res => {
-                const allProdi = res.data || [];
-                // Filter: hanya tampilkan prodi mahasiswa sendiri
-                const filtered = user?.prodi_id 
-                    ? allProdi.filter(p => p.id === user.prodi_id)
+        const fetchProdiIdAndProdi = async () => {
+            try {
+                // Ambil profil mahasiswa untuk mendapatkan prodi_id yang akurat
+                const profileRes = await mahasiswaApi.getMyProfile();
+                const profileData = profileRes.data || profileRes;
+                const prodiId = profileData.prodi_id || user?.prodi_id;
+                setUserProdiId(prodiId);
+
+                console.log('🔍 DASHBOARD - User prodi_id:', prodiId);
+
+                // Ambil semua prodi
+                const prodiRes = await prodiApi.getAll();
+                const allProdi = prodiRes.data || [];
+                
+                console.log('🔍 DASHBOARD - All prodi:', allProdi.map(p => ({ id: p.id, nama: p.nama_prodi })));
+                
+                // Filter: hanya tampilkan prodi mahasiswa sendiri dengan String comparison
+                const filtered = prodiId 
+                    ? allProdi.filter(p => String(p.id) === String(prodiId))
                     : allProdi;
+                
+                console.log('🔍 DASHBOARD - Filtered prodi:', filtered.map(p => ({ id: p.id, nama: p.nama_prodi })));
+                
                 setProdiList(filtered);
-            })
-            .catch(() => setProdiList([]))
-            .finally(() => setLoading(false));
+            } catch (error) {
+                console.error('❌ DASHBOARD - Error fetching prodi:', error);
+                setProdiList([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProdiIdAndProdi();
     }, [user]);
 
     const quickActions = [

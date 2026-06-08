@@ -20,6 +20,7 @@ const getAllKelas = async () => {
       mk.nama_mk,
       mk.sks,
       mk.semester as semester_mk,
+      mk.prodi_id,
       d.nama as nama_dosen,
       ps.nama_prodi
     FROM kelas
@@ -46,6 +47,7 @@ const getKelasById = async (id) => {
       mk.kode_mk,
       mk.nama_mk,
       mk.sks,
+      mk.prodi_id,
       d.nama as nama_dosen,
       d.nidn,
       ps.nama_prodi
@@ -72,12 +74,13 @@ const getKelasByDosenId = async (dosenId) => {
       mk.kode_mk,
       mk.nama_mk,
       mk.sks,
+      mk.prodi_id,
       COUNT(e.id) as jumlah_mahasiswa
     FROM kelas
     JOIN mata_kuliah mk ON kelas.mk_id = mk.id
     LEFT JOIN enrollment e ON kelas.id = e.kelas_id
     WHERE kelas.dosen_id = $1
-    GROUP BY kelas.id, kelas.mk_id, mk.kode_mk, mk.nama_mk, mk.sks
+    GROUP BY kelas.id, kelas.mk_id, mk.kode_mk, mk.nama_mk, mk.sks, mk.prodi_id
     ORDER BY kelas.tahun_akademik DESC, kelas.semester_aktif DESC
   `;
 
@@ -97,6 +100,7 @@ const getKelasByMahasiswaId = async (mahasiswaId) => {
       mk.kode_mk,
       mk.nama_mk,
       mk.sks,
+      mk.prodi_id,
       d.nama as nama_dosen,
       d.nidn,
       ps.nama_prodi,
