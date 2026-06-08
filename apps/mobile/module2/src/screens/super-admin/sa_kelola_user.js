@@ -5,7 +5,7 @@ import {
   Keyboard, ScrollView, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { userApi, rolesApi, dosenApi, mahasiswaApi, prodiApi, tokenStorage } from '../../services/api';
+import { userApi, prodiApi, tokenStorage } from '../../services/api';
 import { BASE, ROLE_THEMES } from '../../theme/colors';
 
 // ✅ THEME SUPERADMIN
@@ -92,9 +92,6 @@ export default function SAKelolaUserScreen({ navigation }) {
   const [role, setRole]   = useState('dosen');
   const [password, setPassword] = useState('');
 
-  // roleMap: { nama_role → role_id }
-  const [roleMap, setRoleMap] = useState({});
-
   // Custom alert state
   const [alert, setAlert] = useState({
     visible: false, type: 'info', title: '', message: '',
@@ -121,25 +118,8 @@ export default function SAKelolaUserScreen({ navigation }) {
     };
     loadSession();
     fetchUsers();
-    fetchRoles();
     fetchProdi();
   }, []);
-
-  const fetchRoles = async () => {
-    try {
-      const res = await rolesApi.getAll();
-      const roles = res?.data || res || [];
-      // Bangun map { nama_role → id } dari response API
-      const map = {};
-      roles.forEach(r => {
-        if (r.nama_role && r.id) map[r.nama_role] = r.id;
-      });
-      console.log('📊 Role Map:', map);
-      setRoleMap(map);
-    } catch (e) {
-      console.warn('⚠️ Gagal memuat daftar roles:', e.message);
-    }
-  };
 
   const fetchProdi = async () => {
     try {
@@ -159,49 +139,16 @@ export default function SAKelolaUserScreen({ navigation }) {
       const res = await userApi.getAll();
       const users = res?.data || res || [];
       console.log('✅ Fetched Users:', users.length, 'items');
-      console.log('📋 Sample User:', JSON.stringify(users.slice(0, 2), null, 2));
-      
-      // Normalisasi: pastikan setiap item punya field `role` sebagai string
-      // dan resolve nama_prodi jika role === dosen atau mahasiswa
-      const normalized = await Promise.all(users.map(async (u) => {
-        const baseUser = {
-          ...u,
-          id:   u.id,           // kolom PK di DB adalah `id` (UUID), tidak ada user_id
-          role: u.roles?.nama_role || u.role || u.nama_role || 'dosen',
-        };
 
-        // Resolve prodi name untuk dosen dan mahasiswa
-        let nama_prodi = 'Umum';
-        try {
-          if (baseUser.role === 'dosen') {
-            const dosenRes = await dosenApi.getAll();
-            const dosenData = dosenRes?.data || dosenRes || [];
-            const dosenInfo = dosenData.find(d => String(d.user_id) === String(u.id));
-            if (dosenInfo?.prodi_id) {
-              const prodi = prodiList.find(p => String(p.id) === String(dosenInfo.prodi_id));
-              nama_prodi = prodi?.nama_prodi || 'Umum';
-            }
-          } else if (baseUser.role === 'mahasiswa') {
-            const mhsRes = await mahasiswaApi.getAll();
-            const mhsData = mhsRes?.data || mhsRes || [];
-            const mhsInfo = mhsData.find(m => String(m.user_id) === String(u.id));
-            if (mhsInfo?.prodi_id) {
-              const prodi = prodiList.find(p => String(p.id) === String(mhsInfo.prodi_id));
-              nama_prodi = prodi?.nama_prodi || 'Umum';
-            }
-          }
-        } catch (e) {
-          console.warn(`⚠️ Error resolving prodi for user ${u.email}:`, e.message);
-        }
-
-        return {
-          ...baseUser,
-          nama_prodi,
-        };
+      // Backend getAllUsers sudah JOIN nama_prodi dan entity_type sebagai role
+      // Tidak perlu fetch tambahan per user
+      const normalized = users.map((u) => ({
+        ...u,
+        id:         u.id,
+        role:       u.role || u.entity_type || 'dosen',
+        nama_prodi: u.nama_prodi || 'Umum',
       }));
-      
-      console.log('✅ Normalized Users with Prodi:', normalized.length, 'items');
-      console.log('📋 Sample with Prodi:', JSON.stringify(normalized.slice(0, 2), null, 2));
+
       setData(normalized);
     } catch (error) {
       console.error('❌ Error fetching users:', error);
@@ -259,12 +206,8 @@ export default function SAKelolaUserScreen({ navigation }) {
       return;
     }
 
-    // Resolusi role_id dari roleMap (hasil fetch rolesApi.getAll())
-    // Fallback ke nama role string jika roleMap belum terisi (backend yang resolve)
-    const roleId = roleMap[role];
-    const payload = roleId
-      ? { email: email.trim(), role_id: roleId, password: password.trim() || undefined }
-      : { email: email.trim(), role, password: password.trim() || undefined };
+    // Kirim role sebagai string langsung — backend resolve role_id secara internal
+    const payload = { email: email.trim(), role, password: password.trim() || undefined };
 
     // Hapus field password dari payload update jika tidak diisi (tidak ubah password)
     if (editId && !password.trim()) {
@@ -288,35 +231,9 @@ export default function SAKelolaUserScreen({ navigation }) {
           onConfirm: hideAlert
         }), 350);
       } else {
-        // Buat user di tabel users terlebih dahulu
-        const createRes = await userApi.create(payload);
-        const newUserId = createRes?.data?.id || createRes?.id;
-
-        // Jika role dosen atau mahasiswa, buat entitas terkait agar tidak orphan
-        if (newUserId) {
-          try {
-            if (role === 'dosen') {
-              await dosenApi.create({ user_id: newUserId, nama: email.trim().split('@')[0], nip: '' });
-            } else if (role === 'mahasiswa') {
-              await mahasiswaApi.create({ user_id: newUserId, nama: email.trim().split('@')[0], nim: '' });
-            }
-          } catch (entityErr) {
-            // Entitas gagal dibuat — tampilkan peringatan tapi tidak rollback user
-            console.warn('⚠️ Gagal membuat entitas terkait:', entityErr.message);
-            setFormModalVisible(false);
-            resetForm();
-            fetchUsers();
-            
-            setTimeout(() => showAlert({
-              type: 'info',
-              title: 'Perhatian',
-              message: `Akun berhasil dibuat, namun data entitas ${role} gagal diinisialisasi. Lengkapi profil ${role} secara manual.\n\n(${entityErr.message})`,
-              confirmText: 'Mengerti',
-              onConfirm: hideAlert
-            }), 350);
-            return;
-          }
-        }
+        // Backend createUser sudah membuat entitas dosen/mahasiswa dalam satu transaksi
+        // Tidak perlu buat entitas terpisah setelah ini
+        await userApi.create(payload);
 
         setFormModalVisible(false);
         resetForm();

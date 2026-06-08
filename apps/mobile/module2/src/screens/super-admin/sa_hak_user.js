@@ -5,7 +5,7 @@ import {
   Keyboard, ScrollView, ActivityIndicator, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { userApi, prodiApi, rolesApi } from '../../services/api';
+import { userApi, prodiApi } from '../../services/api';
 import { BASE, ROLE_THEMES } from '../../theme/colors';
 
 // ✅ THEME SUPERADMIN
@@ -49,8 +49,6 @@ export default function SAHakUserScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
   const [userList, setUserList] = useState([]);
   const [prodiList, setProdiList] = useState([]);
-  // Map: nama_role → role_id, diperlukan agar handleChangeRole bisa kirim role_id ke backend
-  const [rolesMeta, setRolesMeta] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('semua');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -65,20 +63,12 @@ export default function SAHakUserScreen({ navigation }) {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [resUser, resProdi, resRoles] = await Promise.all([
+      const [resUser, resProdi] = await Promise.all([
         userApi.getAll().catch(() => ({ data: [] })),
         prodiApi.getAll().catch(() => ({ data: [] })),
-        // Ambil daftar roles dari backend untuk resolving nama_role → role_id
-        rolesApi.getAll().catch(() => ({ data: [] })),
       ]);
       setUserList(resUser?.data || []);
       setProdiList(resProdi?.data || []);
-
-      // Buat map: { superadmin: '<uuid>', dosen: '<uuid>', mahasiswa: '<uuid>' }
-      const rolesData = resRoles?.data || [];
-      const map = {};
-      rolesData.forEach(r => { map[r.nama_role] = r.id; });
-      setRolesMeta(map);
     } catch (err) {
       Alert.alert('Gagal', 'Tidak dapat memuat data pengguna.');
     } finally {
@@ -89,16 +79,9 @@ export default function SAHakUserScreen({ navigation }) {
   const handleChangeRole = async () => {
     if (!newRole || !selectedUser) return;
 
-    // Resolve nama_role → role_id dari tabel roles di DB
-    const resolvedRoleId = rolesMeta[newRole];
-    if (!resolvedRoleId) {
-      Alert.alert('Gagal', `Role "${newRole}" tidak ditemukan. Pastikan data roles sudah dimuat.`);
-      return;
-    }
-
     try {
-      // Kirim role_id (UUID) sesuai kolom users.role_id di skema DB, bukan string nama_role
-      await userApi.update(selectedUser.id, { role_id: resolvedRoleId });
+      // Kirim role sebagai string — backend updateUser resolve role_id secara internal
+      await userApi.update(selectedUser.id, { email: selectedUser.email, role: newRole });
       setEditRoleVisible(false);
       setDetailVisible(false);
       fetchData();

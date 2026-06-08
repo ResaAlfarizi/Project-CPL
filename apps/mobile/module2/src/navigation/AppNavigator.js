@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -8,12 +8,28 @@ import DosenMainScreen from '../screens/dosen/DosenMainScreen';
 import MahasiswaMainScreen from '../screens/mahasiswa/MahasiswaMainScreen';
 import AdminNavigation from '../screens/admin-prodi/admin_navigation';
 import SuperAdminNavigation from '../screens/super-admin/superadmin_navigation';
+import { setSessionExpiredHandler } from '../services/api';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+    const navigationRef = useRef(null);
+
+    useEffect(() => {
+        // Daftarkan handler: saat token expired & refresh gagal, langsung ke Login
+        setSessionExpiredHandler(() => {
+            console.log('🔒 Sesi habis, redirect ke Login');
+            if (navigationRef.current) {
+                navigationRef.current.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                });
+            }
+        });
+    }, []);
+
     return (
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
             <Stack.Navigator
                 initialRouteName="Landing"
                 screenOptions={{
