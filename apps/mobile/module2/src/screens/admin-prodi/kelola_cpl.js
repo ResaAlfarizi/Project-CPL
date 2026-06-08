@@ -17,13 +17,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// ✅ MENGGUNAKAN API YANG BENAR (mkCplApi)
-import { cplApi, profileApi, mkCplApi } from '../../services/api'; 
+// ✅ Import API & Theme
+import { cplApi, profileApi, mkCplApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { LoadingState, CustomAlert, EmptyState, PickerModal } from '../../components';
 
-const THEME_COLOR = '#cad4ed'; 
-const PRIMARY_BLUE = '#577590';
-const CANCEL_BG = '#ffebee'; 
-const CANCEL_TEXT = '#c62828';
+// ✅ THEME ADMIN PRODI
+const THEME = ROLE_THEMES.adminProdi;
+const PRIMARY_BLUE = BASE.primaryLight;
 
 export default function KelolaCPLScreen({ navigation }) {
   const [data, setData] = useState([]);
@@ -46,8 +47,13 @@ export default function KelolaCPLScreen({ navigation }) {
   const [selectedMk, setSelectedMk] = useState(null); 
   const [desc, setDesc] = useState('');
 
-  // State Alert
-  const [alertConfig, setAlertConfig] = useState({ visible: false, type: '', title: '', message: '' });
+  // ✅ State Alert - Using CustomAlert component
+  const [alert, setAlert] = useState({ 
+    visible: false, type: 'info', title: '', message: '', onConfirm: null 
+  });
+  
+  // State for Picker Modal
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   // ✅ FUNGSI UTAMA: Ambil Data & Perkawinan Data Super Aman (Bebas Bug Tipe Data)
   const fetchData = async () => {
@@ -193,7 +199,12 @@ export default function KelolaCPLScreen({ navigation }) {
   // ✅ FUNGSI SIMPAN & EDIT DENGAN SHOTGUN PAYLOAD (Anti Gagal Save)
   const handleSave = async () => {
     if (!kode || !desc) {
-      setAlertConfig({ visible: true, type: 'error', title: 'Lengkapi Data!', message: 'Pastikan Kode dan Deskripsi CPL sudah diisi.' });
+      setAlert({ 
+        visible: true, type: 'error', 
+        title: 'Lengkapi Data!', 
+        message: 'Pastikan Kode dan Deskripsi CPL sudah diisi.',
+        onConfirm: () => setAlert({ ...alert, visible: false })
+      });
       return;
     }
 
@@ -228,16 +239,31 @@ export default function KelolaCPLScreen({ navigation }) {
 
       if (editId) {
         await cplApi.update(editId, payload);
-        setAlertConfig({ visible: true, type: 'success', title: 'Berhasil!', message: 'Data CPL berhasil diperbarui.' });
+        setAlert({ 
+          visible: true, type: 'success', 
+          title: 'Berhasil!', 
+          message: 'Data CPL berhasil diperbarui.',
+          onConfirm: () => setAlert({ ...alert, visible: false })
+        });
       } else {
         await cplApi.create(payload);
-        setAlertConfig({ visible: true, type: 'success', title: 'Berhasil!', message: 'Data CPL baru berhasil disimpan.' });
+        setAlert({ 
+          visible: true, type: 'success', 
+          title: 'Berhasil!', 
+          message: 'Data CPL baru berhasil disimpan.',
+          onConfirm: () => setAlert({ ...alert, visible: false })
+        });
       }
       
       // Refresh data agar list terbaru langsung ditarik dari database
       fetchData();
     } catch (error) {
-      setAlertConfig({ visible: true, type: 'error', title: 'Gagal', message: error.message || 'Terjadi kesalahan saat menyimpan data CPL.' });
+      setAlert({ 
+        visible: true, type: 'error', 
+        title: 'Gagal', 
+        message: error.message || 'Terjadi kesalahan saat menyimpan data CPL.',
+        onConfirm: () => setAlert({ ...alert, visible: false })
+      });
       setIsLoading(false);
     }
   };
@@ -262,6 +288,7 @@ export default function KelolaCPLScreen({ navigation }) {
     setSelectedMk(null);
     setDesc('');
     setEditId(null);
+    setPickerVisible(false);
   };
 
   const renderItem = ({ item }) => {
@@ -318,10 +345,7 @@ export default function KelolaCPLScreen({ navigation }) {
       </View>
 
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={PRIMARY_BLUE} />
-          <Text style={styles.loadingText}>Memproses data...</Text>
-        </View>
+        <LoadingState message="Memproses data CPL..." color={BASE.primary} />
       ) : (
         <SectionList 
           sections={groupedData} 
@@ -332,10 +356,10 @@ export default function KelolaCPLScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
           ListEmptyComponent={
-            <View style={{alignItems: 'center', marginTop: 50}}>
-               <Ionicons name="folder-open-outline" size={48} color="#cbd5e1" />
-               <Text style={{color: '#94A3B8', fontFamily: 'Urbanist-Regular', marginTop: 10}}>Belum ada data CPL.</Text>
-            </View>
+            <EmptyState 
+              icon="folder-open-outline" 
+              message="Belum ada data CPL."
+            />
           }
         />
       )}
@@ -356,21 +380,21 @@ export default function KelolaCPLScreen({ navigation }) {
             <Text style={styles.modalTitleLucu}>{editId ? 'Edit CPL' : 'Tambah CPL Baru'}</Text>
             
             <View style={styles.inputContainer}>
-              <Ionicons name="barcode-outline" size={20} color={PRIMARY_BLUE} style={styles.inputIcon} />
+              <Ionicons name="barcode-outline" size={20} color={BASE.primary} style={styles.inputIcon} />
               <TextInput 
                 style={styles.inputLucu} 
                 placeholder="Kode CPL (Contoh: CPL-05)" 
-                placeholderTextColor="#94A3B8" 
+                placeholderTextColor={BASE.textMuted}
                 value={kode} 
                 onChangeText={setKode} 
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="school-outline" size={20} color={PRIMARY_BLUE} style={styles.inputIcon} />
+              <Ionicons name="school-outline" size={20} color={BASE.primary} style={styles.inputIcon} />
               <TextInput 
-                style={[styles.inputLucu, { color: '#64748B' }]}
-                placeholderTextColor="#94A3B8" 
+                style={[styles.inputLucu, { color: BASE.textMuted }]}
+                placeholderTextColor={BASE.textMuted}
                 value={adminProdiName} 
                 editable={false} 
               />
@@ -378,22 +402,25 @@ export default function KelolaCPLScreen({ navigation }) {
 
             <View style={{ marginBottom: 12 }}>
               <View style={styles.inputContainerDropdown}>
-                <Ionicons name="library-outline" size={20} color={PRIMARY_BLUE} style={styles.inputIcon} />
-                <TouchableOpacity style={styles.dropdownTrigger} onPress={() => { Keyboard.dismiss(); setMkOpen(true); }}>
-                  <Text style={[styles.dropdownValue, !selectedMk && {color: '#94A3B8'}]} numberOfLines={1}>
+                <Ionicons name="library-outline" size={20} color={BASE.primary} style={styles.inputIcon} />
+                <TouchableOpacity 
+                  style={styles.dropdownTrigger} 
+                  onPress={() => { Keyboard.dismiss(); setPickerVisible(true); }}
+                >
+                  <Text style={[styles.dropdownValue, !selectedMk && {color: BASE.textMuted}]} numberOfLines={1}>
                     {selectedMk ? `${selectedMk.kode_mk || ''} - ${selectedMk.nama_mk || ''}`.replace(/^- | -$/, '') : 'Pilih Mata Kuliah'}
                   </Text>
-                  <Ionicons name="chevron-down-outline" size={20} color="#64748B" />
+                  <Ionicons name="chevron-down-outline" size={20} color={BASE.textMuted} />
                 </TouchableOpacity>
               </View>
             </View>
             
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <Ionicons name="create-outline" size={20} color={PRIMARY_BLUE} style={[styles.inputIcon, {marginTop: 15}]} />
+              <Ionicons name="create-outline" size={20} color={BASE.primary} style={[styles.inputIcon, {marginTop: 15}]} />
               <TextInput 
                 style={[styles.inputLucu, styles.textAreaLucu]} 
                 placeholder="Deskripsi CPL" 
-                placeholderTextColor="#94A3B8" 
+                placeholderTextColor={BASE.textMuted}
                 value={desc} 
                 onChangeText={setDesc} 
                 multiline 
@@ -410,60 +437,38 @@ export default function KelolaCPLScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* OVERLAY PICKER MATA KULIAH DARI DATABASE */}
-          {mkOpen && (
-            <View style={styles.pickerOverlay}>
-              <View style={styles.pickerBox}>
-                <Text style={styles.pickerTitle}>Pilih Mata Kuliah</Text>
-                <FlatList 
-                  data={mkOptions} 
-                  keyExtractor={(item) => (item.id || item.mk_id || Math.random()).toString()} 
-                  showsVerticalScrollIndicator={true}
-                  ListEmptyComponent={
-                    <Text style={{textAlign: 'center', color: '#94A3B8', marginVertical: 20, fontFamily: 'Urbanist-Regular'}}>
-                      Tidak ada mata kuliah tersedia.
-                    </Text>
-                  }
-                  renderItem={({ item }) => {
-                    const label = `${item.kode_mk || ''} - ${item.nama_mk || ''}`.replace(/^- | -$/, '');
-                    return (
-                      <TouchableOpacity style={styles.pickerOption} onPress={() => { setSelectedMk(item); setMkOpen(false); }}>
-                        <Text style={styles.pickerOptionText}>{label}</Text>
-                      </TouchableOpacity>
-                    );
-                  }} 
-                />
-                <TouchableOpacity style={styles.pickerCloseBtnSmall} onPress={() => setMkOpen(false)}>
-                  <Text style={styles.pickerCloseText}>Batal</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
         </View>
       </Modal>
 
-      {/* MODAL CUSTOM ALERT */}
-      <Modal visible={alertConfig.visible} animationType="fade" transparent onRequestClose={() => setAlertConfig({...alertConfig, visible: false})}>
-        <TouchableOpacity style={styles.alertOverlay} activeOpacity={1} onPress={() => setAlertConfig({...alertConfig, visible: false})}>
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={styles.alertBox}>
-              <View style={[styles.alertIconWrap, { backgroundColor: alertConfig.type === 'success' ? '#e0f2f1' : '#ffebee' }]}>
-                <Ionicons name={alertConfig.type === 'success' ? "checkmark-circle" : "warning"} size={45} color={alertConfig.type === 'success' ? '#00796b' : '#c62828'} />
-              </View>
-              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-              <TouchableOpacity 
-                style={[styles.btnAlertOK, { backgroundColor: alertConfig.type === 'success' ? PRIMARY_BLUE : '#c62828' }]} 
-                onPress={() => setAlertConfig({...alertConfig, visible: false})} 
-                activeOpacity={0.8}
-              >
-                <Text style={styles.btnAlertOKText}>Oke, Mengerti</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
-        </TouchableOpacity>
-      </Modal>
+      {/* ✅ PICKER MODAL - MATA KULIAH */}
+      <PickerModal
+        visible={pickerVisible}
+        title="Pilih Mata Kuliah"
+        data={mkOptions.map(item => ({
+          id: item.id || item.mk_id,
+          label: `${item.kode_mk || ''} - ${item.nama_mk || ''}`.replace(/^- | -$/, ''),
+          ...item
+        }))}
+        selectedId={selectedMk?.id || selectedMk?.mk_id}
+        onSelect={(item) => {
+          setSelectedMk(item);
+          setPickerVisible(false);
+        }}
+        onClose={() => setPickerVisible(false)}
+        searchable={true}
+        searchPlaceholder="Cari mata kuliah..."
+      />
+
+      {/* ✅ CUSTOM ALERT */}
+      <CustomAlert
+        visible={alert.visible}
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        onConfirm={alert.onConfirm}
+        onCancel={alert.onCancel}
+        confirmText="Oke, Mengerti"
+      />
 
       {/* --- MODAL POP-UP DETAIL CPL --- */}
       <Modal visible={detailVisible} animationType="fade" transparent onRequestClose={() => setDetailVisible(false)}>
@@ -486,7 +491,7 @@ export default function KelolaCPLScreen({ navigation }) {
               
               <View style={styles.detailButtonRowSingle}>
                 <TouchableOpacity 
-                  style={[styles.btnSubmitFit, { flex: 0, paddingHorizontal: 25, paddingVertical: 10, backgroundColor: PRIMARY_BLUE }]} 
+                  style={[styles.btnSubmitFit, { flex: 0, paddingHorizontal: 25, paddingVertical: 10 }]} 
                   onPress={handleOpenEdit} 
                   activeOpacity={0.8}
                 >
@@ -503,73 +508,169 @@ export default function KelolaCPLScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6F5FA' },
-  header: { backgroundColor: THEME_COLOR, paddingTop: 50, paddingBottom: 30, paddingHorizontal: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, flexDirection: 'row', alignItems: 'flex-start', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  container: { flex: 1, backgroundColor: BASE.background },
+  header: { 
+    backgroundColor: THEME.primary, 
+    paddingTop: 50, 
+    paddingBottom: 30, 
+    paddingHorizontal: 24, 
+    borderBottomLeftRadius: 32, 
+    borderBottomRightRadius: 32, 
+    flexDirection: 'row', 
+    alignItems: 'flex-start', 
+    elevation: 4, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.1, 
+    shadowRadius: 4 
+  },
   backBtn: { padding: 8, marginRight: 12, marginTop: -2 },
   headerTextWrap: { flex: 1 },
-  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 4 },
-  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B' },
+  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: BASE.textMain, marginBottom: 4 },
+  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: BASE.textMuted },
   listContainer: { padding: 24, paddingBottom: 100 },
   
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 15, marginBottom: 12, paddingBottom: 8, borderBottomWidth: 1.5, borderBottomColor: THEME_COLOR },
-  sectionIconWrap: { backgroundColor: '#E2E8F0', padding: 6, borderRadius: 8, marginRight: 10 },
-  sectionTitle: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: PRIMARY_BLUE, flex: 1, lineHeight: 20 },
+  sectionHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginTop: 15, 
+    marginBottom: 12, 
+    paddingBottom: 8, 
+    borderBottomWidth: 1.5, 
+    borderBottomColor: THEME.primary 
+  },
+  sectionIconWrap: { backgroundColor: THEME.accent, padding: 6, borderRadius: 8, marginRight: 10 },
+  sectionTitle: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: BASE.primary, flex: 1, lineHeight: 20 },
 
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 16, borderRadius: 24, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 3 },
-  cardAvatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: THEME_COLOR, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  avatarText: { fontFamily: 'Urbanist-Bold', fontSize: 18, color: '#212121' },
+  card: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: BASE.surface, 
+    padding: 16, 
+    borderRadius: 24, 
+    marginBottom: 12, 
+    borderWidth: 1, 
+    borderColor: BASE.border, 
+    elevation: 2, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 1 }, 
+    shadowOpacity: 0.03, 
+    shadowRadius: 3 
+  },
+  cardAvatar: { 
+    width: 48, 
+    height: 48, 
+    borderRadius: 16, 
+    backgroundColor: THEME.secondary, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 16 
+  },
+  avatarText: { fontFamily: 'Urbanist-Bold', fontSize: 18, color: BASE.textMain },
   cardContent: { flex: 1 },
-  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121', marginBottom: 4 },
-  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#64748B', lineHeight: 18, paddingRight: 10 },
-  fab: { position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 20, backgroundColor: THEME_COLOR, justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 5 },
+  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: BASE.textMain, marginBottom: 4 },
+  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: BASE.textMuted, lineHeight: 18, paddingRight: 10 },
+  fab: { 
+    position: 'absolute', 
+    bottom: 30, 
+    right: 30, 
+    width: 60, 
+    height: 60, 
+    borderRadius: 20, 
+    backgroundColor: THEME.primary, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    elevation: 5, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 3 }, 
+    shadowOpacity: 0.2, 
+    shadowRadius: 5 
+  },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(33, 44, 33, 0.5)', justifyContent: 'flex-end' },
-  modalContentLucu: { backgroundColor: '#FFF', borderTopLeftRadius: 35, borderTopRightRadius: 35, padding: 24, paddingTop: 15, paddingBottom: 40, elevation: 20, shadowColor: '#000', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.15, shadowRadius: 10 },
-  modalHandle: { width: 40, height: 5, backgroundColor: '#E2E8F0', borderRadius: 10, alignSelf: 'center', marginBottom: 15 },
-  modalTitleLucu: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: PRIMARY_BLUE, textAlign: 'center', marginBottom: 25 },
+  modalContentLucu: { 
+    backgroundColor: BASE.surface, 
+    borderTopLeftRadius: 35, 
+    borderTopRightRadius: 35, 
+    padding: 24, 
+    paddingTop: 15, 
+    paddingBottom: 40, 
+    elevation: 20, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: -5 }, 
+    shadowOpacity: 0.15, 
+    shadowRadius: 10 
+  },
+  modalHandle: { width: 40, height: 5, backgroundColor: BASE.border, borderRadius: 10, alignSelf: 'center', marginBottom: 15 },
+  modalTitleLucu: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: BASE.primary, textAlign: 'center', marginBottom: 25 },
   
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 18, marginBottom: 12, paddingHorizontal: 15, borderWidth: 1, borderColor: '#e2e8f0' },
-  inputContainerDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 18, paddingHorizontal: 15, borderWidth: 1, borderColor: '#e2e8f0' },
+  inputContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: THEME.accent, 
+    borderRadius: 18, 
+    marginBottom: 12, 
+    paddingHorizontal: 15, 
+    borderWidth: 1, 
+    borderColor: BASE.border 
+  },
+  inputContainerDropdown: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: THEME.accent, 
+    borderRadius: 18, 
+    paddingHorizontal: 15, 
+    borderWidth: 1, 
+    borderColor: BASE.border 
+  },
   dropdownTrigger: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15 },
-  dropdownValue: { fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#212121', flex: 1, marginRight: 10 },
+  dropdownValue: { fontFamily: 'Urbanist-Regular', fontSize: 15, color: BASE.textMain, flex: 1, marginRight: 10 },
   textAreaContainer: { alignItems: 'flex-start' },
   inputIcon: { marginRight: 10 },
-  inputLucu: { flex: 1, paddingVertical: 15, fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#212121' },
+  inputLucu: { flex: 1, paddingVertical: 15, fontFamily: 'Urbanist-Regular', fontSize: 15, color: BASE.textMain },
   textAreaLucu: { height: 100, textAlignVertical: 'top', paddingTop: 15 },
   
   buttonRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 15 },
-  btnCancelFit: { flex: 0.48, backgroundColor: CANCEL_BG, borderRadius: 20, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#ffcdd2' },
-  btnCancelTextFit: { color: CANCEL_TEXT, fontFamily: 'Urbanist-Regular', fontSize: 15, fontWeight: '700' },
-  btnSubmitFit: { flex: 0.48, backgroundColor: PRIMARY_BLUE, borderRadius: 20, paddingVertical: 14, alignItems: 'center', elevation: 3, shadowColor: PRIMARY_BLUE, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 },
-  btnSubmitTextFit: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 15 },
+  btnCancelFit: { 
+    flex: 0.48, 
+    backgroundColor: BASE.errorBg, 
+    borderRadius: 20, 
+    paddingVertical: 14, 
+    alignItems: 'center', 
+    borderWidth: 1, 
+    borderColor: BASE.errorBorder 
+  },
+  btnCancelTextFit: { color: BASE.error, fontFamily: 'Urbanist-Regular', fontSize: 15, fontWeight: '700' },
+  btnSubmitFit: { 
+    flex: 0.48, 
+    backgroundColor: BASE.primary, 
+    borderRadius: 20, 
+    paddingVertical: 14, 
+    alignItems: 'center', 
+    elevation: 3, 
+    shadowColor: BASE.primary, 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.2, 
+    shadowRadius: 3 
+  },
+  btnSubmitTextFit: { color: BASE.surface, fontFamily: 'Urbanist-Bold', fontSize: 15 },
 
-  pickerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 999, padding: 24 },
-  pickerBox: { backgroundColor: '#FFF', width: '100%', borderRadius: 24, maxHeight: '70%', padding: 20, elevation: 10 },
-  pickerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 18, color: PRIMARY_BLUE, textAlign: 'center', marginBottom: 15 },
-  pickerOption: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  pickerOptionText: { fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#212121', textAlign: 'center' },
-  pickerCloseBtnSmall: { marginTop: 15, paddingVertical: 10, paddingHorizontal: 30, backgroundColor: CANCEL_BG, borderRadius: 16, alignSelf: 'center', borderWidth: 1, borderColor: '#ffcdd2' },
-  pickerCloseText: { color: CANCEL_TEXT, fontFamily: 'Urbanist-Bold', fontSize: 14 },
-
-  alertOverlay: { flex: 1, backgroundColor: 'rgba(33, 44, 33, 0.5)', justifyContent: 'center', alignItems: 'center' },
-  alertBox: { backgroundColor: '#FFF', borderRadius: 35, padding: 30, width: '80%', alignItems: 'center', elevation: 20 },
-  alertIconWrap: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  alertTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 10, textAlign: 'center' },
-  alertMessage: { fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 25, lineHeight: 22 },
-  btnAlertOK: { borderRadius: 20, paddingVertical: 14, paddingHorizontal: 30, alignItems: 'center', elevation: 3 },
-  btnAlertOKText: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 16 },
-
-  detailBox: { backgroundColor: '#FFF', borderRadius: 35, padding: 24, width: '85%', maxHeight: '75%', alignItems: 'center', elevation: 20 },
+  detailBox: { 
+    backgroundColor: BASE.surface, 
+    borderRadius: 35, 
+    padding: 24, 
+    width: '85%', 
+    maxHeight: '75%', 
+    alignItems: 'center', 
+    elevation: 20 
+  },
   detailHeaderWrap: { alignItems: 'center', width: '100%' },
-  detailBadgeKode: { backgroundColor: THEME_COLOR, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 12, marginBottom: 10 },
-  detailBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: '#212121' },
-  detailTitle: { fontFamily: 'Urbanist-Bold', fontSize: 18, color: '#212121', textAlign: 'center', marginBottom: 6 },
-  detailDivider: { width: '100%', height: 1, backgroundColor: '#E2E8F0', marginVertical: 16 },
+  detailBadgeKode: { backgroundColor: THEME.secondary, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 12, marginBottom: 10 },
+  detailBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: BASE.textMain },
+  detailTitle: { fontFamily: 'Urbanist-Bold', fontSize: 18, color: BASE.textMain, textAlign: 'center', marginBottom: 6 },
+  detailDivider: { width: '100%', height: 1, backgroundColor: BASE.border, marginVertical: 16 },
   descScroll: { width: '100%', marginBottom: 10 },
-  descLabel: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: '#212121', marginBottom: 6 },
-  descText: { fontFamily: 'Urbanist-Regular', fontSize: 14, color: '#64748B', lineHeight: 22, textAlign: 'justify' },
+  descLabel: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: BASE.textMain, marginBottom: 6 },
+  descText: { fontFamily: 'Urbanist-Regular', fontSize: 14, color: BASE.textMuted, lineHeight: 22, textAlign: 'justify' },
   detailButtonRowSingle: { width: '100%', alignItems: 'flex-end', marginTop: 10 },
-
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
-  loadingText: { marginTop: 12, fontFamily: 'Urbanist-Medium', fontSize: 14, color: '#64748B' }
 });

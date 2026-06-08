@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { prodiApi, cplApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { LoadingState, EmptyState } from '../../components';
+
+// ✅ THEME MAHASISWA (Orange)
+const THEME = ROLE_THEMES.mahasiswa;
 
 export default function ProgramStudiScreen({ user }) {
     const [prodiList, setProdiList]           = useState([]);
@@ -53,11 +58,7 @@ export default function ProgramStudiScreen({ user }) {
     };
 
     if (loading) {
-        return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color="#212121" />
-            </View>
-        );
+        return <LoadingState message="Memuat data program studi..." color={BASE.primary} />;
     }
 
     return (
@@ -73,10 +74,7 @@ export default function ProgramStudiScreen({ user }) {
 
             {/* Prodi List - Hanya Prodi Mahasiswa */}
             {prodiList.length === 0 ? (
-                <View style={styles.emptyCard}>
-                    <MaterialCommunityIcons name="school-off-outline" size={32} color="#CBD5E1" />
-                    <Text style={styles.emptyText}>Data program studi tidak ditemukan</Text>
-                </View>
+                <EmptyState icon="school-off-outline" message="Data program studi tidak ditemukan" />
             ) : (
                 <View style={styles.cardList}>
                     {prodiList.map((prodi) => {
@@ -116,7 +114,7 @@ export default function ProgramStudiScreen({ user }) {
                                 {isSelected && (
                                     <View style={styles.cplContainer}>
                                         {loadingCpl ? (
-                                            <ActivityIndicator size="small" color="#212121" />
+                                            <LoadingState message="Memuat CPL..." color={BASE.primary} />
                                         ) : cplList.length === 0 ? (
                                             <Text style={styles.emptyText}>Belum ada CPL untuk prodi ini</Text>
                                         ) : (
@@ -150,56 +148,56 @@ export default function ProgramStudiScreen({ user }) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: 'transparent' },
+    container: { flex: 1, backgroundColor: BASE.background },
     scrollContent: { paddingBottom: 40 },
 
     heroBanner: {
-        backgroundColor: 'rgba(15,40,25,0.82)',
+        backgroundColor: THEME.secondary,
         paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24,
         marginBottom: 20, borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
     },
     heroContent: { paddingHorizontal: 4 },
-    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4 },
-    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 4 },
+    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: BASE.textMain, letterSpacing: -0.4 },
+    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: BASE.textMuted, marginTop: 4 },
 
     cardList: { gap: 16, paddingHorizontal: 20 },
     prodiCard: {
-        backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20,
+        backgroundColor: BASE.surface, borderRadius: 24, padding: 20,
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 15, elevation: 2,
-        borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
+        borderWidth: 1, borderColor: BASE.border,
     },
     prodiHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
     prodiMeta: { flex: 1, paddingRight: 8 },
-    prodiNama: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121', fontWeight: '800', marginBottom: 6 },
+    prodiNama: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: BASE.textMain, fontWeight: '800', marginBottom: 6 },
     badgeRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-    kodeBadge: { backgroundColor: '#212121', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-    kodeBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#FFFFFF', fontWeight: '700' },
-    jenjangBadge: { backgroundColor: '#EFF0A3', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-    jenjangBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#212121', fontWeight: '700' },
+    kodeBadge: { backgroundColor: BASE.primary, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+    kodeBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: BASE.surface, fontWeight: '700' },
+    jenjangBadge: { backgroundColor: THEME.accent, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+    jenjangBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: BASE.textMain, fontWeight: '700' },
 
     toggleBtn: {
         flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-        backgroundColor: '#F1F5F9', height: 40, borderRadius: 12, gap: 6,
+        backgroundColor: BASE.borderLight, height: 40, borderRadius: 12, gap: 6,
     },
-    toggleBtnActive: { backgroundColor: '#212121' },
-    toggleBtnText: { fontFamily: 'Urbanist-Bold', fontSize: 12, fontWeight: '800', color: '#64748B' },
-    toggleBtnTextActive: { color: '#FFFFFF' },
+    toggleBtnActive: { backgroundColor: BASE.primary },
+    toggleBtnText: { fontFamily: 'Urbanist-Bold', fontSize: 12, fontWeight: '800', color: BASE.textMuted },
+    toggleBtnTextActive: { color: BASE.surface },
 
-    cplContainer: { marginTop: 20, borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 16, gap: 12 },
+    cplContainer: { marginTop: 20, borderTopWidth: 1, borderTopColor: BASE.borderLight, paddingTop: 16, gap: 12 },
     cplHeaderTitle: {
-        fontFamily: 'Urbanist-Bold', fontSize: 12, fontWeight: '800', color: '#64748B',
+        fontFamily: 'Urbanist-Bold', fontSize: 12, fontWeight: '800', color: BASE.textMuted,
         textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4,
     },
-    cplSubCard: { backgroundColor: '#F8FAFC', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#E2E8F0' },
+    cplSubCard: { backgroundColor: THEME.primary, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: BASE.border },
     cplCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    cplBadge: { backgroundColor: '#D8DFE9', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-    cplBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#212121', fontWeight: '700' },
-    cplNama: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#212121', fontWeight: '700', marginBottom: 4 },
+    cplBadge: { backgroundColor: THEME.secondary, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+    cplBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: BASE.textMain, fontWeight: '700' },
+    cplNama: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: BASE.textMain, fontWeight: '700', marginBottom: 4 },
 
     emptyCard: {
-        backgroundColor: '#FFFFFF', borderRadius: 24, padding: 32, alignItems: 'center', gap: 12,
+        backgroundColor: BASE.surface, borderRadius: 24, padding: 32, alignItems: 'center', gap: 12,
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 15, elevation: 2,
         marginHorizontal: 20,
     },
-    emptyText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#94A3B8', textAlign: 'center' },
+    emptyText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textDisabled, textAlign: 'center' },
 });

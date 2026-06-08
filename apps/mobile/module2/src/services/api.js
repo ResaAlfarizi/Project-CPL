@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // PENTING: Ganti dengan IP komputer Anda yang menjalankan backend
-const API_BASE = 'http://192.168.18.252:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
-const API_BASE_M1 = 'http://192.168.18.252:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
+const API_BASE = 'http://20.5.24.71:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
+const API_BASE_M1 = 'http://20.5.24.71:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
 
 const TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 
@@ -12,7 +13,7 @@ export const tokenStorage = {
     get: async () => {
         try { 
             const token = await AsyncStorage.getItem(TOKEN_KEY);
-            console.log('📱 Token retrieved:', token ? 'exists' : 'null');
+            console.log('📱 Access Token retrieved:', token ? 'exists' : 'null');
             return token;
         }
         catch (error) { 
@@ -23,19 +24,40 @@ export const tokenStorage = {
     set: async (token) => {
         try { 
             await AsyncStorage.setItem(TOKEN_KEY, token);
-            console.log('✅ Token saved successfully');
+            console.log('✅ Access Token saved successfully');
         }
         catch (error) {
             console.error('❌ Error saving token:', error);
         }
     },
+    getRefresh: async () => {
+        try { 
+            const token = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+            console.log('📱 Refresh Token retrieved:', token ? 'exists' : 'null');
+            return token;
+        }
+        catch (error) { 
+            console.error('❌ Error getting refresh token:', error);
+            return null; 
+        }
+    },
+    setRefresh: async (token) => {
+        try { 
+            await AsyncStorage.setItem(REFRESH_TOKEN_KEY, token);
+            console.log('✅ Refresh Token saved successfully');
+        }
+        catch (error) {
+            console.error('❌ Error saving refresh token:', error);
+        }
+    },
     remove: async () => {
         try { 
             await AsyncStorage.removeItem(TOKEN_KEY);
-            console.log('🗑️ Token removed');
+            await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+            console.log('🗑️ All tokens removed');
         }
         catch (error) {
-            console.error('❌ Error removing token:', error);
+            console.error('❌ Error removing tokens:', error);
         }
     },
 };
@@ -131,6 +153,54 @@ export const authApi = {
             throw error;
         }
     },
+    
+    refreshToken: async (refreshToken) => {
+        console.log('🔄 Refresh token attempt');
+        const url = `${API_BASE}/auth/refresh-token`;
+        
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+            
+            const data = await res.json();
+            
+            if (!res.ok) {
+                throw new Error(data.message || 'Refresh token gagal');
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('❌ Refresh token error:', error.message);
+            throw error;
+        }
+    },
+
+    logout: async (refreshToken) => {
+        console.log('🚪 Logout attempt');
+        const url = `${API_BASE}/auth/logout`;
+        
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+            
+            const data = await res.json();
+            
+            if (!res.ok) {
+                throw new Error(data.message || 'Logout gagal');
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('❌ Logout error:', error.message);
+            throw error;
+        }
+    },
 };
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -187,13 +257,19 @@ export const cplApi = {
 // ─── MATA KULIAH (MK) ─────────────────────────────────────────────────────────
 
 export const mkApi = {
-    getAll:      ()             => apiFetch('/mk'),
-    getById:     (id)           => apiFetch(`/mk/${id}`),
-    getByProdi:  (prodiId)      => apiFetch(`/mk/prodi/${prodiId}`),
-    // ✅ BARU: CRUD lengkap untuk Superadmin
-    create:      (body)         => apiFetch('/mk', { method: 'POST', body: JSON.stringify(body) }),
-    update:      (id, body)     => apiFetch(`/mk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    delete:      (id)           => apiFetch(`/mk/${id}`, { method: 'DELETE' }),
+    getAll:      ()             => apiFetch('/mata-kuliah'),
+    getById:     (id)           => apiFetch(`/mata-kuliah/${id}`),
+    // ✅ NOTE: Backend doesn't have /mata-kuliah/prodi/:prodiId endpoint yet
+    // Frontend will filter after getAll() until backend adds this endpoint
+    getByProdi:  (prodiId)      => apiFetch('/mata-kuliah').then(res => {
+        const data = res?.data || res;
+        const filtered = Array.isArray(data) ? data.filter(mk => String(mk.prodi_id) === String(prodiId)) : [];
+        return { success: true, data: filtered };
+    }),
+    // ✅ CRUD lengkap untuk Admin Prodi & Superadmin
+    create:      (body)         => apiFetch('/mata-kuliah', { method: 'POST', body: JSON.stringify(body) }),
+    update:      (id, body)     => apiFetch(`/mata-kuliah/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete:      (id)           => apiFetch(`/mata-kuliah/${id}`, { method: 'DELETE' }),
 };
 
 // ─── MATA KULIAH SUPERADMIN ───────────────────────────────────────────────────
@@ -215,6 +291,8 @@ export const subCpmkApi = {
     getByMk:      (mkId)          => apiFetch(`/sub-cpmk/mk/${mkId}`),
     // Sub-CPMK terhubung ke mk_cpl (bukan langsung cpl) — endpoint ini ambil sub_cpmk by mk_cpl_id
     getByMkCpl:   (mkCplId)       => apiFetch(`/sub-cpmk/mk-cpl/${mkCplId}`),
+    // ✅ ADDED: For Dosen to get their Sub-CPMK
+    getMySubCpmk: ()              => apiFetch('/sub-cpmk/dosen/my-sub-cpmk'),
     create:       (body)          => apiFetch('/sub-cpmk', { method: 'POST', body: JSON.stringify(body) }),
     update:       (id, body)      => apiFetch(`/sub-cpmk/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     // ✅ BARU: Delete untuk Superadmin
@@ -226,7 +304,8 @@ export const subCpmkApi = {
 export const mkCplApi = {
     getAll:      ()             => apiFetch('/mk-cpl'),
     getByMk:     (mkId)         => apiFetch(`/mk-cpl/mk/${mkId}`),
-    // ✅ BARU: CRUD untuk Pemetaan MK-CPL
+    getMyMkCpl:  ()             => apiFetch('/mk-cpl/dosen/my-mk-cpl'), // ✅ For Dosen
+    // ✅ CRUD untuk Pemetaan MK-CPL
     create:      (body)         => apiFetch('/mk-cpl', { method: 'POST', body: JSON.stringify(body) }),
     update:      (id, body)     => apiFetch(`/mk-cpl/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     delete:      (id)           => apiFetch(`/mk-cpl/${id}`, { method: 'DELETE' }),

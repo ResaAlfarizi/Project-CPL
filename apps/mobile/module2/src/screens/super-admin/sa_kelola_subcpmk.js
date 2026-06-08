@@ -17,12 +17,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 // 1. IMPORT DISESUAIKAN 100% DENGAN api.js KAMU
-import { subCpmkApi, prodiApi, cplApi, mkCplApi } from '../../services/api'; 
+import { subCpmkApi, prodiApi, cplApi, mkCplApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-const THEME_COLOR = '#cad4ed'; 
-const PRIMARY_BLUE = '#577590'; 
-const CANCEL_BG = '#ffebee'; 
-const CANCEL_TEXT = '#c62828'; 
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const CANCEL_BG = BASE.errorBg;
+const CANCEL_TEXT = BASE.error; 
 
 export default function SAKelolaSubCpmkScreen({ navigation }) {
   // --- STATE DATA API ---

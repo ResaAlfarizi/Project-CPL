@@ -32,12 +32,17 @@ function extractArray(res) {
 }
 
 const { width: SW } = Dimensions.get('window');
-const THEME_COLOR   = '#cdddf4'; 
-const PRIMARY_DARK  = '#24354a';  // ← Update warna sesuai CPL
-const PRIMARY_BLUE  = '#577590';  // ← Update warna sesuai CPL
-const DANGER_COLOR  = '#c62828'; 
-const SUCCESS_COLOR = '#16a34a'; 
-const FAB_COLOR     = THEME_COLOR;
+
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_DARK = BASE.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const DANGER_COLOR = BASE.error;
+const SUCCESS_COLOR = BASE.success;
+const FAB_COLOR = THEME_COLOR;
 
 // ─── CUSTOM ALERT MODAL (sama seperti CPL) ───────────────────────────────────
 function CustomAlert({ visible, type, title, message, onConfirm, onCancel, confirmText, cancelText }) {

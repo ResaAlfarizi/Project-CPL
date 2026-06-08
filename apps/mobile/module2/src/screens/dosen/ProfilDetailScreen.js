@@ -1,6 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+
+// ✅ THEME DOSEN (Green)
+const THEME = ROLE_THEMES.dosen;
 
 export default function ProfilDetailScreen({ user, nidn: nidnProp, namaProdi: namaProdiProp }) {
     const nama  = user?.name  || '-';
@@ -45,7 +49,7 @@ export default function ProfilDetailScreen({ user, nidn: nidnProp, namaProdi: na
         return (
             <View style={styles.infoRow} key={label}>
                 <View style={styles.infoIconBox}>
-                    <MaterialCommunityIcons name={icon} size={16} color="#64748B" />
+                    <MaterialCommunityIcons name={icon} size={16} color={BASE.textMuted} />
                 </View>
                 <View style={styles.infoMeta}>
                     <Text style={styles.infoLabel}>{label}</Text>
@@ -69,34 +73,34 @@ const styles = StyleSheet.create({
     },
     heroAvatar: {
         width: 68, height: 68, borderRadius: 34,
-        backgroundColor: '#EFF0A3',
+        backgroundColor: THEME.accent,
         justifyContent: 'center', alignItems: 'center',
         marginBottom: 12,
         borderWidth: 3, borderColor: 'rgba(255,255,255,0.25)',
     },
-    heroAvatarText: { fontFamily: 'Urbanist-Bold', fontSize: 30, color: '#212121', fontWeight: '800' },
-    heroName:       { fontFamily: 'Urbanist-Bold', fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
+    heroAvatarText: { fontFamily: 'Urbanist-Bold', fontSize: 30, color: BASE.textMain, fontWeight: '800' },
+    heroName:       { fontFamily: 'Urbanist-Bold', fontSize: 20, fontWeight: '800', color: BASE.surface },
     heroEmail:      { fontFamily: 'Urbanist-Medium', fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 3 },
     heroBadge: {
         marginTop: 8,
         backgroundColor: 'rgba(255,255,255,0.15)',
         borderRadius: 99, paddingHorizontal: 12, paddingVertical: 4,
     },
-    heroBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#EFF0A3', fontWeight: '700', letterSpacing: 0.5 },
+    heroBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: THEME.accent, fontWeight: '700', letterSpacing: 0.5 },
 
     infoCard: {
         marginHorizontal: 20,
-        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 24, padding: 20,
+        backgroundColor: BASE.surface, borderRadius: 24, padding: 20,
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3,
     },
-    cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 14, fontWeight: '800', color: '#212121', marginBottom: 16 },
+    cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 14, fontWeight: '800', color: BASE.textMain, marginBottom: 16 },
     infoRow:   { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
     infoIconBox: {
         width: 32, height: 32, borderRadius: 10,
-        backgroundColor: '#F1F5F9',
+        backgroundColor: BASE.borderLight,
         justifyContent: 'center', alignItems: 'center', marginRight: 12,
     },
     infoMeta:  { flex: 1 },
-    infoLabel: { fontFamily: 'Urbanist-Bold', fontSize: 9, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.4 },
-    infoValue: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#212121', fontWeight: '700', marginTop: 2 },
+    infoLabel: { fontFamily: 'Urbanist-Bold', fontSize: 9, color: BASE.textDisabled, textTransform: 'uppercase', letterSpacing: 0.4 },
+    infoValue: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: BASE.textMain, fontWeight: '700', marginTop: 2 },
 });

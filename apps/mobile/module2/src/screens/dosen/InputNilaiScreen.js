@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, KeyboardAvoidingView, Platform, ActivityIndicator  } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { nilaiApi, enrollmentApi, subCpmkApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { EmptyState } from '../../components';
+
+// ✅ THEME DOSEN (Green)
+const THEME = ROLE_THEMES.dosen;
 
 export default function InputNilaiScreen({ 
     kelasList = [],
@@ -277,12 +282,15 @@ export default function InputNilaiScreen({
 
                         {/* 3. Grades Card List */}
                         {loading ? (
-                            <ActivityIndicator size="large" color="#212121" style={{ marginTop: 24 }} />
+                            <ActivityIndicator size="large" color={BASE.primary} style={{ marginTop: 24 }} />
                         ) : (
                             <View style={styles.cardList}>
                                 {nilaiList.length === 0 ? (
-                                    <View style={styles.emptyGrade}>
-                                        <Text style={styles.emptyGradeText}>Belum ada nilai. Klik "Input Nilai Baru".</Text>
+                                    <View style={{ marginHorizontal: 24 }}>
+                                        <EmptyState 
+                                            icon="clipboard-text-off-outline" 
+                                            message='Belum ada nilai. Klik "Input Nilai Baru".' 
+                                        />
                                     </View>
                                 ) : nilaiList.map((n) => {
                                     const isEditing = editingId === n.id;
@@ -416,9 +424,9 @@ export default function InputNilaiScreen({
 
 const styles = StyleSheet.create({
 
-    /* -- Hero Banner — warna sesuai card vanilla -- */
+    /* -- Hero Banner — warna THEME Dosen -- */
     heroBanner: {
-        backgroundColor: '#f2f3cb',
+        backgroundColor: THEME.primary,
         paddingHorizontal: 24,
         paddingTop: 24,
         paddingBottom: 28,
@@ -428,8 +436,8 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     heroContent: { },
-    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#212121', letterSpacing: -0.4 },
-    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B', marginTop: 4 },
+    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: BASE.textMain, letterSpacing: -0.4 },
+    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted, marginTop: 4 },
     container: {
         flex: 1,
         backgroundColor: 'transparent',
@@ -449,13 +457,13 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 24,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
         letterSpacing: -0.5,
     },
     subtitle: {
         fontFamily: 'Urbanist-Medium',
         fontSize: 13,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 2,
         lineHeight: 18,
     },
@@ -469,7 +477,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginBottom: 8,
     },
     selectBtn: {
@@ -479,8 +487,8 @@ const styles = StyleSheet.create({
         minHeight: 52,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: BASE.border,
+        backgroundColor: BASE.surface,
         paddingHorizontal: 16,
         paddingVertical: 10,
     },
@@ -488,19 +496,19 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
         fontWeight: '700',
-        color: '#212121',
+        color: BASE.textMain,
     },
     selectBtnSub: {
         fontFamily: 'Urbanist-Regular',
         fontSize: 11,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 2,
     },
     dropdownOptions: {
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
+        borderColor: BASE.border,
         marginTop: 6,
         overflow: 'hidden',
         shadowColor: '#000000',
@@ -512,17 +520,17 @@ const styles = StyleSheet.create({
     dropdownOptionRow: {
         padding: 14,
         borderBottomWidth: 1,
-        borderBottomColor: '#F1F5F9',
+        borderBottomColor: BASE.borderLight,
     },
     dropdownOptionText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
-        color: '#212121',
+        color: BASE.textMain,
     },
     dropdownOptionSub: {
         fontFamily: 'Urbanist-Regular',
         fontSize: 11,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 2,
     },
     contentSection: {
@@ -534,21 +542,21 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginHorizontal: 24,
         marginBottom: 16,
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 16,
         padding: 12,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.02)',
+        borderColor: BASE.border,
     },
     classBadgeRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        flex: 1,           // ambil sisa ruang, bukan dorong tombol
-        marginRight: 8,    // jarak minimal ke tombol
+        flex: 1,
+        marginRight: 8,
     },
     classInfoBadge: {
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         borderRadius: 6,
         paddingHorizontal: 6,
         paddingVertical: 2,
@@ -556,34 +564,34 @@ const styles = StyleSheet.create({
     classInfoBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 9,
-        color: '#FFFFFF',
+        color: BASE.surface,
         fontWeight: '750',
     },
     classInfoName: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
         fontWeight: '800',
-        color: '#212121',
-        flexShrink: 1,     // boleh menyusut saat nama panjang
+        color: BASE.textMain,
+        flexShrink: 1,
     },
     addNilaiBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#EFF0A3',
+        backgroundColor: THEME.accent,
         borderRadius: 10,
         paddingVertical: 6,
         paddingHorizontal: 10,
         gap: 4,
-        flexShrink: 0,     // tombol tidak boleh menyusut
+        flexShrink: 0,
     },
     addNilaiBtnText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
     },
     addFormCard: {
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 24,
         padding: 16,
         marginHorizontal: 24,
@@ -594,13 +602,13 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
         elevation: 3,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.02)',
+        borderColor: BASE.border,
     },
     formCardTitle: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
         marginBottom: 12,
     },
     formGrid: {
@@ -616,18 +624,18 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
         fontWeight: '700',
-        color: '#64748B',
+        color: BASE.textMuted,
     },
     miniInput: {
         height: 38,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: BASE.border,
+        backgroundColor: BASE.surface,
         paddingHorizontal: 10,
         fontFamily: 'Urbanist-Bold',
         fontSize: 12,
-        color: '#212121',
+        color: BASE.textMain,
     },
     formActions: {
         flexDirection: 'row',
@@ -635,7 +643,7 @@ const styles = StyleSheet.create({
         marginTop: 14,
     },
     btnFormSave: {
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         borderRadius: 8,
         paddingVertical: 8,
         paddingHorizontal: 16,
@@ -644,7 +652,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 11,
         fontWeight: '800',
-        color: '#FFFFFF',
+        color: BASE.surface,
     },
     btnFormCancel: {
         backgroundColor: 'transparent',
@@ -656,7 +664,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 11,
         fontWeight: '700',
-        color: '#64748B',
+        color: BASE.textMuted,
     },
     // Card List Styles (Replacing Table)
     cardList: {
@@ -664,7 +672,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
     },
     gradeCard: {
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 24,
         padding: 16,
         shadowColor: '#000000',
@@ -673,7 +681,7 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
         elevation: 2,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.01)',
+        borderColor: BASE.border,
     },
     gradeCardHeader: {
         flexDirection: 'row',
@@ -689,10 +697,10 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 14,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
     },
     nimBadge: {
-        backgroundColor: '#F1F5F9',
+        backgroundColor: BASE.borderLight,
         borderRadius: 6,
         paddingHorizontal: 6,
         paddingVertical: 2,
@@ -700,11 +708,11 @@ const styles = StyleSheet.create({
     nimBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 9,
-        color: '#64748B',
+        color: BASE.textMuted,
         fontWeight: '750',
     },
     subBadge: {
-        backgroundColor: '#D8DFE9', // Alice blue
+        backgroundColor: THEME.secondary,
         borderRadius: 6,
         paddingHorizontal: 8,
         paddingVertical: 4,
@@ -712,12 +720,12 @@ const styles = StyleSheet.create({
     subBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
-        color: '#212121',
+        color: BASE.textMain,
         fontWeight: '800',
     },
     divider: {
         height: 1,
-        backgroundColor: '#F1F5F9',
+        backgroundColor: BASE.border,
         marginVertical: 12,
     },
     gradeCardBody: {
@@ -731,11 +739,11 @@ const styles = StyleSheet.create({
     tglText: {
         fontFamily: 'Urbanist-Medium',
         fontSize: 11,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 4,
     },
     cplInfoBadge: {
-        backgroundColor: '#D8DFE9',
+        backgroundColor: THEME.secondary,
         borderRadius: 6,
         paddingHorizontal: 7,
         paddingVertical: 2,
@@ -745,7 +753,7 @@ const styles = StyleSheet.create({
     cplInfoText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
-        color: '#212121',
+        color: BASE.textMain,
         fontWeight: '700',
     },
     scoreRow: {
@@ -754,7 +762,7 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     scoreBadgeContainer: {
-        backgroundColor: '#EFF0A3', // Vanilla color style
+        backgroundColor: THEME.accent,
         borderRadius: 12,
         paddingVertical: 4,
         paddingHorizontal: 12,
@@ -764,20 +772,20 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 8,
         fontWeight: '700',
-        color: '#64748B',
+        color: BASE.textMuted,
         textTransform: 'uppercase',
     },
     scoreValue: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 14,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
     },
     editRowBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1.5,
-        borderColor: '#E2E8F0',
+        borderColor: BASE.border,
         borderRadius: 10,
         paddingVertical: 6,
         paddingHorizontal: 12,
@@ -787,7 +795,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 11,
         fontWeight: '700',
-        color: '#212121',
+        color: BASE.textMain,
     },
     inlineEditArea: {
         flexDirection: 'row',
@@ -797,20 +805,20 @@ const styles = StyleSheet.create({
     nilaiLabel: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 12,
-        color: '#64748B',
+        color: BASE.textMuted,
     },
     rowInput: {
         height: 36,
         width: 60,
         borderRadius: 10,
         borderWidth: 1.5,
-        borderColor: '#212121',
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: BASE.primary,
+        backgroundColor: BASE.surface,
         textAlign: 'center',
         fontFamily: 'Urbanist-Bold',
         fontSize: 14,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
         padding: 0,
     },
     rowEditActions: {
@@ -820,7 +828,7 @@ const styles = StyleSheet.create({
     btnInlineSave: {
         width: 32,
         height: 32,
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
@@ -828,7 +836,7 @@ const styles = StyleSheet.create({
     btnInlineCancel: {
         width: 32,
         height: 32,
-        backgroundColor: 'rgba(234, 84, 85, 0.12)',
+        backgroundColor: BASE.errorBg,
         borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
@@ -841,14 +849,14 @@ const styles = StyleSheet.create({
         height: 38,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: BASE.border,
+        backgroundColor: BASE.surface,
         paddingHorizontal: 10,
     },
     miniSelectBtnText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 11,
-        color: '#212121',
+        color: BASE.textMain,
         flex: 1,
     },
     // Full-width selector untuk form Input Nilai (mengganti grid 3 kolom)
@@ -859,8 +867,8 @@ const styles = StyleSheet.create({
         minHeight: 44,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: BASE.border,
+        backgroundColor: BASE.surface,
         paddingHorizontal: 14,
         paddingVertical: 8,
         marginBottom: 2,
@@ -868,7 +876,7 @@ const styles = StyleSheet.create({
     fullSelectBtnText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 12,
-        color: '#212121',
+        color: BASE.textMain,
         flex: 1,
         marginRight: 8,
         lineHeight: 18,
@@ -877,12 +885,12 @@ const styles = StyleSheet.create({
         height: 44,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: BASE.border,
+        backgroundColor: BASE.surface,
         paddingHorizontal: 14,
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
-        color: '#212121',
+        color: BASE.textMain,
         marginBottom: 2,
     },
     modalBackdrop: {
@@ -895,7 +903,7 @@ const styles = StyleSheet.create({
     modalContent: {
         width: '100%',
         maxWidth: 320,
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 20,
         padding: 20,
         shadowColor: '#000000',
@@ -908,30 +916,30 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 14,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
         marginBottom: 14,
         paddingBottom: 8,
         borderBottomWidth: 1,
-        borderBottomColor: '#F1F5F9',
+        borderBottomColor: BASE.borderLight,
     },
     optionRow: {
         paddingVertical: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#F1F5F9',
+        borderBottomColor: BASE.borderLight,
     },
     optionText: {
         fontFamily: 'Urbanist-SemiBold',
         fontSize: 12,
-        color: '#212121',
+        color: BASE.textMain,
     },
     optionSubText: {
         fontFamily: 'Urbanist-Regular',
         fontSize: 11,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 3,
     },
     subCpmkCodeBadge: {
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         borderRadius: 6,
         paddingHorizontal: 7,
         paddingVertical: 2,
@@ -940,10 +948,10 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
         fontWeight: '800',
-        color: '#FFFFFF',
+        color: BASE.surface,
     },
     cplBadge: {
-        backgroundColor: '#cad4ed',
+        backgroundColor: THEME.secondary,
         borderRadius: 6,
         paddingHorizontal: 7,
         paddingVertical: 2,
@@ -952,19 +960,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
         fontWeight: '700',
-        color: '#212c21',
-    },
-    emptyGrade: {
-        padding: 24,
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.92)',
-        borderRadius: 24,
-    },
-    emptyGradeText: {
-        fontFamily: 'Urbanist-Medium',
-        fontSize: 13,
-        color: '#94A3B8',
-        textAlign: 'center',
+        color: BASE.textMain,
     },
 });
 

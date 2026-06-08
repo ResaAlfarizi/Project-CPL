@@ -1,6 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { EmptyState } from '../../components';
+
+// ✅ THEME DOSEN (Green)
+const THEME = ROLE_THEMES.dosen;
 
 export default function MataKuliahScreen({ kelasList = [] }) {
     const listMk = kelasList.map((k) => ({
@@ -25,10 +30,10 @@ export default function MataKuliahScreen({ kelasList = [] }) {
             {/* ── Card List ── */}
             <View style={styles.cardList}>
                 {listMk.length === 0 ? (
-                    <View style={styles.emptyCard}>
-                        <MaterialCommunityIcons name="book-off-outline" size={32} color="#CBD5E1" />
-                        <Text style={styles.emptyText}>Belum ada mata kuliah yang diampu</Text>
-                    </View>
+                    <EmptyState 
+                        icon="book-off-outline" 
+                        message="Belum ada mata kuliah yang diampu" 
+                    />
                 ) : (
                     listMk.map((mk) => (
                         <View key={mk.id} style={styles.mkCard}>
@@ -50,9 +55,9 @@ export default function MataKuliahScreen({ kelasList = [] }) {
                             </View>
                             <View style={styles.divider} />
                             <View style={styles.detailsGrid}>
-                                {renderDetailCell('calendar-clock',   'Tahun Akademik', mk.ta,              '#F1F5F9')}
-                                {renderDetailCell('google-classroom',  'Kelas',          `Kelas ${mk.kelas}`, '#EFF0A3')}
-                                {renderDetailCell('bookmark-outline',  'Semester',       mk.semester,        '#D8DFE9')}
+                                {renderDetailCell('calendar-clock',   'Tahun Akademik', mk.ta,              BASE.borderLight)}
+                                {renderDetailCell('google-classroom',  'Kelas',          `Kelas ${mk.kelas}`, THEME.accent)}
+                                {renderDetailCell('bookmark-outline',  'Semester',       mk.semester,        THEME.secondary)}
                             </View>
                         </View>
                     ))
@@ -61,11 +66,11 @@ export default function MataKuliahScreen({ kelasList = [] }) {
         </ScrollView>
     );
 
-    function renderDetailCell(iconName, label, value, bg = '#F1F5F9') {
+    function renderDetailCell(iconName, label, value, bg = BASE.borderLight) {
         return (
             <View style={styles.detailCell} key={label}>
                 <View style={styles.labelRow}>
-                    <MaterialCommunityIcons name={iconName} size={13} color="#64748B" />
+                    <MaterialCommunityIcons name={iconName} size={13} color={BASE.textMuted} />
                     <Text style={styles.cellLabel}>{label}</Text>
                 </View>
                 <View style={[styles.cellValBadge, { backgroundColor: bg }]}>
@@ -80,9 +85,9 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
     scrollContent: { paddingBottom: 40 },
 
-    /* Hero Banner — warna sesuai card pinky */
+    /* Hero Banner — warna THEME Dosen */
     heroBanner: {
-        backgroundColor: '#f4d6d6',
+        backgroundColor: THEME.primary,
         paddingHorizontal: 24,
         paddingTop: 24,
         paddingBottom: 28,
@@ -91,36 +96,32 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 32,
         elevation: 4,
     },
-    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#212121', letterSpacing: -0.4 },
-    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B', marginTop: 4 },
+    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: BASE.textMain, letterSpacing: -0.4 },
+    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted, marginTop: 4 },
 
     /* Cards */
     cardList: { gap: 16, paddingHorizontal: 20 },
     mkCard: {
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 24, padding: 20,
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 15, elevation: 3,
     },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     titleMeta: { flex: 1, paddingRight: 10 },
-    mkName: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121', fontWeight: '800', marginBottom: 8, lineHeight: 22 },
+    mkName: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: BASE.textMain, fontWeight: '800', marginBottom: 8, lineHeight: 22 },
     badgeRow: { flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' },
-    kodeBadge: { backgroundColor: '#212121', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-    kodeBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#FFFFFF', fontWeight: '700' },
-    sksBadge: { backgroundColor: '#CFDECA', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-    sksBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#212121', fontWeight: '700' },
-    iconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#F5F3FF', justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
-    divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 16 },
+    kodeBadge: { backgroundColor: BASE.primary, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+    kodeBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: BASE.surface, fontWeight: '700' },
+    sksBadge: { backgroundColor: THEME.secondary, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+    sksBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: BASE.textMain, fontWeight: '700' },
+    iconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: THEME.accent, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+    divider: { height: 1, backgroundColor: BASE.border, marginVertical: 16 },
 
     /* Detail Grid */
     detailsGrid: { flexDirection: 'row', gap: 10 },
     detailCell: { flex: 1, gap: 6 },
     labelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
-    cellLabel: { fontFamily: 'Urbanist-Bold', fontSize: 9, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.3, flexShrink: 1 },
+    cellLabel: { fontFamily: 'Urbanist-Bold', fontSize: 9, fontWeight: '700', color: BASE.textMuted, textTransform: 'uppercase', letterSpacing: 0.3, flexShrink: 1 },
     cellValBadge: { borderRadius: 8, paddingVertical: 5, paddingHorizontal: 8 },
-    cellVal: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: '#212121', fontWeight: '700', lineHeight: 15 },
-
-    /* Empty */
-    emptyCard: { backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 24, padding: 32, alignItems: 'center', gap: 12, elevation: 2 },
-    emptyText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#94A3B8', textAlign: 'center' },
+    cellVal: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: BASE.textMain, fontWeight: '700', lineHeight: 15 },
 });

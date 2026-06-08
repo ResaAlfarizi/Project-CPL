@@ -6,12 +6,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { userApi, rolesApi, dosenApi, mahasiswaApi, prodiApi, tokenStorage } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-const THEME_COLOR = '#cad4ed'; 
-const PRIMARY_DARK = '#24354a';
-const PRIMARY_BLUE = '#577590';
-const DANGER_COLOR = '#c62828';
-const SUCCESS_COLOR = '#16a34a';
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_DARK = BASE.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const DANGER_COLOR = BASE.error;
+const SUCCESS_COLOR = BASE.success;
 
 // Daftar nama role yang ditampilkan di UI (tanpa admin_prodi karena SA yang kelola)
 const ROLE_OPTIONS = ['superadmin', 'dosen', 'mahasiswa'];

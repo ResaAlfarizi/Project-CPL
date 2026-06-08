@@ -16,14 +16,17 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { nilaiApi, prodiApi, kelasApi, subCpmkApi, mkCplApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-const THEME_COLOR = '#cad4ed'; 
-const PRIMARY_BLUE = '#577590';
-const PRIMARY_DARK = '#24354a';
-const DANGER_COLOR = '#c62828';
-const WARNING_COLOR = '#f59e0b';
-const SUCCESS_COLOR = '#16a34a';
-const DISABLED_COLOR = '#F1F5F9';
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const PRIMARY_DARK = BASE.primary;
+const DANGER_COLOR = BASE.error;
+const WARNING_COLOR = BASE.warning;
+const SUCCESS_COLOR = BASE.success;
+const DISABLED_COLOR = BASE.borderLight;
 
 // ─── CUSTOM ALERT MODAL ──────────────────────────────────────────────────────
 function CustomAlert({ visible, type, title, message, onConfirm, onCancel, confirmText, cancelText }) {

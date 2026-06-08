@@ -6,12 +6,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { mkCplApi, mkSaApi, cplApi, prodiApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-const THEME_COLOR  = '#cdddf4';
-const PRIMARY_DARK = '#24354a';
-const PRIMARY_BLUE = '#577590';
-const DANGER_COLOR = '#c62828';
-const GREEN        = '#16a34a';
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_DARK = BASE.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const DANGER_COLOR = BASE.error;
+const GREEN = BASE.success;
 
 // ─────────────────────────────────────────────────────────────────
 // CUSTOM ALERT (pola dari kode 2)

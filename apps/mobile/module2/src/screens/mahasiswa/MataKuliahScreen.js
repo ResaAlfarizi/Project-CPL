@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { mahasiswaApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { LoadingState, EmptyState } from '../../components';
+
+// ✅ THEME MAHASISWA (Orange)
+const THEME = ROLE_THEMES.mahasiswa;
 
 export default function MataKuliahScreen() {
     const [kelasList, setKelasList]           = useState([]);
@@ -33,11 +38,7 @@ export default function MataKuliahScreen() {
     const totalSks = filtered.reduce((sum, k) => sum + (k.sks || 0), 0);
 
     if (loading) {
-        return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color="#212121" />
-            </View>
-        );
+        return <LoadingState message="Memuat data mata kuliah..." color={BASE.primary} />;
     }
 
     return (
@@ -87,10 +88,7 @@ export default function MataKuliahScreen() {
 
             {/* Card List */}
             {filtered.length === 0 ? (
-                <View style={styles.emptyCard}>
-                    <MaterialCommunityIcons name="book-off-outline" size={32} color="#CBD5E1" />
-                    <Text style={styles.emptyText}>Tidak ada mata kuliah ditemukan</Text>
-                </View>
+                <EmptyState icon="book-off-outline" message="Tidak ada mata kuliah ditemukan" />
             ) : (
                 <View style={styles.cardList}>
                     {filtered.map((k, idx) => {
@@ -184,73 +182,73 @@ function renderDetailCell(iconName, label, value, bg = '#F1F5F9') {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: 'transparent' },
+    container: { flex: 1, backgroundColor: BASE.background },
     scrollContent: { paddingBottom: 40 },
 
     heroBanner: {
-        backgroundColor: 'rgba(15,40,25,0.82)',
+        backgroundColor: THEME.secondary,
         paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24,
         marginBottom: 20, borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
     },
-    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4 },
-    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 4 },
+    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: BASE.textMain, letterSpacing: -0.4 },
+    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: BASE.textMuted, marginTop: 4 },
 
     searchContainer: {
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 16,
+        backgroundColor: BASE.surface, borderRadius: 16,
         marginHorizontal: 20, marginBottom: 12, paddingHorizontal: 16,
-        borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
+        borderWidth: 1, borderColor: BASE.border,
     },
     searchIcon: { marginRight: 10 },
-    searchInput: { flex: 1, height: 44, fontFamily: 'Urbanist-SemiBold', fontSize: 13, color: '#212121' },
+    searchInput: { flex: 1, height: 44, fontFamily: 'Urbanist-SemiBold', fontSize: 13, color: BASE.textMain },
 
     filterScroll: { marginBottom: 16 },
     filterContent: { paddingHorizontal: 20, gap: 8 },
     chip: {
         paddingHorizontal: 14, paddingVertical: 7, borderRadius: 99,
-        backgroundColor: 'rgba(255,255,255,0.92)', borderWidth: 1, borderColor: '#E2E8F0',
+        backgroundColor: BASE.surface, borderWidth: 1, borderColor: BASE.border,
     },
-    chipActive: { backgroundColor: '#212121', borderColor: '#212121' },
-    chipText: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: '#64748B', fontWeight: '700' },
-    chipTextActive: { color: '#FFFFFF' },
+    chipActive: { backgroundColor: BASE.primary, borderColor: BASE.primary },
+    chipText: { fontFamily: 'Urbanist-Bold', fontSize: 12, color: BASE.textMuted, fontWeight: '700' },
+    chipTextActive: { color: BASE.surface },
 
     cardList: { gap: 16, paddingHorizontal: 20 },
     mkCard: {
-        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 24, padding: 20,
+        backgroundColor: BASE.surface, borderRadius: 24, padding: 20,
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 15, elevation: 3,
     },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     titleMeta: { flex: 1, paddingRight: 10 },
-    mkName: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121', fontWeight: '800', marginBottom: 8, lineHeight: 22 },
+    mkName: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: BASE.textMain, fontWeight: '800', marginBottom: 8, lineHeight: 22 },
     badgeRow: { flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' },
-    kodeBadge: { backgroundColor: '#212121', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-    kodeBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#FFFFFF', fontWeight: '700' },
-    sksBadge: { backgroundColor: '#CFDECA', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-    sksBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: '#212121', fontWeight: '700' },
-    iconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#F5F3FF', justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
-    divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 16 },
+    kodeBadge: { backgroundColor: BASE.primary, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+    kodeBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: BASE.surface, fontWeight: '700' },
+    sksBadge: { backgroundColor: THEME.accent, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+    sksBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: BASE.textMain, fontWeight: '700' },
+    iconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: THEME.primary, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+    divider: { height: 1, backgroundColor: BASE.borderLight, marginVertical: 16 },
 
     detailsGrid: { flexDirection: 'row', gap: 10 },
     detailCell: { flex: 1, gap: 6 },
     labelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
-    cellLabel: { fontFamily: 'Urbanist-Bold', fontSize: 9, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.3, flexShrink: 1 },
+    cellLabel: { fontFamily: 'Urbanist-Bold', fontSize: 9, fontWeight: '700', color: BASE.textMuted, textTransform: 'uppercase', letterSpacing: 0.3, flexShrink: 1 },
     cellValBadge: { borderRadius: 8, paddingVertical: 5, paddingHorizontal: 8 },
-    cellVal: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: '#212121', fontWeight: '700', lineHeight: 15 },
+    cellVal: { fontFamily: 'Urbanist-Bold', fontSize: 11, color: BASE.textMain, fontWeight: '700', lineHeight: 15 },
 
     dosenRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 },
-    dosenText: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: '#64748B' },
+    dosenText: { fontFamily: 'Urbanist-Medium', fontSize: 12, color: BASE.textMuted },
 
     summaryCard: {
         marginHorizontal: 20, marginTop: 8,
-        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 16, padding: 14,
-        borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
+        backgroundColor: BASE.surface, borderRadius: 16, padding: 14,
+        borderWidth: 1, borderColor: BASE.border,
     },
-    summaryText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B' },
-    summaryBold: { fontFamily: 'Urbanist-Bold', fontWeight: '700', color: '#212121' },
+    summaryText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted },
+    summaryBold: { fontFamily: 'Urbanist-Bold', fontWeight: '700', color: BASE.textMain },
 
     emptyCard: {
-        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 24, padding: 32,
+        backgroundColor: BASE.surface, borderRadius: 24, padding: 32,
         alignItems: 'center', gap: 12, elevation: 2, marginHorizontal: 20,
     },
-    emptyText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#94A3B8', textAlign: 'center' },
+    emptyText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textDisabled, textAlign: 'center' },
 });

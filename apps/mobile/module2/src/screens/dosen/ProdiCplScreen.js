@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, ImageBackground } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { prodiApi, cplApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { EmptyState, LoadingState } from '../../components';
+
+// ✅ THEME DOSEN (Green)
+const THEME = ROLE_THEMES.dosen;
 
 // Memuat asset gambar untuk background dasar aplikasi (samar-samar di belakang)
 const BG_IMAGE = require('../../../assets/uinsa2.jpeg');
@@ -41,7 +46,7 @@ export default function ProdiCplScreen() {
     if (loading) {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color="#212121" />
+                <LoadingState message="Memuat data program studi..." color={BASE.primary} />
             </View>
         );
     }
@@ -66,9 +71,11 @@ export default function ProdiCplScreen() {
                 </View>
 
                 {prodiList.length === 0 ? (
-                    <View style={styles.emptyCard}>
-                        <MaterialCommunityIcons name="school-off-outline" size={32} color="#CBD5E1" />
-                        <Text style={styles.emptyText}>Data program studi tidak ditemukan</Text>
+                    <View style={{ paddingHorizontal: 20 }}>
+                        <EmptyState 
+                            icon="school-off-outline" 
+                            message="Data program studi tidak ditemukan" 
+                        />
                     </View>
                 ) : (
                     <View style={styles.cardList}>
@@ -88,7 +95,7 @@ export default function ProdiCplScreen() {
                                                 </View>
                                             </View>
                                         </View>
-                                        <MaterialCommunityIcons name="school-outline" size={36} color="#E2E8F0" />
+                                        <MaterialCommunityIcons name="school-outline" size={36} color={BASE.border} />
                                     </View>
 
                                     <TouchableOpacity
@@ -102,14 +109,14 @@ export default function ProdiCplScreen() {
                                         <MaterialCommunityIcons
                                             name={isSelected ? "chevron-up" : "chevron-down"}
                                             size={16}
-                                            color={isSelected ? "#FFFFFF" : "#64748B"}
+                                            color={isSelected ? BASE.surface : BASE.textMuted}
                                         />
                                     </TouchableOpacity>
 
                                     {isSelected && (
                                         <View style={styles.cplContainer}>
                                             {loadingCpl ? (
-                                                <ActivityIndicator size="small" color="#212121" />
+                                                <ActivityIndicator size="small" color={BASE.primary} />
                                             ) : cplList.length === 0 ? (
                                                 <Text style={styles.emptyText}>Belum ada CPL untuk prodi ini</Text>
                                             ) : (
@@ -156,7 +163,7 @@ const styles = StyleSheet.create({
         left: 0, 
         right: 0, 
         bottom: 0,
-        backgroundColor: 'rgba(246,245,250,0.85)', // Overlay putih tipis untuk membungkus gambar latar belakang screen
+        backgroundColor: 'rgba(246,245,250,0.85)',
     },
     container: {
         flex: 1,
@@ -166,9 +173,9 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
 
-    /* ── Gaya Hero Banner — warna sesuai card aliceBlue ── */
+    /* ── Gaya Hero Banner — warna THEME Dosen ── */
     heroBanner: { 
-        backgroundColor: '#cad4ed',
+        backgroundColor: THEME.primary,
         borderBottomLeftRadius: 32, 
         borderBottomRightRadius: 32,
         paddingTop: 24,
@@ -182,13 +189,13 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold', 
         fontSize: 22, 
         fontWeight: '800', 
-        color: '#212121', 
+        color: BASE.textMain, 
         letterSpacing: -0.5 
     },
     heroSubtitle: { 
         fontFamily: 'Urbanist-Medium', 
         fontSize: 13, 
-        color: '#64748B', 
+        color: BASE.textMuted, 
         marginTop: 6,
         lineHeight: 18
     },
@@ -199,7 +206,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     prodiCard: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: BASE.surface,
         borderRadius: 24,
         padding: 20,
         shadowColor: '#000000',
@@ -208,7 +215,7 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
         elevation: 2,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.02)',
+        borderColor: BASE.border,
     },
     prodiHeader: {
         flexDirection: 'row',
@@ -223,7 +230,7 @@ const styles = StyleSheet.create({
     prodiNama: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 16,
-        color: '#212121',
+        color: BASE.textMain,
         fontWeight: '800',
         marginBottom: 6,
     },
@@ -233,7 +240,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     kodeBadge: {
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         borderRadius: 6,
         paddingHorizontal: 8,
         paddingVertical: 2,
@@ -241,11 +248,11 @@ const styles = StyleSheet.create({
     kodeBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
-        color: '#FFFFFF',
+        color: BASE.surface,
         fontWeight: '700',
     },
     jenjangBadge: {
-        backgroundColor: '#EFF0A3', 
+        backgroundColor: THEME.accent, 
         borderRadius: 6,
         paddingHorizontal: 8,
         paddingVertical: 2,
@@ -253,34 +260,34 @@ const styles = StyleSheet.create({
     jenjangBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
-        color: '#212121',
+        color: BASE.textMain,
         fontWeight: '700',
     },
     toggleBtn: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F1F5F9',
+        backgroundColor: BASE.borderLight,
         height: 40,
         borderRadius: 12,
         gap: 6,
     },
     toggleBtnActive: {
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
     },
     toggleBtnText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 12,
         fontWeight: '800',
-        color: '#64748B',
+        color: BASE.textMuted,
     },
     toggleBtnTextActive: {
-        color: '#FFFFFF',
+        color: BASE.surface,
     },
     cplContainer: {
         marginTop: 20,
         borderTopWidth: 1,
-        borderTopColor: '#F1F5F9',
+        borderTopColor: BASE.border,
         paddingTop: 16,
         gap: 12,
     },
@@ -288,17 +295,17 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 12,
         fontWeight: '800',
-        color: '#64748B',
+        color: BASE.textMuted,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
         marginBottom: 4,
     },
     cplSubCard: {
-        backgroundColor: '#F8FAFC',
+        backgroundColor: BASE.borderLight,
         borderRadius: 16,
         padding: 14,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
+        borderColor: BASE.border,
     },
     cplCardHeader: {
         flexDirection: 'row',
@@ -307,7 +314,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     cplBadge: {
-        backgroundColor: '#D8DFE9', 
+        backgroundColor: THEME.secondary, 
         borderRadius: 6,
         paddingHorizontal: 8,
         paddingVertical: 2,
@@ -315,7 +322,7 @@ const styles = StyleSheet.create({
     cplBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
-        color: '#212121',
+        color: BASE.textMain,
         fontWeight: '700',
     },
     statusBadge: {
@@ -336,23 +343,10 @@ const styles = StyleSheet.create({
         color: '#475569',
         lineHeight: 18,
     },
-    emptyCard: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 24,
-        padding: 32,
-        alignItems: 'center',
-        gap: 12,
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 15,
-        elevation: 2,
-        marginHorizontal: 20,
-    },
     emptyText: {
         fontFamily: 'Urbanist-Medium',
         fontSize: 13,
-        color: '#94A3B8',
+        color: BASE.textDisabled,
         textAlign: 'center',
     },
 });

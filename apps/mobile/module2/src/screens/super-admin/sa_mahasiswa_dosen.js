@@ -6,12 +6,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { dosenApi, mahasiswaApi, prodiApi, userApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-const THEME_COLOR  = '#cdddf4';
-const PRIMARY_DARK = '#24354a';
-const PRIMARY_BLUE = '#577590';
-const DANGER       = '#c62828';
-const GREEN        = '#16a34a';
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_DARK = BASE.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const DANGER = BASE.error;
+const GREEN = BASE.success;
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 const getProdiId = (p) => p?.id ?? p?.id_prodi ?? null;

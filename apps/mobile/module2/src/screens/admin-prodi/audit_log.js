@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// ✅ MENGGUNAKAN AUDITLOGAPI DARI API.JS TERSENTRALISASI
-import { auditLogApi } from '../../services/api'; 
+// ✅ Import API & Theme
+import { auditLogApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { LoadingState, EmptyState } from '../../components';
 
-const THEME_COLOR = '#cad4ed'; 
-const PRIMARY_BLUE = '#577590';
-const INACTIVE_BG = '#f8fafc';
+// ✅ THEME ADMIN PRODI
+const THEME = ROLE_THEMES.adminProdi;
+const PRIMARY_BLUE = BASE.primaryLight;
 
 export default function AuditLogScreen({ navigation }) {
   const [logData, setLogData] = useState([]);
@@ -190,10 +192,7 @@ export default function AuditLogScreen({ navigation }) {
 
       {/* AREA UTAMA / LIST DATA */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={PRIMARY_BLUE} />
-          <Text style={styles.loadingText}>Memuat riwayat login...</Text>
-        </View>
+        <LoadingState message="Memuat riwayat login..." color={BASE.primary} />
       ) : (
         <FlatList 
           data={filteredData} 
@@ -202,10 +201,10 @@ export default function AuditLogScreen({ navigation }) {
           contentContainerStyle={styles.listContainer} 
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="search-outline" size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>Tidak ada log aktivitas yang sesuai filter.</Text>
-            </View>
+            <EmptyState 
+              icon="search-outline" 
+              message="Tidak ada log aktivitas yang sesuai filter."
+            />
           }
         />
       )}
@@ -214,49 +213,80 @@ export default function AuditLogScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6F5FA' },
+  container: { flex: 1, backgroundColor: BASE.background },
   header: { 
-    backgroundColor: THEME_COLOR, paddingTop: 50, paddingBottom: 30, paddingHorizontal: 24, 
-    borderBottomLeftRadius: 32, borderBottomRightRadius: 32, flexDirection: 'row', elevation: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5
+    backgroundColor: THEME.primary, 
+    paddingTop: 50, 
+    paddingBottom: 30, 
+    paddingHorizontal: 24, 
+    borderBottomLeftRadius: 32, 
+    borderBottomRightRadius: 32, 
+    flexDirection: 'row', 
+    elevation: 4,
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.1, 
+    shadowRadius: 5
   },
   backBtn: { padding: 8, marginRight: 12, marginTop: -2 },
   headerTextWrap: { flex: 1 },
-  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 4 },
-  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B' },
+  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: BASE.textMain, marginBottom: 4 },
+  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: BASE.textMuted },
   
   filterSection: { paddingTop: 20, paddingBottom: 5 },
   filterRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, marginBottom: 8 },
   filterIcon: { marginRight: 6 },
-  filterLabel: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: '#64748B' },
+  filterLabel: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: BASE.textMuted },
   scrollWrapper: { paddingLeft: 24 },
   pill: { 
-    backgroundColor: INACTIVE_BG, paddingHorizontal: 16, paddingVertical: 10, 
-    borderRadius: 20, marginRight: 10, borderWidth: 1, borderColor: '#e2e8f0' 
+    backgroundColor: THEME.accent, 
+    paddingHorizontal: 16, 
+    paddingVertical: 10, 
+    borderRadius: 20, 
+    marginRight: 10, 
+    borderWidth: 1, 
+    borderColor: BASE.border 
   },
   pillActive: { 
-    backgroundColor: PRIMARY_BLUE, borderColor: PRIMARY_BLUE, elevation: 2,
-    shadowColor: PRIMARY_BLUE, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3
+    backgroundColor: BASE.primary, 
+    borderColor: BASE.primary, 
+    elevation: 2,
+    shadowColor: BASE.primary, 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.2, 
+    shadowRadius: 3
   },
-  pillText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B' },
-  pillTextActive: { color: '#FFFFFF', fontWeight: '800' },
+  pillText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted },
+  pillTextActive: { color: BASE.surface, fontWeight: '800' },
 
   listContainer: { padding: 24, paddingBottom: 40 },
   card: { 
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 16, 
-    borderRadius: 24, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0', elevation: 2,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: BASE.surface, 
+    padding: 16, 
+    borderRadius: 24, 
+    marginBottom: 12, 
+    borderWidth: 1, 
+    borderColor: BASE.border, 
+    elevation: 2,
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 1 }, 
+    shadowOpacity: 0.05, 
+    shadowRadius: 3
   },
-  cardAvatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: THEME_COLOR, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  cardAvatar: { 
+    width: 48, 
+    height: 48, 
+    borderRadius: 16, 
+    backgroundColor: THEME.secondary, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 16 
+  },
   cardContent: { flex: 1 },
-  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: '#212121', marginBottom: 4 },
-  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#64748B', marginBottom: 6, lineHeight: 18 },
+  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 14, color: BASE.textMain, marginBottom: 4 },
+  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: BASE.textMuted, marginBottom: 6, lineHeight: 18 },
   timeWrap: { flexDirection: 'row', alignItems: 'center' },
-  timeText: { fontFamily: 'Urbanist-Regular', fontSize: 11, color: '#A1A1AA', fontStyle: 'italic' },
-  
-  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50 },
-  emptyText: { fontFamily: 'Urbanist-Regular', marginTop: 10, color: '#94A3B8', fontSize: 14 },
-
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
-  loadingText: { marginTop: 12, fontFamily: 'Urbanist-Medium', fontSize: 14, color: '#64748B' }
+  timeText: { fontFamily: 'Urbanist-Regular', fontSize: 11, color: BASE.textMuted, fontStyle: 'italic' },
 });

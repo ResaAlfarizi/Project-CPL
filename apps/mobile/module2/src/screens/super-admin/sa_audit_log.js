@@ -5,10 +5,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { auditLogApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-const THEME_COLOR = '#cdddf4'; 
-const PRIMARY_DARK = '#24354a';
-const PRIMARY_BLUE = '#577590';
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_DARK = BASE.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
 
 const EVENT_FILTER_OPTIONS = ['Semua Event', 'login_success', 'login_failed', 'logout', 'create', 'update', 'delete'];
 

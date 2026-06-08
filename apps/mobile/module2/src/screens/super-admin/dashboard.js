@@ -6,20 +6,26 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { tokenStorage, dashboardApi, profileApi, auditLogApi } from '../../services/api'; 
+import { tokenStorage, dashboardApi, profileApi, auditLogApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { LoadingState, CustomAlert } from '../../components';
 
+// ✅ THEME SUPERADMIN (Lavender/Light Blue)
+const THEME = ROLE_THEMES.superadmin;
+
+// ✅ Local color mapping untuk compatibility
 const COLORS = {
-  primary: '#24354a',      
-  background: '#F6F5FA',  
-  surface: '#FFFFFF',    
-  textMain: '#212121',  
-  textMuted: '#64748B',
-  border: '#E2E8F0',     
-  aliceBlue: '#cad4ed',
+  primary: BASE.primary,
+  background: BASE.background,
+  surface: BASE.surface,
+  textMain: BASE.textMain,
+  textMuted: BASE.textMuted,
+  border: BASE.border,
+  aliceBlue: THEME.primary,      // '#cdddf4'
   honeydew: '#dcead7',
   vanilla: '#f2f3cb',
   pinky: '#f4d6d6',
-  danger: '#c62828'
+  danger: BASE.error,
 };
 
 export default function SuperAdminDashboardScreen({ navigation }) {
@@ -107,6 +113,13 @@ export default function SuperAdminDashboardScreen({ navigation }) {
   const handleLogout = async () => {
     setLogoutModalVisible(false);
     try {
+      const refreshToken = await tokenStorage.getRefresh();
+      if (refreshToken) {
+        const { authApi } = require('../../services/api');
+        await authApi.logout(refreshToken).catch((err) => {
+          console.log('Logout API error:', err.message);
+        });
+      }
       if (tokenStorage?.remove) await tokenStorage.remove();
     } catch (e) { console.error("Error removing token", e); }
     navigation.replace('Login');

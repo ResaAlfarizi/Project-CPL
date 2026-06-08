@@ -10,11 +10,16 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { capaianApi, prodiApi, mahasiswaApi, cplApi } from '../../services/api';
 
 const { width: SW } = Dimensions.get('window');
-const THEME_COLOR = '#cdddf4'; 
-const PRIMARY_DARK = '#24354a';
-const PRIMARY_BLUE  = '#577590';
-const DANGER_COLOR  = '#c62828'; 
-const SUCCESS_COLOR = '#16a34a';
+
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_DARK = BASE.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const DANGER_COLOR = BASE.error;
+const SUCCESS_COLOR = BASE.success;
 
 const STATUS_COLOR = {
   'Excellence':    { bg: '#e8f5e9', text: '#2e7d32' },

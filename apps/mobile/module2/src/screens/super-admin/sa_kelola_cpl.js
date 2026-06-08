@@ -6,11 +6,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { cplApi, prodiApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-const THEME_COLOR  = '#cdddf4';
-const PRIMARY_DARK = '#24354a';
-const PRIMARY_BLUE = '#577590';
-const DANGER       = '#c62828';
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;  // '#cdddf4'
+const PRIMARY_DARK = BASE.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const DANGER = BASE.error;
 
 // Helper: ambil ID prodi secara konsisten
 const getProdiId = (p) => p?.id ?? p?.id_prodi ?? null;

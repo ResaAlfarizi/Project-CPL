@@ -6,11 +6,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { prodiApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-const THEME_COLOR  = '#cdddf4';
-const PRIMARY_DARK = '#24354a';
-const PRIMARY_BLUE = '#577590';
-const DANGER       = '#c62828';
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+const THEME_COLOR = THEME.primary;
+const PRIMARY_DARK = BASE.primary;
+const PRIMARY_BLUE = BASE.primaryLight;
+const DANGER = BASE.error;
 
 const JENJANG_OPTIONS = ['D3', 'S1', 'S2', 'S3'];
 

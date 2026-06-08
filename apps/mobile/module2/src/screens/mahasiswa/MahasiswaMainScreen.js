@@ -17,6 +17,10 @@ import ScreenBackground from '../../components/ScreenBackground';
 
 // API
 import { tokenStorage } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+
+// ✅ THEME MAHASISWA (Orange)
+const THEME = ROLE_THEMES.mahasiswa;
 
 export default function MahasiswaMainScreen() {
     const navigation = useNavigation();
@@ -32,6 +36,18 @@ export default function MahasiswaMainScreen() {
     };
 
     const handleLogout = async () => {
+        try {
+            const refreshToken = await tokenStorage.getRefresh();
+            if (refreshToken) {
+                const { authApi } = require('../../services/api');
+                await authApi.logout(refreshToken).catch((err) => {
+                    console.log('Logout API error:', err.message);
+                });
+            }
+        } catch (error) {
+            console.log('Error during logout:', error);
+        }
+        
         await tokenStorage.remove();
         navigation.replace('Login');
     };
@@ -62,7 +78,7 @@ export default function MahasiswaMainScreen() {
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <View style={styles.logoIcon}>
-                        <MaterialCommunityIcons name="school" size={20} color="#EFF0A3" />
+                        <MaterialCommunityIcons name="school" size={20} color={THEME.primary} />
                     </View>
                     <View>
                         <Text style={styles.logoText}>Sistem CPL</Text>
@@ -94,13 +110,13 @@ export default function MahasiswaMainScreen() {
                             setProfileDropdownOpen(false);
                             setCurrentScreen('profile');
                         }}>
-                            <MaterialCommunityIcons name="account-outline" size={18} color="#212121" />
+                            <MaterialCommunityIcons name="account-outline" size={18} color={BASE.textMain} />
                             <Text style={styles.dropdownItemText}>Profil Saya</Text>
                         </TouchableOpacity>
                         <View style={styles.dropdownDivider} />
                         <TouchableOpacity activeOpacity={0.8} style={styles.dropdownItem} onPress={handleLogout}>
-                            <MaterialCommunityIcons name="logout" size={18} color="#EA5455" />
-                            <Text style={[styles.dropdownItemText, { color: '#EA5455' }]}>Keluar</Text>
+                            <MaterialCommunityIcons name="logout" size={18} color={BASE.error} />
+                            <Text style={[styles.dropdownItemText, { color: BASE.error }]}>Keluar</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -127,7 +143,7 @@ export default function MahasiswaMainScreen() {
                     <MaterialCommunityIcons 
                         name="view-dashboard" 
                         size={24} 
-                        color={currentScreen === 'dashboard' ? '#212121' : '#94A3B8'} 
+                        color={currentScreen === 'dashboard' ? BASE.textMain : BASE.textDisabled} 
                     />
                     <Text style={[styles.navLabel, currentScreen === 'dashboard' && styles.navLabelActive]}>
                         Dashboard
@@ -142,7 +158,7 @@ export default function MahasiswaMainScreen() {
                     <MaterialCommunityIcons 
                         name="school-outline" 
                         size={24} 
-                        color={currentScreen === 'program_studi' ? '#212121' : '#94A3B8'} 
+                        color={currentScreen === 'program_studi' ? BASE.textMain : BASE.textDisabled} 
                     />
                     <Text style={[styles.navLabel, currentScreen === 'program_studi' && styles.navLabelActive]}>
                         Prodi
@@ -157,7 +173,7 @@ export default function MahasiswaMainScreen() {
                     <MaterialCommunityIcons 
                         name="book-open-outline" 
                         size={24} 
-                        color={currentScreen === 'mata_kuliah' ? '#212121' : '#94A3B8'} 
+                        color={currentScreen === 'mata_kuliah' ? BASE.textMain : BASE.textDisabled} 
                     />
                     <Text style={[styles.navLabel, currentScreen === 'mata_kuliah' && styles.navLabelActive]}>
                         Mata Kuliah
@@ -172,7 +188,7 @@ export default function MahasiswaMainScreen() {
                     <MaterialCommunityIcons 
                         name="chart-bell-curve-cumulative" 
                         size={24} 
-                        color={currentScreen === 'capaian' ? '#212121' : '#94A3B8'} 
+                        color={currentScreen === 'capaian' ? BASE.textMain : BASE.textDisabled} 
                     />
                     <Text style={[styles.navLabel, currentScreen === 'capaian' && styles.navLabelActive]}>
                         Capaian
@@ -186,7 +202,7 @@ export default function MahasiswaMainScreen() {
 const styles = StyleSheet.create({
     appContainer: {
         flex: 1,
-        backgroundColor: '#F6F5FA',
+        backgroundColor: BASE.background,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
     header: {
@@ -195,9 +211,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#F6F5FA',
+        backgroundColor: BASE.background,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0,0,0,0.03)',
+        borderBottomColor: BASE.border,
         zIndex: 100,
         position: 'relative',
     },
@@ -211,9 +227,9 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 12,
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         borderWidth: 2,
-        borderColor: '#EFF0A3',
+        borderColor: THEME.secondary,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -221,19 +237,19 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 16,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
     },
     logoSubtext: {
         fontFamily: 'Urbanist-Medium',
         fontSize: 11,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 2,
     },
     profileBtn: {
         width: 36,
         height: 36,
         borderRadius: 10,
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
@@ -245,7 +261,7 @@ const styles = StyleSheet.create({
     avatarText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 16,
-        color: '#FFFFFF',
+        color: BASE.surface,
         fontWeight: '700',
     },
     profileDropdown: {
@@ -253,16 +269,16 @@ const styles = StyleSheet.create({
         top: 60,
         right: 24,
         width: 250,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: BASE.surface,
         borderRadius: 20,
         padding: 16,
-        shadowColor: '#212121',
+        shadowColor: BASE.primary,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.1,
         shadowRadius: 20,
         elevation: 6,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
+        borderColor: BASE.border,
         zIndex: 150,
     },
     dropdownProfileRow: {
@@ -274,7 +290,7 @@ const styles = StyleSheet.create({
         width: 38,
         height: 38,
         borderRadius: 11,
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         justifyContent: 'center',
         alignItems: 'center',
         flexShrink: 0,
@@ -282,24 +298,24 @@ const styles = StyleSheet.create({
     dropdownAvatarText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 16,
-        color: '#FFFFFF',
+        color: BASE.surface,
         fontWeight: '800',
     },
     dropdownName: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
     },
     dropdownEmail: {
         fontFamily: 'Urbanist-Medium',
         fontSize: 10,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 1,
     },
     dropdownRolePill: {
         marginTop: 4,
-        backgroundColor: '#F1F5F9',
+        backgroundColor: BASE.borderLight,
         borderRadius: 99,
         paddingHorizontal: 8,
         paddingVertical: 2,
@@ -308,12 +324,12 @@ const styles = StyleSheet.create({
     dropdownRoleText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 9,
-        color: '#64748B',
+        color: BASE.textMuted,
         fontWeight: '700',
     },
     dropdownDivider: {
         height: 1,
-        backgroundColor: '#F1F5F9',
+        backgroundColor: BASE.border,
         marginVertical: 10,
     },
     dropdownItem: {
@@ -327,16 +343,16 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 12,
         fontWeight: '700',
-        color: '#212121',
+        color: BASE.textMain,
     },
     screenViewport: {
         flex: 1,
     },
     bottomNav: {
         flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: BASE.surface,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
+        borderTopColor: BASE.border,
         paddingBottom: Platform.OS === 'ios' ? 20 : 8,
         paddingTop: 8,
         elevation: 8,
@@ -354,11 +370,11 @@ const styles = StyleSheet.create({
     navLabel: {
         fontFamily: 'Urbanist-SemiBold',
         fontSize: 11,
-        color: '#94A3B8',
+        color: BASE.textDisabled,
         marginTop: 4,
     },
     navLabelActive: {
-        color: '#212121',
+        color: BASE.textMain,
         fontWeight: '700',
     },
 });

@@ -35,7 +35,15 @@ export default function LoginScreen({ navigation }) {
             
             // Call login API
             const res = await authApi.login({ email: trimmedEmail, password: trimmedPassword });
-            await tokenStorage.set(res.token);
+            
+            // Backend now returns: { access_token, refresh_token, expires_in, user }
+            if (!res.access_token) {
+                throw new Error('Token tidak diterima dari server');
+            }
+            
+            // Store both tokens
+            await tokenStorage.set(res.access_token);
+            await tokenStorage.setRefresh(res.refresh_token);
 
             const user = res.user || {};
             const role = (user.role || 'dosen').toLowerCase();
@@ -64,7 +72,7 @@ export default function LoginScreen({ navigation }) {
                 } catch { return null; }
             };
 
-            const payload = decodeJwt(res.token);
+            const payload = decodeJwt(res.access_token);
             
             // Format user data
             const formattedUser = {

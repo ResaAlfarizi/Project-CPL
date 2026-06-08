@@ -16,14 +16,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// ✅ SEKARANG MENGGIATKAN BERDUA: userApi dan prodiApi DARI FILE api.js ANDA
+// ✅ Import API & Theme
 import { userApi, prodiApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { LoadingState, CustomAlert, EmptyState } from '../../components';
 
-const THEME_PINK = '#f4d6d6'; 
-const DARK_PINK = '#c98a8a'; 
-const SUBMIT_PINK = '#b35c5c'; 
-const CANCEL_PINK = '#ffebee';
-const CANCEL_TEXT = '#c62828'; 
+// ✅ THEME ADMIN PRODI
+const THEME = ROLE_THEMES.adminProdi;
+const PRIMARY_DARK = BASE.primary; 
 
 export default function KelolaUserScreen({ navigation }) {
   const [users, setUsers] = useState([]); 
@@ -46,7 +46,10 @@ export default function KelolaUserScreen({ navigation }) {
   // ✅ STATE BARU UNTUK MENAMPUNG UUID PRODI YANG VALID DARI BACKEND
   const [selectedProdiId, setSelectedProdiId] = useState('');
 
-  const [alertConfig, setAlertConfig] = useState({ visible: false, type: '', title: '', message: '' });
+  // ✅ State Alert - Using CustomAlert component
+  const [alert, setAlert] = useState({ 
+    visible: false, type: 'info', title: '', message: '', onConfirm: null 
+  });
 
   // ✅ 1. PROSES GET DATA DENGAN MENYESUAIKAN VARIABEL 'identifier' DARI BE
   const fetchUsersData = () => {
@@ -129,18 +132,22 @@ export default function KelolaUserScreen({ navigation }) {
   // ✅ 2. PROSES POST DATA SESUAI REQUEST BODY CONTROLLER BE (MENGGUNAKAN UUID REAL)
   const handleAddUser = () => {
     if (!nama || !email || !password || !entityId || (roleMode === 'Mahasiswa' && !angkatan)) {
-      setAlertConfig({ 
-        visible: true, type: 'error', title: 'Lengkapi Data!', 
-        message: 'Pastikan semua data lengkap sebelum menyimpan Akun Baru.' 
+      setAlert({ 
+        visible: true, type: 'error', 
+        title: 'Lengkapi Data!', 
+        message: 'Pastikan semua data lengkap sebelum menyimpan Akun Baru.',
+        onConfirm: () => setAlert({ ...alert, visible: false })
       });
       return;
     }
 
     // Antisipasi jika UUID prodi belum selesai di-load dari server saat klik simpan
     if (!selectedProdiId) {
-      setAlertConfig({
-        visible: true, type: 'error', title: 'Mohon Tunggu',
-        message: 'Sistem sedang menghubungkan ke database Program Studi. Silakan coba simpan kembali dalam 2 detik.'
+      setAlert({
+        visible: true, type: 'error', 
+        title: 'Mohon Tunggu',
+        message: 'Sistem sedang menghubungkan ke database Program Studi. Silakan coba simpan kembali dalam 2 detik.',
+        onConfirm: () => setAlert({ ...alert, visible: false })
       });
       return;
     }
@@ -165,12 +172,22 @@ export default function KelolaUserScreen({ navigation }) {
         return fetchUsersData();
       }) 
       .then(() => {
-        setTimeout(() => setAlertConfig({ visible: true, type: 'success', title: 'Berhasil!', message: `Akun ${roleMode} berhasil disimpan ke database.` }), 300);
+        setTimeout(() => setAlert({ 
+          visible: true, type: 'success', 
+          title: 'Berhasil!', 
+          message: `Akun ${roleMode} berhasil disimpan ke database.`,
+          onConfirm: () => setAlert({ ...alert, visible: false })
+        }), 300);
       })
       .catch(err => {
         console.error("=== GAGAL SIMPAN API ===", err);
         setLoading(false);
-        setTimeout(() => setAlertConfig({ visible: true, type: 'error', title: 'Gagal', message: err.message || 'Gagal menambahkan akun ke database.' }), 300);
+        setTimeout(() => setAlert({ 
+          visible: true, type: 'error', 
+          title: 'Gagal', 
+          message: err.message || 'Gagal menambahkan akun ke database.',
+          onConfirm: () => setAlert({ ...alert, visible: false })
+        }), 300);
       });
   };
 
@@ -196,7 +213,7 @@ export default function KelolaUserScreen({ navigation }) {
         <Text style={styles.cardTitle}>{item.nama}</Text>
         <Text style={styles.cardSubtitle}>{item.role} • {item.email}</Text>
       </View>
-      <Ionicons name="information-circle-outline" size={24} color={DARK_PINK} />
+      <Ionicons name="information-circle-outline" size={24} color={PRIMARY_DARK} />
     </TouchableOpacity>
   );
 
@@ -230,10 +247,7 @@ export default function KelolaUserScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={SUBMIT_PINK} />
-          <Text style={{ marginTop: 10, fontFamily: 'Urbanist-Medium', color: '#64748B' }}>Memuat pengguna...</Text>
-        </View>
+        <LoadingState message="Memuat pengguna..." color={BASE.primary} />
       ) : (
         <FlatList 
           data={filteredUsers} 
@@ -242,10 +256,10 @@ export default function KelolaUserScreen({ navigation }) {
           contentContainerStyle={styles.listContainer} 
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="people-outline" size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>Belum ada pengguna di role ini.</Text>
-            </View>
+            <EmptyState 
+              icon="people-outline" 
+              message="Belum ada pengguna di role ini."
+            />
           }
         />
       )}
@@ -280,28 +294,28 @@ export default function KelolaUserScreen({ navigation }) {
               </View>
               
               <View style={styles.inputContainer}>
-                <Ionicons name="person-outline" size={20} color={DARK_PINK} style={styles.inputIcon} />
+                <Ionicons name="person-outline" size={20} color={PRIMARY_DARK} style={styles.inputIcon} />
                 <TextInput style={styles.inputLucu} placeholder="Nama Lengkap *" placeholderTextColor="#94A3B8" value={nama} onChangeText={setNama} />
               </View>
 
               <View style={styles.inputContainer}>
-                <Ionicons name="mail-outline" size={20} color={DARK_PINK} style={styles.inputIcon} />
+                <Ionicons name="mail-outline" size={20} color={PRIMARY_DARK} style={styles.inputIcon} />
                 <TextInput style={styles.inputLucu} placeholder="Alamat Email *" placeholderTextColor="#94A3B8" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
               </View>
 
               <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color={DARK_PINK} style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color={PRIMARY_DARK} style={styles.inputIcon} />
                 <TextInput style={styles.inputLucu} placeholder="Kata Sandi *" placeholderTextColor="#94A3B8" secureTextEntry value={password} onChangeText={setPassword} />
               </View>
 
               <View style={styles.inputContainer}>
-                <Ionicons name="finger-print-outline" size={20} color={DARK_PINK} style={styles.inputIcon} />
+                <Ionicons name="finger-print-outline" size={20} color={PRIMARY_DARK} style={styles.inputIcon} />
                 <TextInput style={styles.inputLucu} placeholder={roleMode === 'Dosen' ? "NIDN / NIP *" : "NIM *"} placeholderTextColor="#94A3B8" value={entityId} onChangeText={setEntityId} keyboardType="number-pad" />
               </View>
 
               {roleMode === 'Mahasiswa' && (
                 <View style={styles.inputContainer}>
-                  <Ionicons name="calendar-outline" size={20} color={DARK_PINK} style={styles.inputIcon} />
+                  <Ionicons name="calendar-outline" size={20} color={PRIMARY_DARK} style={styles.inputIcon} />
                   <TextInput 
                     style={styles.inputLucu} 
                     placeholder="Tahun Angkatan (Contoh: 2024) *" 
@@ -385,96 +399,141 @@ export default function KelolaUserScreen({ navigation }) {
         </TouchableOpacity>
       </Modal>
 
-      {/* MODAL CUSTOM ALERT */}
-      <Modal visible={alertConfig.visible} animationType="fade" transparent onRequestClose={() => setAlertConfig({...alertConfig, visible: false})}>
-        <TouchableOpacity style={styles.alertOverlay} activeOpacity={1} onPress={() => setAlertConfig({...alertConfig, visible: false})}>
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={styles.alertBox}>
-              <View style={[styles.alertIconWrap, { backgroundColor: alertConfig.type === 'success' ? '#e0f2f1' : '#ffebee' }]}>
-                <Ionicons 
-                  name={alertConfig.type === 'success' ? "checkmark-circle" : "warning"} 
-                  size={45} 
-                  color={alertConfig.type === 'success' ? '#00796b' : '#c62828'} 
-                />
-              </View>
-              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-              
-              <TouchableOpacity 
-                style={[styles.btnAlertOK, { backgroundColor: alertConfig.type === 'success' ? SUBMIT_PINK : '#c62828' }]} 
-                onPress={() => setAlertConfig({...alertConfig, visible: false})} 
-                activeOpacity={0.8}
-              >
-                <Text style={styles.btnAlertOKText}>Oke, Mengerti</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
-        </TouchableOpacity>
-      </Modal>
+      {/* ✅ CUSTOM ALERT */}
+      <CustomAlert
+        visible={alert.visible}
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        onConfirm={alert.onConfirm}
+        onCancel={alert.onCancel}
+        confirmText="Oke, Mengerti"
+      />
 
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6F5FA' },
-  header: { backgroundColor: THEME_PINK, paddingTop: 50, paddingBottom: 30, paddingHorizontal: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, flexDirection: 'row', elevation: 4 },
+  container: { flex: 1, backgroundColor: BASE.background },
+  header: { 
+    backgroundColor: THEME.primary, 
+    paddingTop: 50, 
+    paddingBottom: 30, 
+    paddingHorizontal: 24, 
+    borderBottomLeftRadius: 32, 
+    borderBottomRightRadius: 32, 
+    flexDirection: 'row', 
+    elevation: 4 
+  },
   backBtn: { padding: 8, marginRight: 12, marginTop: -2 },
   headerTextWrap: { flex: 1 },
-  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 4 },
-  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B' },
+  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: BASE.textMain, marginBottom: 4 },
+  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: BASE.textMuted },
   
   filterSection: { paddingTop: 20, paddingBottom: 5 },
   scrollWrapper: { paddingHorizontal: 24, gap: 10 },
-  pill: { backgroundColor: '#FFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: '#e2e8f0' },
-  pillActive: { backgroundColor: SUBMIT_PINK, borderColor: SUBMIT_PINK, elevation: 2 },
-  pillText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B' },
-  pillTextActive: { color: '#FFFFFF', fontWeight: '800' },
+  pill: { backgroundColor: BASE.surface, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: BASE.border },
+  pillActive: { backgroundColor: BASE.primary, borderColor: BASE.primary, elevation: 2 },
+  pillText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted },
+  pillTextActive: { color: BASE.surface, fontWeight: '800' },
 
   listContainer: { padding: 24, paddingBottom: 100, paddingTop: 10 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 16, borderRadius: 24, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0', elevation: 2 },
-  cardAvatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: THEME_PINK, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  avatarText: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: '#212121' },
+  card: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: BASE.surface, 
+    padding: 16, 
+    borderRadius: 24, 
+    marginBottom: 12, 
+    borderWidth: 1, 
+    borderColor: BASE.border, 
+    elevation: 2 
+  },
+  cardAvatar: { 
+    width: 48, 
+    height: 48, 
+    borderRadius: 16, 
+    backgroundColor: THEME.secondary, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 16 
+  },
+  avatarText: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: BASE.textMain },
   cardContent: { flex: 1 },
-  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121', marginBottom: 4 },
-  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#64748B' },
-  fab: { position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 20, backgroundColor: THEME_PINK, justifyContent: 'center', alignItems: 'center', elevation: 5 },
+  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: BASE.textMain, marginBottom: 4 },
+  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: BASE.textMuted },
+  fab: { 
+    position: 'absolute', 
+    bottom: 30, 
+    right: 30, 
+    width: 60, 
+    height: 60, 
+    borderRadius: 20, 
+    backgroundColor: THEME.primary, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    elevation: 5 
+  },
   
-  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50 },
-  emptyText: { fontFamily: 'Urbanist-Regular', marginTop: 10, color: '#94A3B8', fontSize: 14 },
-
   modalOverlay: { flex: 1, backgroundColor: 'rgba(33, 44, 33, 0.5)', justifyContent: 'flex-end' },
-  modalContentLucu: { backgroundColor: '#FFF', borderTopLeftRadius: 35, borderTopRightRadius: 35, padding: 24, paddingTop: 15, paddingBottom: 40, elevation: 20 },
-  modalHandle: { width: 40, height: 5, backgroundColor: '#E2E8F0', borderRadius: 10, alignSelf: 'center', marginBottom: 15 },
-  modalTitleLucu: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: '#212121', textAlign: 'center', marginBottom: 25 },
+  modalContentLucu: { 
+    backgroundColor: BASE.surface, 
+    borderTopLeftRadius: 35, 
+    borderTopRightRadius: 35, 
+    padding: 24, 
+    paddingTop: 15, 
+    paddingBottom: 40, 
+    elevation: 20 
+  },
+  modalHandle: { width: 40, height: 5, backgroundColor: BASE.border, borderRadius: 10, alignSelf: 'center', marginBottom: 15 },
+  modalTitleLucu: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: BASE.textMain, textAlign: 'center', marginBottom: 25 },
   
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fcf3f3', borderRadius: 18, marginBottom: 12, paddingHorizontal: 15, borderWidth: 1, borderColor: '#f4d6d6' },
+  inputContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: THEME.accent, 
+    borderRadius: 18, 
+    marginBottom: 12, 
+    paddingHorizontal: 15, 
+    borderWidth: 1, 
+    borderColor: BASE.border 
+  },
   inputIcon: { marginRight: 10 },
-  inputLucu: { flex: 1, paddingVertical: 15, fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#212121' },
+  inputLucu: { flex: 1, paddingVertical: 15, fontFamily: 'Urbanist-Regular', fontSize: 15, color: BASE.textMain },
   
   roleWrap: { flexDirection: 'row', gap: 10, marginBottom: 25 },
   roleBtn: { flex: 1, paddingVertical: 12, borderRadius: 18, alignItems: 'center', borderWidth: 1 },
-  roleActive: { backgroundColor: SUBMIT_PINK, borderColor: SUBMIT_PINK },
-  roleInactive: { backgroundColor: '#fcf3f3', borderColor: THEME_PINK },
-  roleText: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#64748B' },
+  roleActive: { backgroundColor: BASE.primary, borderColor: BASE.primary },
+  roleInactive: { backgroundColor: THEME.accent, borderColor: THEME.secondary },
+  roleText: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: BASE.textMuted },
   
   buttonRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 10 },
-  btnSubmitFit: { flex: 0.48, backgroundColor: SUBMIT_PINK, borderRadius: 20, paddingVertical: 14, alignItems: 'center', elevation: 3 },
-  btnSubmitTextFit: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 15 },
-  btnCancelFit: { flex: 0.48, backgroundColor: CANCEL_PINK, borderRadius: 20, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#ffcdd2' },
-  btnCancelTextFit: { color: CANCEL_TEXT, fontFamily: 'Urbanist-Bold', fontSize: 15 },
+  btnSubmitFit: { 
+    flex: 0.48, 
+    backgroundColor: BASE.primary, 
+    borderRadius: 20, 
+    paddingVertical: 14, 
+    alignItems: 'center', 
+    elevation: 3 
+  },
+  btnSubmitTextFit: { color: BASE.surface, fontFamily: 'Urbanist-Bold', fontSize: 15 },
+  btnCancelFit: { 
+    flex: 0.48, 
+    backgroundColor: BASE.errorBg, 
+    borderRadius: 20, 
+    paddingVertical: 14, 
+    alignItems: 'center', 
+    borderWidth: 1, 
+    borderColor: BASE.errorBorder 
+  },
+  btnCancelTextFit: { color: BASE.error, fontFamily: 'Urbanist-Bold', fontSize: 15 },
 
   roleBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   roleBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 11 },
   detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2, marginTop: 16 },
-  detailLabel: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B', marginLeft: 6 },
-  detailValue: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: '#212121', marginLeft: 24 },
+  detailLabel: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted, marginLeft: 6 },
+  detailValue: { fontFamily: 'Urbanist-Bold', fontSize: 15, color: BASE.textMain, marginLeft: 24 },
 
   alertOverlay: { flex: 1, backgroundColor: 'rgba(33, 44, 33, 0.5)', justifyContent: 'center', alignItems: 'center' },
-  alertBox: { backgroundColor: '#FFF', borderRadius: 35, padding: 30, width: '80%', alignItems: 'center', elevation: 20 },
-  alertIconWrap: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  alertTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 10, textAlign: 'center' },
-  alertMessage: { fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 25, lineHeight: 22 },
-  btnAlertOK: { borderRadius: 20, paddingVertical: 14, paddingHorizontal: 30, alignItems: 'center', elevation: 3 },
-  btnAlertOKText: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 16 }
 });

@@ -12,16 +12,19 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// ✅ IMPORT FUNGSI API TERSENTRALISASI
-import { nilaiApi } from '../../services/api';
+// ✅ Import API & Theme
+import { nilaiApi, profileApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { LoadingState, EmptyState } from '../../components';
 
-const THEME_COLOR = '#cad4ed'; 
-const PRIMARY_BLUE = '#577590';
-const INACTIVE_BG = '#f8fafc';
+// ✅ THEME ADMIN PRODI
+const THEME = ROLE_THEMES.adminProdi;
+const PRIMARY_BLUE = BASE.primaryLight;
 
 export default function PantauNilaiScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [adminProdiId, setAdminProdiId] = useState(null); // ✅ State prodi_id admin
 
   // State Filter
   const [filterMk, setFilterMk] = useState('Semua');
@@ -45,45 +48,59 @@ export default function PantauNilaiScreen({ navigation }) {
     }
   };
 
-  // ✅ Fungsi menarik data nilai mahasiswa
-  const fetchNilaiMahasiswa = () => {
+  // ✅ Fungsi menarik data nilai mahasiswa DENGAN FILTER PRODI_ID
+  const fetchNilaiMahasiswa = async () => {
     setIsLoading(true);
-    nilaiApi.getAll()
-      .then(result => {
-        const fetchedData = result && result.data && Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : []);
-        
-        // 🌟 NORMALISASI DATA: Memetakan kolom database agar sesuai radar UI aplikasi
-        const normalizedData = fetchedData.map(item => {
-          // Ambil nilai tanggal mentah dari kolom input_at atau created_at database kamu
-          const tanggalMentah = item.input_at || item.created_at || item.tanggal_input || item.tanggal || '-';
-
-          return {
-            ...item,
-            id: item.id || item.nilai_id || Math.random().toString(),
-            nama: item.nama || item.nama_mahasiswa || item.mahasiswa_nama || 'Mahasiswa',
-            nim: item.nim || item.mahasiswa_nim || '-',
-            nilai: item.nilai !== undefined ? item.nilai : (item.score || 0),
-            
-            // Penyelaras database mata kuliah
-            mk: item.nama_mk || item.mk || item.mata_kuliah || item.matakuliah || 'Mata Kuliah',
-            
-            // Penyelaras database sub-cpmk (kode_sub_cpmk)
-            subcpmk: item.kode_sub_cpmk || item.subcpmk || item.kode_subcpmk || item.sub_cpmk || item.kode || '-',
-            
-            // 🔥 Tanggal mentah dikirim ke fungsi helper agar terformat rapi
-            tanggal_input: formatTanggal(tanggalMentah)
-          };
-        });
-
-        setData(normalizedData);
-      })
-      .catch(error => {
-        console.error("Gagal menarik data nilai:", error);
-        setData([]);
-      })
-      .finally(() => {
-        setIsLoading(false);
+    try {
+      // 1. Ambil profil admin untuk dapat prodi_id
+      let currentProdiId = adminProdiId;
+      if (!currentProdiId) {
+        const profile = await profileApi.getAdmin();
+        currentProdiId = profile?.data?.prodi_id || profile?.prodi_id || profile?.data?.entity_id;
+        setAdminProdiId(currentProdiId);
+      }
+      
+      // 2. Ambil semua data nilai dari backend
+      const result = await nilaiApi.getAll();
+      const fetchedData = result && result.data && Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : []);
+      
+      // 3. ✅ FILTER: Hanya tampilkan nilai dari mahasiswa prodi admin ini
+      const filteredByProdi = fetchedData.filter(item => {
+        // Cek prodi_id dari mahasiswa atau dari mata kuliah
+        const itemProdiId = item.prodi_id || item.mahasiswa_prodi_id || item.mk_prodi_id;
+        return String(itemProdiId) === String(currentProdiId);
       });
+      
+      // 4. 🌟 NORMALISASI DATA: Memetakan kolom database agar sesuai radar UI aplikasi
+      const normalizedData = filteredByProdi.map(item => {
+        // Ambil nilai tanggal mentah dari kolom input_at atau created_at database kamu
+        const tanggalMentah = item.input_at || item.created_at || item.tanggal_input || item.tanggal || '-';
+
+        return {
+          ...item,
+          id: item.id || item.nilai_id || Math.random().toString(),
+          nama: item.nama || item.nama_mahasiswa || item.mahasiswa_nama || 'Mahasiswa',
+          nim: item.nim || item.mahasiswa_nim || '-',
+          nilai: item.nilai !== undefined ? item.nilai : (item.score || 0),
+          
+          // Penyelaras database mata kuliah
+          mk: item.nama_mk || item.mk || item.mata_kuliah || item.matakuliah || 'Mata Kuliah',
+          
+          // Penyelaras database sub-cpmk (kode_sub_cpmk)
+          subcpmk: item.kode_sub_cpmk || item.subcpmk || item.kode_subcpmk || item.sub_cpmk || item.kode || '-',
+          
+          // 🔥 Tanggal mentah dikirim ke fungsi helper agar terformat rapi
+          tanggal_input: formatTanggal(tanggalMentah)
+        };
+      });
+
+      setData(normalizedData);
+    } catch (error) {
+      console.error("Gagal menarik data nilai:", error);
+      setData([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -170,10 +187,7 @@ export default function PantauNilaiScreen({ navigation }) {
 
       {/* LIST DATA / LOADING BAR */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={PRIMARY_BLUE} />
-          <Text style={styles.loadingText}>Memuat data nilai...</Text>
-        </View>
+        <LoadingState message="Memuat data nilai..." color={BASE.primary} />
       ) : (
         <FlatList 
           data={filteredData} 
@@ -182,10 +196,10 @@ export default function PantauNilaiScreen({ navigation }) {
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="sad-outline" size={48} color="#94A3B8" />
-              <Text style={styles.emptyText}>Tidak ada data nilai ditemukan</Text>
-            </View>
+            <EmptyState 
+              icon="sad-outline" 
+              message="Tidak ada data nilai ditemukan"
+            />
           }
         />
       )}
@@ -194,10 +208,10 @@ export default function PantauNilaiScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6F5FA' },
+  container: { flex: 1, backgroundColor: BASE.background },
   
   header: { 
-    backgroundColor: THEME_COLOR, 
+    backgroundColor: THEME.primary, 
     paddingTop: 50, 
     paddingBottom: 30, 
     paddingHorizontal: 24, 
@@ -208,28 +222,28 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 8, marginRight: 12, marginTop: -2 },
   headerTextWrap: { flex: 1 },
-  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 4 },
-  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#577590' },
+  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: BASE.textMain, marginBottom: 4 },
+  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: BASE.primary },
   
   filterSection: { paddingTop: 20, paddingBottom: 5 },
-  filterLabel: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: '#212121', marginBottom: 8, paddingHorizontal: 24 },
+  filterLabel: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: BASE.textMain, marginBottom: 8, paddingHorizontal: 24 },
   filterScroll: { paddingHorizontal: 24, gap: 8, paddingBottom: 4 },
   
-  filterChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E2E8F0' },
-  filterChipActive: { backgroundColor: PRIMARY_BLUE, borderColor: PRIMARY_BLUE, elevation: 2 },
-  chipText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B' },
-  chipTextActive: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontWeight: '800' },
+  filterChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: BASE.surface, borderWidth: 1, borderColor: BASE.border },
+  filterChipActive: { backgroundColor: BASE.primary, borderColor: BASE.primary, elevation: 2 },
+  chipText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted },
+  chipTextActive: { color: BASE.surface, fontFamily: 'Urbanist-Bold', fontWeight: '800' },
   
   listContainer: { padding: 24, paddingBottom: 30, paddingTop: 10 },
   card: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    backgroundColor: '#FFF', 
+    backgroundColor: BASE.surface, 
     borderRadius: 24, 
     padding: 16, 
     marginBottom: 12,
     borderWidth: 1, 
-    borderColor: '#E2E8F0', 
+    borderColor: BASE.border, 
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -240,21 +254,17 @@ const styles = StyleSheet.create({
     width: 48, 
     height: 48, 
     borderRadius: 16, 
-    backgroundColor: THEME_COLOR, 
+    backgroundColor: THEME.secondary, 
     justifyContent: 'center', 
     alignItems: 'center', 
     marginRight: 16 
   },
   cardContent: { flex: 1, paddingRight: 8 },
-  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121', marginBottom: 4 },
-  nimText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#94A3B8' }, 
-  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B', marginBottom: 6 },
+  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: BASE.textMain, marginBottom: 4 },
+  nimText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted }, 
+  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: BASE.textMuted, marginBottom: 6 },
   dateRow: { flexDirection: 'row', alignItems: 'center' },
-  dateText: { fontFamily: 'Urbanist-Medium', fontSize: 11, color: '#94A3B8', marginLeft: 4 },
-  badgeWrap: { backgroundColor: PRIMARY_BLUE, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
-  badgeText: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontSize: 14 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { fontFamily: 'Urbanist-Medium', fontSize: 14, color: '#64748B', marginTop: 10 },
-  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50 },
-  emptyText: { fontFamily: 'Urbanist-Regular', fontSize: 14, color: '#94A3B8', marginTop: 10 }
+  dateText: { fontFamily: 'Urbanist-Medium', fontSize: 11, color: BASE.textMuted, marginLeft: 4 },
+  badgeWrap: { backgroundColor: BASE.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
+  badgeText: { color: BASE.surface, fontFamily: 'Urbanist-Bold', fontSize: 14 },
 });

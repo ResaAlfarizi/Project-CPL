@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { capaianApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { EmptyState } from '../../components';
+
+// ✅ THEME DOSEN (Green)
+const THEME = ROLE_THEMES.dosen;
 
 export default function CapaianScreen({ kelasList = [] }) {
     const [selectedKelasId, setSelectedKelasId] = useState('');
@@ -79,19 +84,19 @@ export default function CapaianScreen({ kelasList = [] }) {
                                 </Text>
                             </>
                         ) : (
-                            <Text style={[styles.selectBtnText, { color: '#94A3B8', fontWeight: '400' }]}>
+                            <Text style={[styles.selectBtnText, { color: BASE.textDisabled, fontWeight: '400' }]}>
                                 -- Pilih Kelas --
                             </Text>
                         )}
                     </View>
-                    <MaterialCommunityIcons name={showKelasDropdown ? "menu-up" : "menu-down"} size={24} color="#64748B" />
+                    <MaterialCommunityIcons name={showKelasDropdown ? "menu-up" : "menu-down"} size={24} color={BASE.textMuted} />
                 </TouchableOpacity>
 
                 {showKelasDropdown && (
                     <View style={styles.dropdownOptions}>
                         {kelasList.length === 0 ? (
                             <View style={styles.dropdownOptionRow}>
-                                <Text style={[styles.dropdownOptionText, { color: '#94A3B8' }]}>Tidak ada kelas tersedia</Text>
+                                <Text style={[styles.dropdownOptionText, { color: BASE.textDisabled }]}>Tidak ada kelas tersedia</Text>
                             </View>
                         ) : kelasList.map((k) => (
                             <TouchableOpacity 
@@ -142,26 +147,25 @@ export default function CapaianScreen({ kelasList = [] }) {
 
                     {/* Search box filter */}
                     <View style={styles.searchBox}>
-                        <MaterialCommunityIcons name="magnify" size={18} color="#64748B" style={styles.searchIcon} />
+                        <MaterialCommunityIcons name="magnify" size={18} color={BASE.textMuted} style={styles.searchIcon} />
                         <TextInput 
                             style={styles.searchInput}
                             placeholder="Cari mahasiswa..."
                             value={searchQuery}
                             onChangeText={setSearchQuery}
-                            placeholderTextColor="#94A3B8"
+                            placeholderTextColor={BASE.textDisabled}
                         />
                     </View>
 
                     {/* Capaian Card List */}
                     <View style={styles.cardList}>
                         {loading ? (
-                            <ActivityIndicator size="large" color="#212121" style={{ marginTop: 16 }} />
+                            <ActivityIndicator size="large" color={BASE.primary} style={{ marginTop: 16 }} />
                         ) : displayRows.length === 0 ? (
-                            <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyText}>
-                                    {searchQuery ? 'Mahasiswa tidak ditemukan' : 'Belum ada data capaian untuk kelas ini'}
-                                </Text>
-                            </View>
+                            <EmptyState 
+                                icon="clipboard-text-off-outline" 
+                                message={searchQuery ? 'Mahasiswa tidak ditemukan' : 'Belum ada data capaian untuk kelas ini'} 
+                            />
                         ) : displayRows.map((c, idx) => {
                             const { badge, text } = getStatusStyle(c.status);
                             return (
@@ -210,9 +214,9 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(246,245,250,0.82)',
     },
 
-    /* -- Hero Banner — warna sesuai card pinky -- */
+    /* -- Hero Banner — warna THEME Dosen -- */
     heroBanner: {
-        backgroundColor: '#f4d6d6',
+        backgroundColor: THEME.primary,
         paddingHorizontal: 24,
         paddingTop: 24,
         paddingBottom: 28,
@@ -222,8 +226,8 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     heroContent: { },
-    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: '#212121', letterSpacing: -0.4 },
-    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B', marginTop: 4 },
+    heroTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, fontWeight: '800', color: BASE.textMain, letterSpacing: -0.4 },
+    heroSubtitle: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted, marginTop: 4 },
     container: {
         flex: 1,
         backgroundColor: 'transparent',
@@ -240,13 +244,13 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 24,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
         letterSpacing: -0.5,
     },
     subtitle: {
         fontFamily: 'Urbanist-Medium',
         fontSize: 13,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 2,
         lineHeight: 18,
     },
@@ -260,7 +264,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginBottom: 8,
     },
     selectBtn: {
@@ -270,8 +274,8 @@ const styles = StyleSheet.create({
         minHeight: 52,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: BASE.border,
+        backgroundColor: BASE.surface,
         paddingHorizontal: 16,
         paddingVertical: 10,
     },
@@ -279,19 +283,19 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
         fontWeight: '700',
-        color: '#212121',
+        color: BASE.textMain,
     },
     selectBtnSub: {
         fontFamily: 'Urbanist-Regular',
         fontSize: 11,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 2,
     },
     dropdownOptions: {
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
+        borderColor: BASE.border,
         marginTop: 6,
         overflow: 'hidden',
         shadowColor: '#000000',
@@ -303,17 +307,17 @@ const styles = StyleSheet.create({
     dropdownOptionRow: {
         padding: 14,
         borderBottomWidth: 1,
-        borderBottomColor: '#F1F5F9',
+        borderBottomColor: BASE.borderLight,
     },
     dropdownOptionText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
-        color: '#212121',
+        color: BASE.textMain,
     },
     dropdownOptionSub: {
         fontFamily: 'Urbanist-Regular',
         fontSize: 11,
-        color: '#64748B',
+        color: BASE.textMuted,
         marginTop: 2,
     },
     contentSection: {
@@ -322,11 +326,11 @@ const styles = StyleSheet.create({
     classInfoBar: {
         marginHorizontal: 24,
         marginBottom: 16,
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 16,
         padding: 12,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.02)',
+        borderColor: BASE.border,
     },
     classBadgeRow: {
         flexDirection: 'row',
@@ -334,7 +338,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     classInfoBadge: {
-        backgroundColor: '#212121',
+        backgroundColor: BASE.primary,
         borderRadius: 6,
         paddingHorizontal: 6,
         paddingVertical: 2,
@@ -342,14 +346,14 @@ const styles = StyleSheet.create({
     classInfoBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 9,
-        color: '#FFFFFF',
+        color: BASE.surface,
         fontWeight: '750',
     },
     classInfoName: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 13,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
     },
     statsContainer: {
         flexDirection: 'row',
@@ -360,7 +364,7 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 16,
         padding: 12,
         shadowColor: '#000000',
@@ -369,31 +373,31 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 1,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.01)',
+        borderColor: BASE.border,
     },
     statLabel: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 8,
         fontWeight: '700',
-        color: '#64748B',
+        color: BASE.textMuted,
     },
     statVal: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 20,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
         marginTop: 4,
     },
     searchBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 16,
         marginHorizontal: 24,
         marginBottom: 16,
         paddingHorizontal: 16,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
+        borderColor: BASE.border,
     },
     searchIcon: {
         marginRight: 10,
@@ -403,7 +407,7 @@ const styles = StyleSheet.create({
         height: 40,
         fontFamily: 'Urbanist-SemiBold',
         fontSize: 12,
-        color: '#212121',
+        color: BASE.textMain,
     },
     // Card List Styles (Replacing Table)
     cardList: {
@@ -411,7 +415,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
     },
     capaianCard: {
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: BASE.surface,
         borderRadius: 24,
         padding: 16,
         shadowColor: '#000000',
@@ -420,7 +424,7 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
         elevation: 2,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.01)',
+        borderColor: BASE.border,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -436,10 +440,10 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 14,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
     },
     nimBadge: {
-        backgroundColor: '#F1F5F9',
+        backgroundColor: BASE.borderLight,
         borderRadius: 6,
         paddingHorizontal: 6,
         paddingVertical: 2,
@@ -447,11 +451,11 @@ const styles = StyleSheet.create({
     nimBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 9,
-        color: '#64748B',
+        color: BASE.textMuted,
         fontWeight: '750',
     },
     cplBadge: {
-        backgroundColor: '#D8DFE9', // Alice blue
+        backgroundColor: THEME.secondary,
         borderRadius: 6,
         paddingHorizontal: 8,
         paddingVertical: 4,
@@ -459,12 +463,12 @@ const styles = StyleSheet.create({
     cplBadgeText: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 10,
-        color: '#212121',
+        color: BASE.textMain,
         fontWeight: '800',
     },
     divider: {
         height: 1,
-        backgroundColor: '#F1F5F9',
+        backgroundColor: BASE.border,
         marginVertical: 12,
     },
     cardBody: {
@@ -479,14 +483,14 @@ const styles = StyleSheet.create({
         fontFamily: 'Urbanist-Bold',
         fontSize: 9,
         fontWeight: '700',
-        color: '#64748B',
+        color: BASE.textMuted,
         textTransform: 'uppercase',
     },
     scoreVal: {
         fontFamily: 'Urbanist-Bold',
         fontSize: 18,
         fontWeight: '800',
-        color: '#212121',
+        color: BASE.textMain,
     },
     statusBadge: {
         borderRadius: 99,
@@ -518,15 +522,6 @@ const styles = StyleSheet.create({
     badgeNeedsImpText: {
         color: '#FF9F43',
     },
-    emptyContainer: {
-        padding: 24,
-        alignItems: 'center',
-    },
-    emptyText: {
-        fontFamily: 'Urbanist-Medium',
-        fontSize: 12,
-        color: '#64748B',
-    }
 });
 
 

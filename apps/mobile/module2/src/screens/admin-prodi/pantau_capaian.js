@@ -15,11 +15,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// ✅ IMPORT FUNGSI API TERSENTRALISASI
-import { capaianApi, mahasiswaApi } from '../../services/api';
+// ✅ Import API & Theme
+import { capaianApi, profileApi } from '../../services/api';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
+import { LoadingState, CustomAlert, EmptyState } from '../../components';
 
-const THEME_PINK = '#f4d6d6'; 
-const SUBMIT_PINK = '#b35c5c'; 
+// ✅ THEME ADMIN PRODI
+const THEME = ROLE_THEMES.adminProdi; 
 
 const FILTER_OPTIONS = [
   { key: 'ALL', label: 'Semua' },
@@ -35,7 +37,11 @@ export default function LaporanCPLScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('ALL'); 
-  const [alertConfig, setAlertConfig] = useState({ visible: false, type: '', title: '', message: '' });
+  
+  // ✅ State Alert - Using CustomAlert component
+  const [alert, setAlert] = useState({ 
+    visible: false, type: 'info', title: '', message: '', onConfirm: null 
+  });
 
   const getDynamicStatus = (nilaiAngka) => {
     const num = Number(nilaiAngka) || 0;
@@ -49,24 +55,17 @@ export default function LaporanCPLScreen({ navigation }) {
   const fetchLaporanCPL = () => {
     setIsLoading(true);
     
-    mahasiswaApi.getAllKelas()
-      .then(kelasResult => {
-        const daftarKelas = kelasResult?.data && Array.isArray(kelasResult.data) 
-          ? kelasResult.data 
-          : (Array.isArray(kelasResult) ? kelasResult : []);
+    // ✅ GET ADMIN PROFILE TO FILTER BY PRODI_ID
+    profileApi.getAdmin()
+      .then(profile => {
+        const currentProdiId = profile?.data?.prodi_id || profile?.data?.entity_id;
         
-        if (daftarKelas.length === 0) {
-          throw new Error("KELAS_KOSONG");
+        if (!currentProdiId) {
+          throw new Error("PRODI_ID_NOT_FOUND");
         }
-
-        // Cari kelas fffffff1 yang ada datanya
-        const kelasTarget = daftarKelas.find(k => (k.id === 'fffffff1-ffff-ffff-ffff-fffffffffff1' || k.kelas_id === 'fffffff1-ffff-ffff-ffff-fffffffffff1'));
         
-        const targetKelasId = kelasTarget 
-          ? (kelasTarget.id || kelasTarget.kelas_id)
-          : (daftarKelas[0].id || daftarKelas[0].kelas_id);
-
-        return capaianApi.getByKelas(targetKelasId);
+        // ✅ GET CAPAIAN BY PRODI INSTEAD OF HARDCODED KELAS
+        return capaianApi.getByProdi(currentProdiId);
       })
       .then(result => {
         let rawData = [];
@@ -102,8 +101,8 @@ export default function LaporanCPLScreen({ navigation }) {
       })
       .catch(error => {
         console.error("Gagal mengambil data laporan CPL:", error);
-        if (error?.message === "KELAS_KOSONG") {
-          Alert.alert("Info", "Belum ada data kelas yang terdaftar.");
+        if (error?.message === "PRODI_ID_NOT_FOUND") {
+          Alert.alert("Error", "Tidak dapat menemukan ID Program Studi Anda.");
         } else {
           const errorMsg = error?.message || error?.toString() || "";
           if (errorMsg.includes('kadaluarsa') || errorMsg.includes('401')) {
@@ -137,7 +136,12 @@ export default function LaporanCPLScreen({ navigation }) {
   }, [activeFilter, masterData]);
 
   const handleDownload = () => {
-    setAlertConfig({ visible: true, type: 'download', title: 'Mengekspor File', message: 'Rekapitulasi CPL Program Studi sedang diunduh ke perangkat Anda.' });
+    setAlert({ 
+      visible: true, type: 'success', 
+      title: 'Mengekspor File', 
+      message: 'Rekapitulasi CPL Program Studi sedang diunduh ke perangkat Anda.',
+      onConfirm: () => setAlert({ ...alert, visible: false })
+    });
   };
 
   const renderItem = ({ item }) => {
@@ -186,10 +190,7 @@ export default function LaporanCPLScreen({ navigation }) {
 
       {/* LIST DATA */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={SUBMIT_PINK} />
-          <Text style={styles.loadingText}>Memuat data capaian CPL...</Text>
-        </View>
+        <LoadingState message="Memuat data capaian CPL..." color={BASE.primary} />
       ) : (
         <FlatList
           data={data}
@@ -199,10 +200,10 @@ export default function LaporanCPLScreen({ navigation }) {
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="folder-open-outline" size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>Belum ada data capaian CPL atau filter tidak cocok.</Text>
-            </View>
+            <EmptyState 
+              icon="folder-open-outline" 
+              message="Belum ada data capaian CPL atau filter tidak cocok."
+            />
           }
         />
       )}
@@ -212,64 +213,80 @@ export default function LaporanCPLScreen({ navigation }) {
         <Ionicons name="download-outline" size={28} color="#212121" />
       </TouchableOpacity>
 
-      {/* EXPORT POPUP MODAL */}
-      <Modal visible={alertConfig.visible} transparent animationType="fade" onRequestClose={() => setAlertConfig({ ...alertConfig, visible: false })}>
-        <TouchableWithoutFeedback onPress={() => setAlertConfig({ ...alertConfig, visible: false })}>
-          <View style={styles.alertOverlay}>
-            <View style={styles.alertBox}>
-              <View style={[styles.alertIconWrap, { backgroundColor: '#e8f5e9' }]}>
-                <Ionicons name="checkmark-circle" size={48} color="#2e7d32" />
-              </View>
-              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-              
-              <TouchableOpacity 
-                style={styles.btnAlertOK} 
-                onPress={() => setAlertConfig({ ...alertConfig, visible: false })}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.btnAlertOKText}>Selesai</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+      {/* ✅ CUSTOM ALERT */}
+      <CustomAlert
+        visible={alert.visible}
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        onConfirm={alert.onConfirm}
+        onCancel={alert.onCancel}
+        confirmText="Selesai"
+      />
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6F5FA' },
-  header: { backgroundColor: THEME_PINK, paddingTop: 50, paddingBottom: 30, paddingHorizontal: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, flexDirection: 'row', elevation: 4 },
+  container: { flex: 1, backgroundColor: BASE.background },
+  header: { 
+    backgroundColor: THEME.primary, 
+    paddingTop: 50, 
+    paddingBottom: 30, 
+    paddingHorizontal: 24, 
+    borderBottomLeftRadius: 32, 
+    borderBottomRightRadius: 32, 
+    flexDirection: 'row', 
+    elevation: 4 
+  },
   backBtn: { padding: 8, marginRight: 12, marginTop: -2 },
   headerTextWrap: { flex: 1 },
-  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 4 },
-  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: '#64748B' },
+  headerTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: BASE.textMain, marginBottom: 4 },
+  headerSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 13, color: BASE.textMuted },
   filterContainer: { paddingTop: 20, paddingBottom: 5 },
   filterScroll: { paddingHorizontal: 24, gap: 8 },
-  filterChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E2E8F0' },
-  filterChipActive: { backgroundColor: SUBMIT_PINK, borderColor: SUBMIT_PINK, elevation: 2 },
-  filterChipText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: '#64748B' },
-  filterChipTextActive: { color: '#FFF', fontFamily: 'Urbanist-Bold', fontWeight: '800' },
+  filterChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: BASE.surface, borderWidth: 1, borderColor: BASE.border },
+  filterChipActive: { backgroundColor: BASE.primary, borderColor: BASE.primary, elevation: 2 },
+  filterChipText: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMuted },
+  filterChipTextActive: { color: BASE.surface, fontFamily: 'Urbanist-Bold', fontWeight: '800' },
   listContainer: { padding: 24, paddingBottom: 100, paddingTop: 10 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 24, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0', elevation: 2 },
-  cardAvatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: THEME_PINK, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  avatarText: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: '#212121' },
+  card: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: BASE.surface, 
+    borderRadius: 24, 
+    padding: 16, 
+    marginBottom: 12, 
+    borderWidth: 1, 
+    borderColor: BASE.border, 
+    elevation: 2 
+  },
+  cardAvatar: { 
+    width: 48, 
+    height: 48, 
+    borderRadius: 16, 
+    backgroundColor: THEME.secondary, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 16 
+  },
+  avatarText: { fontFamily: 'Urbanist-Bold', fontSize: 20, color: BASE.textMain },
   cardContent: { flex: 1, paddingRight: 8 },
-  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: '#212121', marginBottom: 4 },
-  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: '#64748B' },
+  cardTitle: { fontFamily: 'Urbanist-Bold', fontSize: 16, color: BASE.textMain, marginBottom: 4 },
+  cardSubtitle: { fontFamily: 'Urbanist-Regular', fontSize: 12, color: BASE.textMuted },
   statusBadge: { borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, alignItems: 'center', minWidth: 95 },
   statusText: { fontFamily: 'Urbanist-Bold', fontSize: 11 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { fontFamily: 'Urbanist-Medium', fontSize: 14, color: '#64748B', marginTop: 10 },
-  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50 },
-  emptyText: { fontFamily: 'Urbanist-Regular', fontSize: 14, color: '#94A3B8', marginTop: 10 },
-  fab: { position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 20, backgroundColor: THEME_PINK, justifyContent: 'center', alignItems: 'center', elevation: 5 },
+  fab: { 
+    position: 'absolute', 
+    bottom: 30, 
+    right: 30, 
+    width: 60, 
+    height: 60, 
+    borderRadius: 20, 
+    backgroundColor: THEME.primary, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    elevation: 5 
+  },
   alertOverlay: { flex: 1, backgroundColor: 'rgba(33, 44, 33, 0.5)', justifyContent: 'center', alignItems: 'center' },
-  alertBox: { backgroundColor: '#FFF', borderRadius: 35, padding: 30, width: '85%', alignItems: 'center', elevation: 20 },
-  alertIconWrap: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  alertTitle: { fontFamily: 'Urbanist-Bold', fontSize: 22, color: '#212121', marginBottom: 10, textAlign: 'center' },
-  alertMessage: { fontFamily: 'Urbanist-Regular', fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 25, lineHeight: 22 },
-  btnAlertOK: { backgroundColor: SUBMIT_PINK, borderRadius: 20, paddingVertical: 14, paddingHorizontal: 35, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', elevation: 3, marginTop: 15 },
-  btnAlertOKText: { color: '#FFFFFF', fontFamily: 'Urbanist-Bold', fontSize: 16 }
 });

@@ -4,18 +4,22 @@ import {
   StatusBar, ImageBackground, ScrollView 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BASE, ROLE_THEMES } from '../../theme/colors';
 
-// PALET WARNA SUPERADMIN
+// ✅ THEME SUPERADMIN
+const THEME = ROLE_THEMES.superadmin;
+
+// ✅ Local color mapping
 const COLORS = {
-  primary: '#24354a',      
-  background: '#F6F5FA',  
-  surface: '#FFFFFF',    
-  textMain: '#212121',  
-  textMuted: '#64748B',
-  border: '#E2E8F0',     
-  blueSoft: '#a3c1e5',  
-  blueStrong: '#cdddf4',
-  lavender: '#E5E1F9'
+  primary: BASE.primary,
+  background: BASE.background,
+  surface: BASE.surface,
+  textMain: BASE.textMain,
+  textMuted: BASE.textMuted,
+  border: BASE.border,
+  blueSoft: THEME.secondary,
+  blueStrong: THEME.primary,
+  lavender: THEME.accent,
 };
 
 export default function SAProfilScreen({ navigation }) {
