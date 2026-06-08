@@ -188,24 +188,34 @@ export default function ProdiListScreen({ navigation }) {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{form.id ? 'Edit Prodi' : 'Tambah Prodi'}</Text>
+
+            <Text style={styles.inputLabel}>Kode Program Studi <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.inputHint}>Kode singkat prodi, contoh: IF, DKV, TL</Text>
             <TextInput
               style={styles.input}
-              placeholder="Kode Prodi (Cth: IF)"
+              placeholder="Contoh: IF"
               value={form.kode_prodi}
               onChangeText={t => setForm({...form, kode_prodi: t})}
             />
+
+            <Text style={styles.inputLabel}>Nama Program Studi <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.inputHint}>Nama lengkap program studi</Text>
             <TextInput
               style={styles.input}
-              placeholder="Nama Prodi (Cth: Teknik Informatika)"
+              placeholder="Contoh: Teknik Informatika"
               value={form.nama_prodi}
               onChangeText={t => setForm({...form, nama_prodi: t})}
             />
+
+            <Text style={styles.inputLabel}>Jenjang <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.inputHint}>Tingkat pendidikan: D3, S1, S2, atau S3</Text>
             <TextInput
               style={styles.input}
-              placeholder="Jenjang (Cth: S1, D3)"
+              placeholder="Contoh: S1"
               value={form.jenjang}
               onChangeText={t => setForm({...form, jenjang: t})}
             />
+
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.btnCancel} onPress={() => setModalVisible(false)} disabled={saving}>
                 <Text>Batal</Text>
@@ -348,8 +358,11 @@ const styles = StyleSheet.create({
   modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
   modalContent: { backgroundColor: 'white', padding: 20, borderRadius: 12 },
   modalTitle: { fontSize: 18, fontFamily: 'Urbanist_700Bold', marginBottom: 16 },
-  input: { borderWidth: 1, borderColor: Colors.border, borderRadius: 8, padding: 12, marginBottom: 12, fontFamily: 'Urbanist_500Medium' },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 12 },
+  inputLabel: { fontSize: 13, fontFamily: 'Urbanist_600SemiBold', color: '#111827', marginBottom: 2 },
+  inputHint: { fontSize: 11, fontFamily: 'Urbanist_400Regular', color: '#9ca3af', marginBottom: 6 },
+  required: { color: '#e53e3e' },
+  input: { borderWidth: 1, borderColor: Colors.border, borderRadius: 8, padding: 12, marginBottom: 14, fontFamily: 'Urbanist_500Medium', fontSize: 14 },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 4 },
   btnCancel: { padding: 10 },
   btnSave: { backgroundColor: '#0066FF', padding: 10, borderRadius: 8, paddingHorizontal: 16, minWidth: 80, alignItems: 'center' },
 });
