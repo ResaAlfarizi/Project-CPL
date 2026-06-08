@@ -10,7 +10,18 @@ export interface LoginCredentials {
 
 export interface LoginResponse {
   message: string;
-  token: string;
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    entity_type: string;
+    entity_id: string;
+    prodi_id?: string;
+    nama: string;
+  };
 }
 
 export interface ApiError {
@@ -53,6 +64,32 @@ export const authApi = {
     }
     return data;
   },
+  
+  refreshToken: async (refreshToken: string): Promise<{ access_token: string; expires_in: number }> => {
+    const response = await fetch(`${API_BASE}/auth/refresh-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Refresh token gagal');
+    }
+    return data;
+  },
+
+  logout: async (refreshToken: string): Promise<void> => {
+    const response = await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Logout gagal');
+    }
+  },
+
   register: async (body: { email: string; password: string; role_id: number }) => {
     const response = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',

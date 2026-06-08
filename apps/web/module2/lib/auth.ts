@@ -14,15 +14,16 @@ export interface DecodedToken {
 }
 
 const TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export const authStorage = {
-  // Get token from localStorage
+  // Get access token from localStorage
   getToken: (): string | null => {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem(TOKEN_KEY);
   },
 
-  // Set token to localStorage
+  // Set access token to localStorage
   setToken: (token: string): void => {
     if (typeof window === 'undefined') return;
     localStorage.setItem(TOKEN_KEY, token);
@@ -31,10 +32,23 @@ export const authStorage = {
     document.cookie = `${TOKEN_KEY}=${token}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
   },
 
-  // Remove token
+  // Get refresh token from localStorage
+  getRefreshToken: (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  },
+
+  // Set refresh token to localStorage
+  setRefreshToken: (token: string): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  },
+
+  // Remove all tokens
   removeToken: (): void => {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     
     // Remove cookie
     document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
