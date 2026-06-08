@@ -7,12 +7,28 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- =====================================================
--- DOSEN (2 ORANG)
+-- DOSEN (8 ORANG - 2 PER PRODI + 2 UMUM)
 -- =====================================================
 
+-- Dosen Umum
 INSERT INTO dosen(nidn, nama) VALUES
 ('NIDN00001', 'Dr. Ahmad Fauzi, M.Kom'),
 ('NIDN00002', 'Dr. Siti Nurhaliza, M.T');
+
+-- Dosen Teknik Informatika
+INSERT INTO dosen(nidn, nama) VALUES
+('NIDN00101', 'Dr. Budi Raharjo, M.Kom'),
+('NIDN00102', 'Dr. Dewi Sartika, M.T');
+
+-- Dosen Sistem Informasi
+INSERT INTO dosen(nidn, nama) VALUES
+('NIDN00201', 'Dr. Eko Wijayanto, M.Kom'),
+('NIDN00202', 'Dr. Fitri Handayani, M.SI');
+
+-- Dosen Teknologi Informasi
+INSERT INTO dosen(nidn, nama) VALUES
+('NIDN00301', 'Dr. Gunawan Saputra, M.T'),
+('NIDN00302', 'Dr. Hani Puspita, M.Kom');
 
 -- =====================================================
 -- PROGRAM STUDI (3 PRODI)
@@ -487,6 +503,21 @@ UNION ALL
 SELECT ps.id, 'TI2023015', 'Sandi Permana', 2023 FROM program_studi ps WHERE ps.kode_prodi = 'TI';
 
 -- =====================================================
+-- USERS - SUPERADMIN (1 ORANG)
+-- =====================================================
+
+INSERT INTO users(email, password_hash, role_id, prodi_id, entity_type, entity_id)
+SELECT 
+    'superadmin@kampus.ac.id',
+    crypt('password123', gen_salt('bf')),
+    r.id,
+    NULL,
+    'admin',
+    NULL
+FROM roles r
+WHERE r.nama_role = 'superadmin';
+
+-- =====================================================
 -- USERS - ADMIN PRODI (3 ORANG)
 -- =====================================================
 
@@ -524,9 +555,10 @@ FROM roles r, program_studi ps
 WHERE r.nama_role = 'admin_prodi' AND ps.kode_prodi = 'TI';
 
 -- =====================================================
--- USERS - DOSEN (2 ORANG)
+-- USERS - DOSEN (8 ORANG)
 -- =====================================================
 
+-- Dosen Umum (NULL prodi karena bisa mengajar di berbagai prodi)
 INSERT INTO users(email, password_hash, role_id, prodi_id, entity_type, entity_id)
 SELECT 
     'ahmad.fauzi@kampus.ac.id',
@@ -549,6 +581,75 @@ SELECT
 FROM roles r, dosen d
 WHERE r.nama_role = 'dosen' AND d.nidn = 'NIDN00002';
 
+-- Dosen Teknik Informatika
+INSERT INTO users(email, password_hash, role_id, prodi_id, entity_type, entity_id)
+SELECT 
+    'budi.raharjo@kampus.ac.id',
+    crypt('password123', gen_salt('bf')),
+    r.id,
+    ps.id,
+    'dosen',
+    d.id
+FROM roles r, dosen d, program_studi ps
+WHERE r.nama_role = 'dosen' AND d.nidn = 'NIDN00101' AND ps.kode_prodi = 'IF';
+
+INSERT INTO users(email, password_hash, role_id, prodi_id, entity_type, entity_id)
+SELECT 
+    'dewi.sartika@kampus.ac.id',
+    crypt('password123', gen_salt('bf')),
+    r.id,
+    ps.id,
+    'dosen',
+    d.id
+FROM roles r, dosen d, program_studi ps
+WHERE r.nama_role = 'dosen' AND d.nidn = 'NIDN00102' AND ps.kode_prodi = 'IF';
+
+-- Dosen Sistem Informasi
+INSERT INTO users(email, password_hash, role_id, prodi_id, entity_type, entity_id)
+SELECT 
+    'eko.wijayanto@kampus.ac.id',
+    crypt('password123', gen_salt('bf')),
+    r.id,
+    ps.id,
+    'dosen',
+    d.id
+FROM roles r, dosen d, program_studi ps
+WHERE r.nama_role = 'dosen' AND d.nidn = 'NIDN00201' AND ps.kode_prodi = 'SI';
+
+INSERT INTO users(email, password_hash, role_id, prodi_id, entity_type, entity_id)
+SELECT 
+    'fitri.handayani@kampus.ac.id',
+    crypt('password123', gen_salt('bf')),
+    r.id,
+    ps.id,
+    'dosen',
+    d.id
+FROM roles r, dosen d, program_studi ps
+WHERE r.nama_role = 'dosen' AND d.nidn = 'NIDN00202' AND ps.kode_prodi = 'SI';
+
+-- Dosen Teknologi Informasi
+INSERT INTO users(email, password_hash, role_id, prodi_id, entity_type, entity_id)
+SELECT 
+    'gunawan.saputra@kampus.ac.id',
+    crypt('password123', gen_salt('bf')),
+    r.id,
+    ps.id,
+    'dosen',
+    d.id
+FROM roles r, dosen d, program_studi ps
+WHERE r.nama_role = 'dosen' AND d.nidn = 'NIDN00301' AND ps.kode_prodi = 'TI';
+
+INSERT INTO users(email, password_hash, role_id, prodi_id, entity_type, entity_id)
+SELECT 
+    'hani.puspita@kampus.ac.id',
+    crypt('password123', gen_salt('bf')),
+    r.id,
+    ps.id,
+    'dosen',
+    d.id
+FROM roles r, dosen d, program_studi ps
+WHERE r.nama_role = 'dosen' AND d.nidn = 'NIDN00302' AND ps.kode_prodi = 'TI';
+
 -- =====================================================
 -- USERS - MAHASISWA (45 ORANG)
 -- =====================================================
@@ -568,53 +669,53 @@ WHERE r.nama_role = 'mahasiswa';
 -- KELAS (9 KELAS - 3 PER PRODI)
 -- =====================================================
 
--- Kelas Teknik Informatika
+-- Kelas Teknik Informatika (menggunakan dosen IF)
 INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
 SELECT mk.id, d.id, '2024/2025', 1, 'A'
 FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'IF' AND mk.kode_mk = 'IF101' AND d.nidn = 'NIDN00001';
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'IF' AND mk.kode_mk = 'IF101' AND d.nidn = 'NIDN00101';
 
 INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
 SELECT mk.id, d.id, '2024/2025', 1, 'A'
 FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'IF' AND mk.kode_mk = 'IF102' AND d.nidn = 'NIDN00002';
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'IF' AND mk.kode_mk = 'IF102' AND d.nidn = 'NIDN00102';
 
 INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
 SELECT mk.id, d.id, '2024/2025', 1, 'A'
 FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'IF' AND mk.kode_mk = 'IF103' AND d.nidn = 'NIDN00001';
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'IF' AND mk.kode_mk = 'IF103' AND d.nidn = 'NIDN00101';
 
--- Kelas Sistem Informasi
+-- Kelas Sistem Informasi (menggunakan dosen SI)
 INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
 SELECT mk.id, d.id, '2024/2025', 1, 'A'
 FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'SI' AND mk.kode_mk = 'SI101' AND d.nidn = 'NIDN00002';
-
-INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
-SELECT mk.id, d.id, '2024/2025', 1, 'A'
-FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'SI' AND mk.kode_mk = 'SI102' AND d.nidn = 'NIDN00001';
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'SI' AND mk.kode_mk = 'SI101' AND d.nidn = 'NIDN00201';
 
 INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
 SELECT mk.id, d.id, '2024/2025', 1, 'A'
 FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'SI' AND mk.kode_mk = 'SI103' AND d.nidn = 'NIDN00002';
-
--- Kelas Teknologi Informasi
-INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
-SELECT mk.id, d.id, '2024/2025', 1, 'A'
-FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'TI' AND mk.kode_mk = 'TI101' AND d.nidn = 'NIDN00001';
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'SI' AND mk.kode_mk = 'SI102' AND d.nidn = 'NIDN00202';
 
 INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
 SELECT mk.id, d.id, '2024/2025', 1, 'A'
 FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'TI' AND mk.kode_mk = 'TI102' AND d.nidn = 'NIDN00002';
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'SI' AND mk.kode_mk = 'SI103' AND d.nidn = 'NIDN00201';
+
+-- Kelas Teknologi Informasi (menggunakan dosen TI)
+INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
+SELECT mk.id, d.id, '2024/2025', 1, 'A'
+FROM mata_kuliah mk, dosen d, program_studi ps
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'TI' AND mk.kode_mk = 'TI101' AND d.nidn = 'NIDN00301';
 
 INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
 SELECT mk.id, d.id, '2024/2025', 1, 'A'
 FROM mata_kuliah mk, dosen d, program_studi ps
-WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'TI' AND mk.kode_mk = 'TI103' AND d.nidn = 'NIDN00001';
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'TI' AND mk.kode_mk = 'TI102' AND d.nidn = 'NIDN00302';
+
+INSERT INTO kelas(mk_id, dosen_id, tahun_akademik, semester_aktif, nama_kelas)
+SELECT mk.id, d.id, '2024/2025', 1, 'A'
+FROM mata_kuliah mk, dosen d, program_studi ps
+WHERE mk.prodi_id = ps.id AND ps.kode_prodi = 'TI' AND mk.kode_mk = 'TI103' AND d.nidn = 'NIDN00301';
 
 -- =====================================================
 -- ENROLLMENT - SEMUA MAHASISWA KE KELAS SESUAI PRODI
@@ -954,7 +1055,7 @@ RINGKASAN DATA YANG DIBUAT:
 MASTER DATA:
 - 4 Roles (superadmin, admin_prodi, dosen, mahasiswa)
 - 3 Program Studi (Teknik Informatika, Sistem Informasi, Teknologi Informasi)
-- 2 Dosen
+- 8 Dosen (2 umum + 2 per prodi: 2 IF, 2 SI, 2 TI)
 - 45 Mahasiswa (15 per prodi)
 - 9 Mata Kuliah (3 per prodi)
 - 9 CPL (3 per prodi)
@@ -963,27 +1064,45 @@ MASTER DATA:
 - 15 Threshold Status (5 per prodi)
 
 OPERATIONAL DATA:
-- 9 Kelas (3 per prodi)
+- 9 Kelas (3 per prodi dengan dosen sesuai prodi)
 - 135 Enrollment (setiap mahasiswa ke 3 kelas di prodinya)
 - 1,215 Nilai Sub-CPMK (135 enrollment × 9 sub-cpmk)
 - 405 Capaian CPL MK (135 enrollment × 3 CPL)
 - 135 Capaian CPL Mahasiswa (45 mahasiswa × 3 CPL)
 
 AUTHENTICATION & AUTHORIZATION:
-- 50 Users (3 admin + 2 dosen + 45 mahasiswa)
+- 57 Users (1 superadmin + 3 admin + 8 dosen + 45 mahasiswa)
 - 46 Role Permissions (untuk 4 roles)
 - 3 Sample Refresh Tokens
 - 4 Sample Auth Audit Logs
 
 CREDENTIALS:
+SUPERADMIN:
+- Superadmin: superadmin@kampus.ac.id / password123
+
+ADMIN PRODI:
 - Admin IF: admin.if@kampus.ac.id / password123
 - Admin SI: admin.si@kampus.ac.id / password123
 - Admin TI: admin.ti@kampus.ac.id / password123
-- Dosen 1: ahmad.fauzi@kampus.ac.id / password123
-- Dosen 2: siti.nurhaliza@kampus.ac.id / password123
-- Mahasiswa: if2023001@student.ac.id / password123 (dan seterusnya)
+
+DOSEN:
+- Dosen Umum 1: ahmad.fauzi@kampus.ac.id / password123 (NIDN00001)
+- Dosen Umum 2: siti.nurhaliza@kampus.ac.id / password123 (NIDN00002)
+- Dosen IF 1: budi.raharjo@kampus.ac.id / password123 (NIDN00101)
+- Dosen IF 2: dewi.sartika@kampus.ac.id / password123 (NIDN00102)
+- Dosen SI 1: eko.wijayanto@kampus.ac.id / password123 (NIDN00201)
+- Dosen SI 2: fitri.handayani@kampus.ac.id / password123 (NIDN00202)
+- Dosen TI 1: gunawan.saputra@kampus.ac.id / password123 (NIDN00301)
+- Dosen TI 2: hani.puspita@kampus.ac.id / password123 (NIDN00302)
+
+MAHASISWA:
+- Mahasiswa IF: if2023001@student.ac.id / password123 (dan seterusnya sampai if2023015)
+- Mahasiswa SI: si2023001@student.ac.id / password123 (dan seterusnya sampai si2023015)
+- Mahasiswa TI: ti2023001@student.ac.id / password123 (dan seterusnya sampai ti2023015)
 
 RELASI YANG DIJAGA:
+✓ Setiap prodi memiliki 2 dosen khusus
+✓ Kelas diampu oleh dosen sesuai prodinya
 ✓ Mahasiswa hanya enroll di kelas sesuai prodinya
 ✓ Nilai sub-cpmk hanya untuk sub-cpmk yang ada di kelas tersebut
 ✓ Capaian CPL MK dihitung dari nilai sub-cpmk
