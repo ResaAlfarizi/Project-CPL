@@ -1,23 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
-// Read-only API client for Module 1
-// Only GET endpoints — no create/update/delete
+// Full CRUD API client for Module 1
 
 export async function getAPIUrl() {
   // Otomatis mengambil IP dari server Expo yang sedang berjalan
   const hostUri = Constants.expoConfig?.hostUri;
   // Jika gagal, akan fallback ke 127.0.0.1 (tapi hampir selalu berhasil jika dari Expo Go)
   const ip = hostUri ? hostUri.split(':')[0] : '127.0.0.1';
-  return `http://192.168.1.29:3000/api/v1/m1`;
+  return `http://192.168.1.75:3000/api/v1/m1`;
 }
 
-async function fetchAPI(endpoint) {
+async function fetchAPI(endpoint, options = {}) {
   const url = await getAPIUrl();
   try {
     const res = await fetch(`${url}${endpoint}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
     });
     const data = await res.json();
     if (!res.ok) {
@@ -34,22 +36,47 @@ async function fetchAPI(endpoint) {
 
 export const ProdiAPI = {
   list: () => fetchAPI('/prodi'),
+  create: (data) => fetchAPI('/prodi', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => fetchAPI(`/prodi/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => fetchAPI(`/prodi/${id}`, { method: 'DELETE' }),
 };
 
 export const CPLAPI = {
   list: () => fetchAPI('/kurikulum/cpl'),
+  create: (data) => fetchAPI('/kurikulum/cpl', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => fetchAPI(`/kurikulum/cpl/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => fetchAPI(`/kurikulum/cpl/${id}`, { method: 'DELETE' }),
 };
 
 export const MKAPI = {
   list: () => fetchAPI('/kurikulum/mk'),
+  create: (data) => fetchAPI('/kurikulum/mk', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => fetchAPI(`/kurikulum/mk/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => fetchAPI(`/kurikulum/mk/${id}`, { method: 'DELETE' }),
 };
 
 export const MkCplAPI = {
   listAll: () => fetchAPI('/kurikulum/mapping'),
+  saveBatch: (mk_id, mappings) => fetchAPI('/kurikulum/mapping', {
+    method: 'POST',
+    body: JSON.stringify({ mk_id, mappings })
+  })
 };
 
 export const SubCpmkAPI = {
   listAll: () => fetchAPI('/kurikulum/sub-cpmk'),
+  saveBatch: (mk_cpl_id, subCpmks) => fetchAPI('/kurikulum/sub-cpmk', {
+    method: 'POST',
+    body: JSON.stringify({ mk_cpl_id, subCpmks })
+  })
+};
+
+export const ThresholdAPI = {
+  listAll: () => fetchAPI('/threshold'),
+  save: (prodi_id, thresholds) => fetchAPI('/threshold', {
+    method: 'POST',
+    body: JSON.stringify({ prodi_id, thresholds })
+  })
 };
 
 // Helper to change base URL at runtime (e.g. for physical device)

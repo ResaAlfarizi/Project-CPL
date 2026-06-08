@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, RefreshControl, StyleSheet,
+  TouchableOpacity, Modal, TextInput, Alert, ActivityIndicator
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { MkCplAPI, MKAPI, CPLAPI, ProdiAPI } from '../api';
@@ -17,6 +18,12 @@ export default function MappingScreen({ route }) {
   const [mkcpl, setMkcpl] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // CRUD State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [activeMk, setActiveMk] = useState(null);
+  const [editWeights, setEditWeights] = useState({});
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     try {
@@ -43,6 +50,34 @@ export default function MappingScreen({ route }) {
     setRefreshing(true);
     await load();
     setRefreshing(false);
+  };
+
+  const openEdit = (m) => {
+    setActiveMk(m);
+    const m_cpls = getMappings(m.id);
+    const w = {};
+    m_cpls.forEach(map => {
+      w[map.cpl_id] = String(map.bobot);
+    });
+    setEditWeights(w);
+    setModalVisible(true);
+  };
+
+  const handleSaveMapping = async () => {
+    setSaving(true);
+    try {
+      const mappings = Object.keys(editWeights)
+        .map(cpl_id => ({ cpl_id: parseInt(cpl_id), bobot: parseFloat(editWeights[cpl_id]) }))
+        .filter(m => m.bobot > 0);
+      
+      await MkCplAPI.saveBatch(activeMk.id, mappings);
+      setModalVisible(false);
+      load();
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Display MKs — if mk_id is provided, show only that MK; otherwise show all
@@ -98,6 +133,9 @@ export default function MappingScreen({ route }) {
                   </View>
                   <Text style={styles.mkName}>{m.nama_mk}</Text>
                 </View>
+                <TouchableOpacity onPress={() => openEdit(m)} style={{ padding: 8, backgroundColor: '#f0f4f9', borderRadius: 8, alignSelf: 'flex-start' }}>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold' }}>✏️ Edit</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Weight Bar */}
@@ -136,6 +174,35 @@ export default function MappingScreen({ route }) {
       )}
 
       <View style={{ height: 30 }} />
+
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
+        <View style={{ flex: 1, backgroundColor: 'white', paddingTop: 10 }}>
+          <View style={{ padding: 16, borderBottomWidth: 1, borderColor: '#eee', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Edit Pemetaan: {activeMk?.kode_mk}</Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)}><Text style={{ color: 'red', fontWeight: 'bold' }}>Tutup</Text></TouchableOpacity>
+          </View>
+          <ScrollView style={{ flex: 1, padding: 16 }}>
+            {cpl.filter(c => c.prodi_id === activeMk?.prodi_id).map(c => (
+              <View key={c.id} style={{ marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderColor: '#eee' }}>
+                <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>{c.kode_cpl}</Text>
+                <Text style={{ color: 'gray', marginBottom: 8, fontSize: 12 }}>{c.deskripsi}</Text>
+                <TextInput
+                  style={{ borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 4 }}
+                  placeholder="Bobot (0.0 - 1.0)"
+                  keyboardType="numeric"
+                  value={editWeights[c.id] || ''}
+                  onChangeText={t => setEditWeights({...editWeights, [c.id]: t})}
+                />
+              </View>
+            ))}
+          </ScrollView>
+          <View style={{ padding: 16, borderTopWidth: 1, borderColor: '#eee' }}>
+             <TouchableOpacity style={{ backgroundColor: '#0066FF', padding: 16, borderRadius: 8, alignItems: 'center' }} onPress={handleSaveMapping} disabled={saving}>
+                {saving ? <ActivityIndicator color="white" /> : <Text style={{ color: 'white', fontWeight: 'bold' }}>Simpan Pemetaan</Text>}
+             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -187,6 +254,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: Colors.ghostWhite,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   mkHeaderBadges: {
     flexDirection: 'row',

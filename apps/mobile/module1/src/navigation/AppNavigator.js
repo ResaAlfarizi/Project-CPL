@@ -11,6 +11,7 @@ import MKListScreen from '../screens/MKListScreen';
 import MKDetailScreen from '../screens/MKDetailScreen';
 import MappingScreen from '../screens/MappingScreen';
 import SubCPMKScreen from '../screens/SubCPMKScreen';
+import ThresholdScreen from '../screens/ThresholdScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
@@ -83,6 +84,11 @@ export default function AppNavigator() {
           name="SubCPMKList"
           component={SubCPMKScreen}
           options={{ title: 'Sub-CPMK' }}
+        />
+        <Stack.Screen
+          name="ThresholdList"
+          component={ThresholdScreen}
+          options={{ title: 'Konfigurasi Threshold' }}
         />
         <Stack.Screen
           name="Settings"

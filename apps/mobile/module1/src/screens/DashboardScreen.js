@@ -60,6 +60,7 @@ export default function DashboardScreen({ navigation }) {
     { icon: '📚', label: 'Mata Kuliah', value: stats.mk, color: '#fde8cc', bg: '#fef6ed', screen: 'MKList' },
     { icon: '🔗', label: 'Pemetaan MK–CPL', value: stats.mkcpl, color: '#cceeff', bg: '#eef9ff', screen: 'MappingList' },
     { icon: '📋', label: 'Sub-CPMK', value: stats.sub, color: '#ffe0e0', bg: '#fff5f5', screen: 'SubCPMKList' },
+    { icon: '⚙️', label: 'Threshold', value: 'Atur', color: '#e0e0ff', bg: '#f5f5ff', screen: 'ThresholdList' },
   ];
 
   const STEPS = [
@@ -68,6 +69,7 @@ export default function DashboardScreen({ navigation }) {
     { step: '③', label: 'Daftar Mata Kuliah', screen: 'MKList', done: (stats.mk || 0) > 0 },
     { step: '④', label: 'Pemetaan MK → CPL', screen: 'MappingList', done: (stats.mkcpl || 0) > 0 },
     { step: '⑤', label: 'Definisi Sub-CPMK', screen: 'SubCPMKList', done: (stats.sub || 0) > 0 },
+    { step: '⑥', label: 'Konfigurasi Threshold', screen: 'ThresholdList', done: true },
   ];
 
   if (loading) {

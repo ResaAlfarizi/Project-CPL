@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, RefreshControl, StyleSheet,
+  Modal, TextInput, Alert, ActivityIndicator
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { CPLAPI } from '../api';
@@ -16,6 +17,11 @@ export default function CPLListScreen({ route, navigation }) {
   const [activeFilter, setActiveFilter] = useState(null); // 'aktif' | 'nonaktif' | null
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // CRUD State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [form, setForm] = useState({ id: null, kode_cpl: '', deskripsi: '', prodi_id: prodi_id });
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     try {
@@ -41,6 +47,41 @@ export default function CPLListScreen({ route, navigation }) {
     setRefreshing(false);
   };
 
+  const handleSave = async () => {
+    if (!form.kode_cpl || !form.deskripsi) {
+      Alert.alert('Error', 'Kode dan Deskripsi CPL wajib diisi');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (form.id) {
+        await CPLAPI.update(form.id, form);
+      } else {
+        await CPLAPI.create({ ...form, prodi_id });
+      }
+      setModalVisible(false);
+      load();
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = (item) => {
+    Alert.alert('Hapus CPL', `Yakin ingin menghapus ${item.kode_cpl}?`, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Hapus', style: 'destructive', onPress: async () => {
+          try {
+            await CPLAPI.delete(item.id);
+            load();
+          } catch (e) {
+            Alert.alert('Error', e.message);
+          }
+      }}
+    ]);
+  };
+
   const searched = list.filter((c) => {
     const matchesSearch = c.kode_cpl.toLowerCase().includes(search.toLowerCase()) ||
                           c.deskripsi.toLowerCase().includes(search.toLowerCase());
@@ -61,7 +102,14 @@ export default function CPLListScreen({ route, navigation }) {
             {item.is_active ? '✅ Aktif' : '⭕ Nonaktif'}
           </Badge>
         </View>
-        <Text style={styles.rowNumber}>#{index + 1}</Text>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity onPress={() => { setForm(item); setModalVisible(true); }}>
+            <Text style={{ fontSize: 16 }}>✏️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDelete(item)}>
+            <Text style={{ fontSize: 16 }}>🗑️</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={styles.deskripsi}>{item.deskripsi}</Text>
     </View>
@@ -143,6 +191,44 @@ export default function CPLListScreen({ route, navigation }) {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
       />
+
+      {prodi_id && (
+        <TouchableOpacity 
+          style={styles.fab} 
+          onPress={() => { setForm({ id: null, kode_cpl: '', deskripsi: '', prodi_id }); setModalVisible(true); }}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+      )}
+
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{form.id ? 'Edit CPL' : 'Tambah CPL'}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Kode CPL (Cth: CPL-01)"
+              value={form.kode_cpl}
+              onChangeText={t => setForm({...form, kode_cpl: t})}
+            />
+            <TextInput
+              style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+              placeholder="Deskripsi CPL"
+              value={form.deskripsi}
+              multiline
+              onChangeText={t => setForm({...form, deskripsi: t})}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.btnCancel} onPress={() => setModalVisible(false)} disabled={saving}>
+                <Text>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnSave} onPress={handleSave} disabled={saving}>
+                {saving ? <ActivityIndicator color="white" /> : <Text style={{color: 'white', fontWeight: 'bold'}}>Simpan</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -270,4 +356,19 @@ const styles = StyleSheet.create({
     color: '#4b5563',
     lineHeight: 20,
   },
+  fab: {
+    position: 'absolute', right: 20, bottom: 20,
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: '#0066FF',
+    alignItems: 'center', justifyContent: 'center',
+    ...Shadows.md, zIndex: 10
+  },
+  fabText: { color: 'white', fontSize: 32, lineHeight: 36, fontWeight: 'bold' },
+  modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: 'white', padding: 20, borderRadius: 12 },
+  modalTitle: { fontSize: 18, fontFamily: 'Urbanist_700Bold', marginBottom: 16 },
+  input: { borderWidth: 1, borderColor: Colors.border, borderRadius: 8, padding: 12, marginBottom: 12, fontFamily: 'Urbanist_500Medium' },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 12 },
+  btnCancel: { padding: 10 },
+  btnSave: { backgroundColor: '#0066FF', padding: 10, borderRadius: 8, paddingHorizontal: 16, minWidth: 80, alignItems: 'center' },
 });

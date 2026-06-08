@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, RefreshControl, StyleSheet,
+  TouchableOpacity, Modal, TextInput, Alert, ActivityIndicator
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { SubCpmkAPI, MkCplAPI, MKAPI, CPLAPI } from '../api';
@@ -17,6 +18,12 @@ export default function SubCPMKScreen({ route }) {
   const [subCpmk, setSubCpmk] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // CRUD State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [activeMkCpl, setActiveMkCpl] = useState(null);
+  const [editSubs, setEditSubs] = useState([]);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     try {
@@ -43,6 +50,45 @@ export default function SubCPMKScreen({ route }) {
     setRefreshing(true);
     await load();
     setRefreshing(false);
+  };
+
+  const openEdit = (mc) => {
+    setActiveMkCpl(mc);
+    const existing = getSubCpmks(mc.id).map(s => ({ ...s, bobot: String(s.bobot) }));
+    setEditSubs(existing.length > 0 ? existing : [{ kode_sub_cpmk: '', deskripsi: '', bobot: '' }]);
+    setModalVisible(true);
+  };
+
+  const handleAddRow = () => {
+    setEditSubs([...editSubs, { kode_sub_cpmk: '', deskripsi: '', bobot: '' }]);
+  };
+
+  const handleUpdateRow = (index, field, value) => {
+    const updated = [...editSubs];
+    updated[index][field] = value;
+    setEditSubs(updated);
+  };
+
+  const handleRemoveRow = (index) => {
+    const updated = editSubs.filter((_, i) => i !== index);
+    setEditSubs(updated);
+  };
+
+  const handleSaveSubCpmk = async () => {
+    setSaving(true);
+    try {
+      const validSubs = editSubs
+        .filter(s => s.kode_sub_cpmk && s.bobot)
+        .map(s => ({ ...s, bobot: parseFloat(s.bobot) || 0 }));
+      
+      await SubCpmkAPI.saveBatch(activeMkCpl.id, validSubs);
+      setModalVisible(false);
+      load();
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Display MKs
@@ -147,6 +193,9 @@ export default function SubCPMKScreen({ route }) {
                         </Text>
                         <WeightBar total={totalBobot} label="Σ bobot Sub-CPMK" />
                       </View>
+                      <TouchableOpacity onPress={() => openEdit(mc)} style={{ padding: 8, backgroundColor: '#eafaf1', borderRadius: 8, alignSelf: 'center', marginLeft: 10 }}>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold' }}>✏️ Edit</Text>
+                      </TouchableOpacity>
                     </View>
 
                     {/* Sub-CPMK items */}
@@ -184,6 +233,54 @@ export default function SubCPMKScreen({ route }) {
       )}
 
       <View style={{ height: 30 }} />
+
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
+        <View style={{ flex: 1, backgroundColor: 'white', paddingTop: 10 }}>
+          <View style={{ padding: 16, borderBottomWidth: 1, borderColor: '#eee', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Edit Sub-CPMK</Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)}><Text style={{ color: 'red', fontWeight: 'bold' }}>Tutup</Text></TouchableOpacity>
+          </View>
+          <ScrollView style={{ flex: 1, padding: 16 }}>
+            {editSubs.map((s, index) => (
+              <View key={index} style={{ marginBottom: 16, padding: 12, borderWidth: 1, borderColor: '#eee', borderRadius: 8 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                   <Text style={{ fontWeight: 'bold' }}>Sub-CPMK {index + 1}</Text>
+                   <TouchableOpacity onPress={() => handleRemoveRow(index)}><Text style={{ color: 'red' }}>Hapus</Text></TouchableOpacity>
+                </View>
+                <TextInput
+                  style={{ borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 4, marginBottom: 8 }}
+                  placeholder="Kode Sub-CPMK (Cth: L1)"
+                  value={s.kode_sub_cpmk}
+                  onChangeText={t => handleUpdateRow(index, 'kode_sub_cpmk', t)}
+                />
+                <TextInput
+                  style={{ borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 4, marginBottom: 8 }}
+                  placeholder="Bobot (0.0 - 1.0)"
+                  keyboardType="numeric"
+                  value={s.bobot}
+                  onChangeText={t => handleUpdateRow(index, 'bobot', t)}
+                />
+                <TextInput
+                  style={{ borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 4, height: 60, textAlignVertical: 'top' }}
+                  placeholder="Deskripsi"
+                  multiline
+                  value={s.deskripsi}
+                  onChangeText={t => handleUpdateRow(index, 'deskripsi', t)}
+                />
+              </View>
+            ))}
+            <TouchableOpacity style={{ padding: 16, alignItems: 'center', backgroundColor: '#f0f4f9', borderRadius: 8 }} onPress={handleAddRow}>
+               <Text style={{ fontWeight: 'bold' }}>+ Tambah Sub-CPMK</Text>
+            </TouchableOpacity>
+            <View style={{ height: 30 }} />
+          </ScrollView>
+          <View style={{ padding: 16, borderTopWidth: 1, borderColor: '#eee' }}>
+             <TouchableOpacity style={{ backgroundColor: '#0066FF', padding: 16, borderRadius: 8, alignItems: 'center' }} onPress={handleSaveSubCpmk} disabled={saving}>
+                {saving ? <ActivityIndicator color="white" /> : <Text style={{ color: 'white', fontWeight: 'bold' }}>Simpan Sub-CPMK</Text>}
+             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -281,6 +378,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
     borderBottomWidth: 1,
     borderBottomColor: Colors.ghostWhite,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   cplBadgeRow: {
     flexDirection: 'row',

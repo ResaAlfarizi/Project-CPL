@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, RefreshControl, StyleSheet,
+  Modal, TextInput, Alert, ActivityIndicator
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ProdiAPI } from '../api';
@@ -18,6 +19,11 @@ export default function ProdiListScreen({ navigation }) {
   const [activeJenjang, setActiveJenjang] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // CRUD State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [form, setForm] = useState({ id: null, kode_prodi: '', nama_prodi: '', jenjang: 'S1' });
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     try {
@@ -39,6 +45,41 @@ export default function ProdiListScreen({ navigation }) {
     setRefreshing(true);
     await load();
     setRefreshing(false);
+  };
+
+  const handleSave = async () => {
+    if (!form.kode_prodi || !form.nama_prodi) {
+      Alert.alert('Error', 'Kode dan Nama Prodi wajib diisi');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (form.id) {
+        await ProdiAPI.update(form.id, form);
+      } else {
+        await ProdiAPI.create(form);
+      }
+      setModalVisible(false);
+      load();
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = (item) => {
+    Alert.alert('Hapus Prodi', `Yakin ingin menghapus ${item.nama_prodi}?`, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Hapus', style: 'destructive', onPress: async () => {
+          try {
+            await ProdiAPI.delete(item.id);
+            load();
+          } catch (e) {
+            Alert.alert('Error', e.message);
+          }
+      }}
+    ]);
   };
 
   const filtered = list.filter((p) => {
@@ -72,7 +113,15 @@ export default function ProdiListScreen({ navigation }) {
           </View>
         </View>
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <TouchableOpacity onPress={() => { setForm(item); setModalVisible(true); }}>
+          <Text style={{ fontSize: 18 }}>✏️</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleDelete(item)}>
+          <Text style={{ fontSize: 18 }}>🗑️</Text>
+        </TouchableOpacity>
+        <Text style={styles.chevron}>›</Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -127,6 +176,47 @@ export default function ProdiListScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
+
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={() => { setForm({ id: null, kode_prodi: '', nama_prodi: '', jenjang: 'S1' }); setModalVisible(true); }}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{form.id ? 'Edit Prodi' : 'Tambah Prodi'}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Kode Prodi (Cth: IF)"
+              value={form.kode_prodi}
+              onChangeText={t => setForm({...form, kode_prodi: t})}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Nama Prodi (Cth: Teknik Informatika)"
+              value={form.nama_prodi}
+              onChangeText={t => setForm({...form, nama_prodi: t})}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Jenjang (Cth: S1, D3)"
+              value={form.jenjang}
+              onChangeText={t => setForm({...form, jenjang: t})}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.btnCancel} onPress={() => setModalVisible(false)} disabled={saving}>
+                <Text>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnSave} onPress={handleSave} disabled={saving}>
+                {saving ? <ActivityIndicator color="white" /> : <Text style={{color: 'white', fontWeight: 'bold'}}>Simpan</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -247,4 +337,19 @@ const styles = StyleSheet.create({
   separator: {
     height: 10,
   },
+  fab: {
+    position: 'absolute', right: 20, bottom: 20,
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: '#0066FF',
+    alignItems: 'center', justifyContent: 'center',
+    ...Shadows.md, zIndex: 10
+  },
+  fabText: { color: 'white', fontSize: 32, lineHeight: 36, fontWeight: 'bold' },
+  modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: 'white', padding: 20, borderRadius: 12 },
+  modalTitle: { fontSize: 18, fontFamily: 'Urbanist_700Bold', marginBottom: 16 },
+  input: { borderWidth: 1, borderColor: Colors.border, borderRadius: 8, padding: 12, marginBottom: 12, fontFamily: 'Urbanist_500Medium' },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 12 },
+  btnCancel: { padding: 10 },
+  btnSave: { backgroundColor: '#0066FF', padding: 10, borderRadius: 8, paddingHorizontal: 16, minWidth: 80, alignItems: 'center' },
 });
