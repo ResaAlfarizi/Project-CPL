@@ -5,6 +5,7 @@ const {
   getDashboardAdminHandler,
   getDashboardDosenHandler,
   getDashboardMahasiswaHandler,
+  getDashboardSuperadminHandler,
 } = require("../controllers/dashboardController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -20,7 +21,15 @@ const authorize = require("../middlewares/roleMiddleware");
  * - MAHASISWA: - (Tidak ada akses)
  */
 
-// GET dashboard untuk SUPERADMIN/ADMIN PRODI
+// GET dashboard untuk SUPERADMIN (Global - semua prodi)
+router.get(
+  "/superadmin",
+  authMiddleware,
+  authorize("Superadmin"),
+  getDashboardSuperadminHandler
+);
+
+// GET dashboard untuk ADMIN PRODI (per prodi)
 router.get(
   "/admin/:prodi_id",
   authMiddleware,

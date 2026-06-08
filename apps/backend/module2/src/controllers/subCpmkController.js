@@ -10,6 +10,7 @@ const {
   deleteSubCPMK,
 } = require("../models/subCpmkModel");
 
+const pool = require("../config/db");
 const { successResponse, errorResponse } = require("../utils/response");
 
 /**
@@ -111,6 +112,23 @@ const createSubCPMKHandler = async (req, res) => {
       return errorResponse(res, "Bobot harus antara 0 dan 1", 400);
     }
 
+    // ✅ VALIDASI: Total bobot semua Sub-CPMK per mk_cpl harus <= 1.0
+    const totalBobotQuery = await pool.query(
+      `SELECT COALESCE(SUM(bobot), 0) as total FROM sub_cpmk WHERE mk_cpl_id = $1`,
+      [mk_cpl_id]
+    );
+    
+    const currentTotal = parseFloat(totalBobotQuery.rows[0].total);
+    const newTotal = currentTotal + parseFloat(bobot);
+    
+    if (newTotal > 1.0) {
+      return errorResponse(
+        res,
+        `Total bobot Sub-CPMK akan melebihi 1.0. Saat ini: ${currentTotal.toFixed(4)}, mencoba tambah: ${parseFloat(bobot).toFixed(4)}, total akan: ${newTotal.toFixed(4)}`,
+        400
+      );
+    }
+
     const subCpmk = await createSubCPMK(
       kode_sub_cpmk,
       deskripsi,
@@ -138,6 +156,36 @@ const updateSubCPMKHandler = async (req, res) => {
     // Validasi bobot (0-1)
     if (bobot <= 0 || bobot > 1) {
       return errorResponse(res, "Bobot harus antara 0 dan 1", 400);
+    }
+
+    // ✅ VALIDASI: Total bobot semua Sub-CPMK per mk_cpl harus <= 1.0
+    // Ambil bobot lama sub-cpmk ini
+    const oldBobotQuery = await pool.query(
+      `SELECT bobot FROM sub_cpmk WHERE id = $1`,
+      [id]
+    );
+    
+    if (oldBobotQuery.rows.length === 0) {
+      return errorResponse(res, "Sub-CPMK tidak ditemukan", 404);
+    }
+    
+    const oldBobot = parseFloat(oldBobotQuery.rows[0].bobot);
+    
+    // Hitung total bobot tanpa sub-cpmk ini
+    const totalBobotQuery = await pool.query(
+      `SELECT COALESCE(SUM(bobot), 0) as total FROM sub_cpmk WHERE mk_cpl_id = $1 AND id != $2`,
+      [mk_cpl_id, id]
+    );
+    
+    const currentTotal = parseFloat(totalBobotQuery.rows[0].total);
+    const newTotal = currentTotal + parseFloat(bobot);
+    
+    if (newTotal > 1.0) {
+      return errorResponse(
+        res,
+        `Total bobot Sub-CPMK akan melebihi 1.0. Total bobot lain: ${currentTotal.toFixed(4)}, bobot baru: ${parseFloat(bobot).toFixed(4)}, total akan: ${newTotal.toFixed(4)}`,
+        400
+      );
     }
 
     const subCpmk = await updateSubCPMK(

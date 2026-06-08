@@ -2,6 +2,7 @@ const {
   getDashboardAdmin,
   getDashboardDosen,
   getDashboardMahasiswa,
+  getDashboardSuperadmin,
 } = require("../models/dashboardModel");
 
 const { successResponse, errorResponse } = require("../utils/response");
@@ -64,8 +65,20 @@ const getDashboardMahasiswaHandler = async (req, res) => {
   }
 };
 
+// GET dashboard untuk Superadmin (Global - semua prodi)
+const getDashboardSuperadminHandler = async (req, res) => {
+  try {
+    const dashboard = await getDashboardSuperadmin();
+
+    return successResponse(res, dashboard, "Berhasil mengambil data dashboard superadmin");
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
 module.exports = {
   getDashboardAdminHandler,
   getDashboardDosenHandler,
   getDashboardMahasiswaHandler,
+  getDashboardSuperadminHandler,
 };

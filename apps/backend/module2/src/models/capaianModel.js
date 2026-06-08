@@ -192,12 +192,12 @@ const getMahasiswaBelumCapaiCPL = async (cplId, prodiId) => {
 const createCapaian = async (mahasiswaIdOrNim, cplIdOrKode, nilaiCapaian, tahunAkademik = '2024/2025') => {
   // Convert NIM to UUID mahasiswa_id jika perlu
   const mahasiswaQuery = `
-    SELECT id FROM mahasiswa WHERE nim = $1 OR id::text = $1
+    SELECT id, prodi_id FROM mahasiswa WHERE nim = $1 OR id::text = $1
   `;
   const mahasiswaResult = await pool.query(mahasiswaQuery, [mahasiswaIdOrNim]);
-  const mahasiswaId = mahasiswaResult.rows[0]?.id;
+  const mahasiswa = mahasiswaResult.rows[0];
   
-  if (!mahasiswaId) {
+  if (!mahasiswa) {
     throw new Error(`Mahasiswa dengan NIM/ID ${mahasiswaIdOrNim} tidak ditemukan`);
   }
   
@@ -212,11 +212,12 @@ const createCapaian = async (mahasiswaIdOrNim, cplIdOrKode, nilaiCapaian, tahunA
     throw new Error(`CPL dengan kode ${cplIdOrKode} tidak ditemukan`);
   }
 
-  // Tentukan status berdasarkan nilai
-  let status = 'Belum Tercapai';
-  if (nilaiCapaian >= 75) {
-    status = 'Tercapai';
-  }
+  // ✅ Gunakan function get_status_cpl untuk status dinamis
+  const statusResult = await pool.query(
+    `SELECT get_status_cpl($1, $2) as status`,
+    [mahasiswa.prodi_id, nilaiCapaian]
+  );
+  const status = statusResult.rows[0]?.status || 'Not Competent';
   
   const query = `
     INSERT INTO capaian_cpl_mahasiswa (mahasiswa_id, cpl_id, tahun_akademik, nilai_capaian, status, calculated_at)
@@ -224,7 +225,7 @@ const createCapaian = async (mahasiswaIdOrNim, cplIdOrKode, nilaiCapaian, tahunA
     RETURNING *
   `;
   
-  const result = await pool.query(query, [mahasiswaId, cplId, tahunAkademik, nilaiCapaian, status]);
+  const result = await pool.query(query, [mahasiswa.id, cplId, tahunAkademik, nilaiCapaian, status]);
   return result.rows[0];
 };
 
@@ -234,12 +235,12 @@ const updateCapaian = async (mahasiswaIdOrNim, cplIdOrKode, nilaiCapaian, tahunA
   
   // Convert NIM to UUID mahasiswa_id jika perlu
   const mahasiswaQuery = `
-    SELECT id FROM mahasiswa WHERE nim = $1 OR id::text = $1
+    SELECT id, prodi_id FROM mahasiswa WHERE nim = $1 OR id::text = $1
   `;
   const mahasiswaResult = await pool.query(mahasiswaQuery, [mahasiswaIdOrNim]);
-  const mahasiswaId = mahasiswaResult.rows[0]?.id;
+  const mahasiswa = mahasiswaResult.rows[0];
   
-  if (!mahasiswaId) {
+  if (!mahasiswa) {
     throw new Error(`Mahasiswa dengan NIM/ID ${mahasiswaIdOrNim} tidak ditemukan`);
   }
   
@@ -254,13 +255,14 @@ const updateCapaian = async (mahasiswaIdOrNim, cplIdOrKode, nilaiCapaian, tahunA
     throw new Error(`CPL dengan kode ${cplIdOrKode} tidak ditemukan`);
   }
 
-  console.log('🔧 Resolved IDs:', { mahasiswaId, cplId });
+  console.log('🔧 Resolved IDs:', { mahasiswaId: mahasiswa.id, prodiId: mahasiswa.prodi_id, cplId });
 
-  // Tentukan status berdasarkan nilai
-  let status = 'Belum Tercapai';
-  if (nilaiCapaian >= 75) {
-    status = 'Tercapai';
-  }
+  // ✅ Gunakan function get_status_cpl untuk status dinamis
+  const statusResult = await pool.query(
+    `SELECT get_status_cpl($1, $2) as status`,
+    [mahasiswa.prodi_id, nilaiCapaian]
+  );
+  const status = statusResult.rows[0]?.status || 'Not Competent';
   
   let query, values;
   
@@ -271,7 +273,7 @@ const updateCapaian = async (mahasiswaIdOrNim, cplIdOrKode, nilaiCapaian, tahunA
       WHERE mahasiswa_id = $1 AND cpl_id = $2
       RETURNING *
     `;
-    values = [mahasiswaId, cplId, nilaiCapaian, status, tahunAkademik];
+    values = [mahasiswa.id, cplId, nilaiCapaian, status, tahunAkademik];
   } else {
     query = `
       UPDATE capaian_cpl_mahasiswa
@@ -279,7 +281,7 @@ const updateCapaian = async (mahasiswaIdOrNim, cplIdOrKode, nilaiCapaian, tahunA
       WHERE mahasiswa_id = $1 AND cpl_id = $2
       RETURNING *
     `;
-    values = [mahasiswaId, cplId, nilaiCapaian, status];
+    values = [mahasiswa.id, cplId, nilaiCapaian, status];
   }
   
   console.log('🔧 Update query:', query);

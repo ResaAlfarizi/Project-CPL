@@ -10,6 +10,7 @@ const {
   deleteNilai,
 } = require("../models/nilaiModel");
 
+const pool = require("../config/db");
 const { successResponse, errorResponse } = require("../utils/response");
 
 /**
@@ -108,7 +109,16 @@ const createNilaiHandler = async (req, res) => {
 
     const newNilai = await createNilai(enrollment_id, sub_cpmk_id, nilai);
 
-    return successResponse(res, newNilai, "Nilai berhasil dibuat", 201);
+    // ✅ CALL PROCEDURE: Hitung capaian CPL setelah input nilai
+    try {
+      await pool.query('CALL hitung_capaian_cpl_mk($1)', [enrollment_id]);
+    } catch (procError) {
+      console.error('Error calling hitung_capaian_cpl_mk:', procError);
+      // Tidak fail request, hanya log error
+      // Capaian bisa dihitung manual nanti jika procedure gagal
+    }
+
+    return successResponse(res, newNilai, "Nilai berhasil dibuat dan capaian dihitung", 201);
   } catch (error) {
     return errorResponse(res, error.message, 500);
   }
@@ -136,7 +146,16 @@ const updateNilaiHandler = async (req, res) => {
       return errorResponse(res, "Nilai tidak ditemukan", 404);
     }
 
-    return successResponse(res, updatedNilai, "Nilai berhasil diupdate");
+    // ✅ CALL PROCEDURE: Hitung ulang capaian CPL setelah update nilai
+    // Ambil enrollment_id dari updatedNilai
+    try {
+      await pool.query('CALL hitung_capaian_cpl_mk($1)', [updatedNilai.enrollment_id]);
+    } catch (procError) {
+      console.error('Error calling hitung_capaian_cpl_mk:', procError);
+      // Tidak fail request, hanya log error
+    }
+
+    return successResponse(res, updatedNilai, "Nilai berhasil diupdate dan capaian dihitung ulang");
   } catch (error) {
     return errorResponse(res, error.message, 500);
   }
@@ -152,7 +171,16 @@ const deleteNilaiHandler = async (req, res) => {
       return errorResponse(res, "Nilai tidak ditemukan", 404);
     }
 
-    return successResponse(res, nilai, "Nilai berhasil dihapus");
+    // ✅ CALL PROCEDURE: Hitung ulang capaian CPL setelah delete nilai
+    // Ambil enrollment_id dari nilai yang dihapus
+    try {
+      await pool.query('CALL hitung_capaian_cpl_mk($1)', [nilai.enrollment_id]);
+    } catch (procError) {
+      console.error('Error calling hitung_capaian_cpl_mk:', procError);
+      // Tidak fail request, hanya log error
+    }
+
+    return successResponse(res, nilai, "Nilai berhasil dihapus dan capaian dihitung ulang");
   } catch (error) {
     return errorResponse(res, error.message, 500);
   }

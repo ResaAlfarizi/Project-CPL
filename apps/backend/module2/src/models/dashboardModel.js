@@ -39,21 +39,30 @@ const getDashboardAdmin = async (prodiId) => {
     WHERE prodi_id = $1 AND is_active = TRUE
   `;
 
-  // Capaian CPL keseluruhan (menggunakan view)
+  // Capaian CPL keseluruhan (menggunakan view) - FIXED: aggregate dalam CTE
   const capaianCPLQuery = `
+    WITH cpl_avg AS (
+      SELECT 
+        v.cpl_id,
+        ROUND(AVG(v.nilai_cpl_total)::numeric, 2) as rata_rata
+      FROM v_capaian_cpl_mahasiswa v
+      JOIN cpl c ON v.cpl_id = c.id
+      WHERE c.prodi_id = $1
+      GROUP BY v.cpl_id
+    )
     SELECT 
       c.kode_cpl,
       c.deskripsi as deskripsi_cpl,
-      ROUND(AVG(v.nilai_cpl_total)::numeric, 2) as rata_rata,
+      ca.rata_rata,
       ts.nilai_min as nilai_minimum,
       ts.nama_status as status
-    FROM v_capaian_cpl_mahasiswa v
-    JOIN cpl c ON v.cpl_id = c.id
-    JOIN mahasiswa m ON v.mahasiswa_id = m.id
-    LEFT JOIN threshold_status ts ON m.prodi_id = ts.prodi_id 
-      AND AVG(v.nilai_cpl_total) BETWEEN ts.nilai_min AND ts.nilai_max
+    FROM cpl c
+    JOIN cpl_avg ca ON c.id = ca.cpl_id
+    JOIN mahasiswa m ON m.prodi_id = c.prodi_id
+    LEFT JOIN threshold_status ts ON ts.prodi_id = m.prodi_id 
+      AND ca.rata_rata BETWEEN ts.nilai_min AND ts.nilai_max
     WHERE c.prodi_id = $1
-    GROUP BY c.kode_cpl, c.deskripsi, ts.nilai_min, ts.nama_status
+    GROUP BY c.kode_cpl, c.deskripsi, ca.rata_rata, ts.nilai_min, ts.nama_status
     ORDER BY c.kode_cpl
   `;
 
@@ -234,8 +243,105 @@ const getDashboardMahasiswa = async (mahasiswaId) => {
   };
 };
 
+// Dashboard untuk Superadmin (Global - semua prodi)
+const getDashboardSuperadmin = async () => {
+  // Total program studi
+  const totalProdiQuery = `
+    SELECT COUNT(*) as total
+    FROM program_studi
+  `;
+
+  // Total mahasiswa (semua prodi)
+  const totalMahasiswaQuery = `
+    SELECT COUNT(*) as total
+    FROM mahasiswa
+  `;
+
+  // Total dosen (semua prodi)
+  const totalDosenQuery = `
+    SELECT COUNT(*) as total
+    FROM dosen
+  `;
+
+  // Total CPL (semua prodi)
+  const totalCPLQuery = `
+    SELECT COUNT(*) as total
+    FROM cpl
+    WHERE is_active = TRUE
+  `;
+
+  // Total mata kuliah (semua prodi)
+  const totalMKQuery = `
+    SELECT COUNT(*) as total
+    FROM mata_kuliah
+  `;
+
+  // Total pemetaan MK-CPL
+  const totalMkCplQuery = `
+    SELECT COUNT(*) as total
+    FROM mk_cpl
+  `;
+
+  // Total Sub-CPMK
+  const totalSubCpmkQuery = `
+    SELECT COUNT(*) as total
+    FROM sub_cpmk
+  `;
+
+  // Statistik per prodi
+  const statistikPerProdiQuery = `
+    SELECT 
+      ps.id,
+      ps.kode_prodi,
+      ps.nama_prodi,
+      COUNT(DISTINCT m.id) as total_mahasiswa,
+      COUNT(DISTINCT c.id) as total_cpl,
+      COUNT(DISTINCT mk.id) as total_mk
+    FROM program_studi ps
+    LEFT JOIN mahasiswa m ON ps.id = m.prodi_id
+    LEFT JOIN cpl c ON ps.id = c.prodi_id AND c.is_active = TRUE
+    LEFT JOIN mata_kuliah mk ON ps.id = mk.prodi_id
+    GROUP BY ps.id, ps.kode_prodi, ps.nama_prodi
+    ORDER BY ps.nama_prodi
+  `;
+
+  const [
+    totalProdi,
+    totalMahasiswa,
+    totalDosen,
+    totalCPL,
+    totalMK,
+    totalMkCpl,
+    totalSubCpmk,
+    statistikPerProdi,
+  ] = await Promise.all([
+    pool.query(totalProdiQuery),
+    pool.query(totalMahasiswaQuery),
+    pool.query(totalDosenQuery),
+    pool.query(totalCPLQuery),
+    pool.query(totalMKQuery),
+    pool.query(totalMkCplQuery),
+    pool.query(totalSubCpmkQuery),
+    pool.query(statistikPerProdiQuery),
+  ]);
+
+  return {
+    statistik: {
+      total_prodi: parseInt(totalProdi.rows[0].total),
+      total_mahasiswa: parseInt(totalMahasiswa.rows[0].total),
+      total_dosen: parseInt(totalDosen.rows[0].total),
+      total_cpl: parseInt(totalCPL.rows[0].total),
+      total_mk: parseInt(totalMK.rows[0].total),
+      total_mk_cpl: parseInt(totalMkCpl.rows[0].total),
+      total_sub_cpmk: parseInt(totalSubCpmk.rows[0].total),
+    },
+    statistik_per_prodi: statistikPerProdi.rows,
+  };
+};
+
 module.exports = {
   getDashboardAdmin,
   getDashboardDosen,
   getDashboardMahasiswa,
+  getDashboardSuperadmin,
 };
