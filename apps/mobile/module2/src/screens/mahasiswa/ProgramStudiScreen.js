@@ -14,25 +14,49 @@ export default function ProgramStudiScreen({ user }) {
     const [selectedProdiId, setSelectedProdiId] = useState(null);
     const [loading, setLoading]               = useState(true);
     const [loadingCpl, setLoadingCpl]         = useState(false);
+    const [userProdiId, setUserProdiId]       = useState(null);
 
     useEffect(() => {
-        prodiApi.getAll()
-            .then(res => {
-                const allProdi = res.data || [];
+        const fetchProdiIdAndProdi = async () => {
+            try {
+                // Ambil profil mahasiswa untuk mendapatkan prodi_id yang akurat
+                const { mahasiswaApi } = require('../../services/api');
+                const profileRes = await mahasiswaApi.getMyProfile();
+                const profileData = profileRes.data || profileRes;
+                const prodiId = profileData.prodi_id || user?.prodi_id;
+                setUserProdiId(prodiId);
+
+                console.log('🔍 DEBUG - User prodi_id:', prodiId);
+
+                // Ambil semua prodi
+                const prodiRes = await prodiApi.getAll();
+                const allProdi = prodiRes.data || [];
+                
+                console.log('🔍 DEBUG - All prodi:', allProdi.map(p => ({ id: p.id, nama: p.nama_prodi })));
+                
                 // Filter: hanya tampilkan prodi mahasiswa sendiri
-                const filtered = user?.prodi_id 
-                    ? allProdi.filter(p => p.id === user.prodi_id)
+                const filtered = prodiId 
+                    ? allProdi.filter(p => String(p.id) === String(prodiId))
                     : allProdi;
+                
+                console.log('🔍 DEBUG - Filtered prodi:', filtered.map(p => ({ id: p.id, nama: p.nama_prodi })));
+                
                 setProdiList(filtered);
                 
                 // Auto-load CPL untuk prodi mahasiswa
-                if (filtered.length > 0 && user?.prodi_id) {
-                    setSelectedProdiId(user.prodi_id);
-                    loadCplForProdi(user.prodi_id);
+                if (filtered.length > 0 && prodiId) {
+                    setSelectedProdiId(prodiId);
+                    loadCplForProdi(prodiId);
                 }
-            })
-            .catch(() => setProdiList([]))
-            .finally(() => setLoading(false));
+            } catch (error) {
+                console.error('❌ Error fetching prodi:', error);
+                setProdiList([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProdiIdAndProdi();
     }, [user]);
 
     const loadCplForProdi = async (prodiId) => {
@@ -128,9 +152,32 @@ export default function ProgramStudiScreen({ user }) {
                                                             <View style={styles.cplBadge}>
                                                                 <Text style={styles.cplBadgeText}>{cpl.kode_cpl}</Text>
                                                             </View>
+                                                            {/* Status Badge - Aktif atau Non-aktif */}
+                                                            {cpl.is_active !== undefined && (
+                                                                <View style={[
+                                                                    styles.statusBadge, 
+                                                                    cpl.is_active === false 
+                                                                        ? styles.statusInactive 
+                                                                        : styles.statusActive
+                                                                ]}>
+                                                                    <MaterialCommunityIcons 
+                                                                        name={cpl.is_active === false ? 'close-circle' : 'check-circle'} 
+                                                                        size={10} 
+                                                                        color={cpl.is_active === false ? '#EA5455' : '#28C76F'} 
+                                                                    />
+                                                                    <Text style={[
+                                                                        styles.statusBadgeText,
+                                                                        cpl.is_active === false 
+                                                                            ? styles.statusInactiveText 
+                                                                            : styles.statusActiveText
+                                                                    ]}>
+                                                                        {cpl.is_active === false ? 'Non-aktif' : 'Aktif'}
+                                                                    </Text>
+                                                                </View>
+                                                            )}
                                                         </View>
-                                                        {cpl.nama_cpl && (
-                                                            <Text style={styles.cplNama}>{cpl.nama_cpl}</Text>
+                                                        {cpl.deskripsi && (
+                                                            <Text style={styles.cplDeskripsi}>{cpl.deskripsi}</Text>
                                                         )}
                                                     </View>
                                                 ))}
@@ -189,10 +236,26 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4,
     },
     cplSubCard: { backgroundColor: THEME.primary, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: BASE.border },
-    cplCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    cplCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6, flexWrap: 'wrap' },
     cplBadge: { backgroundColor: THEME.secondary, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
     cplBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, color: BASE.textMain, fontWeight: '700' },
-    cplNama: { fontFamily: 'Urbanist-Bold', fontSize: 13, color: BASE.textMain, fontWeight: '700', marginBottom: 4 },
+    
+    // Status Badge Styles
+    statusBadge: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        gap: 4, 
+        borderRadius: 6, 
+        paddingHorizontal: 8, 
+        paddingVertical: 3 
+    },
+    statusActive: { backgroundColor: 'rgba(40, 199, 111, 0.12)' },  // Green background
+    statusInactive: { backgroundColor: 'rgba(234, 84, 85, 0.12)' }, // Red background
+    statusBadgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, fontWeight: '700' },
+    statusActiveText: { color: '#28C76F' },   // Green text
+    statusInactiveText: { color: '#EA5455' }, // Red text
+    
+    cplDeskripsi: { fontFamily: 'Urbanist-Medium', fontSize: 13, color: BASE.textMain, lineHeight: 19, fontWeight: '500' },
 
     emptyCard: {
         backgroundColor: BASE.surface, borderRadius: 24, padding: 32, alignItems: 'center', gap: 12,

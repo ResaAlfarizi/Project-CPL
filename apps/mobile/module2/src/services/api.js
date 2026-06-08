@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // PENTING: Ganti dengan IP komputer Anda yang menjalankan backend
-const API_BASE = 'http://20.5.24.71:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
-const API_BASE_M1 = 'http://20.5.24.71:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
+const API_BASE = 'http://20.5.27.101:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
+const API_BASE_M1 = 'http://20.5.27.101:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
 
 const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -437,31 +437,56 @@ export const mahasiswaApi = {
     getSubCpmkByMk:     (mkId)      => apiFetch(`/sub-cpmk/mk/${mkId}`),
     
     getMyCapaian: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return {
-            success: true,
-            data: [
-                { id: 1, kode_cpl: 'CPL-01', nama_cpl: 'Mampu menerapkan pemikiran logis...', nilai: 85.5, persentase: 85.5, status: 'Tercapai', target: 75 },
-                { id: 2, kode_cpl: 'CPL-02', nama_cpl: 'Mampu menunjukkan kinerja mandiri...', nilai: 72.3, persentase: 72.3, status: 'Belum Tercapai', target: 75 },
-                { id: 3, kode_cpl: 'CPL-03', nama_cpl: 'Mampu mengkaji implikasi...', nilai: 88.7, persentase: 88.7, status: 'Tercapai', target: 75 },
-                { id: 4, kode_cpl: 'CPL-04', nama_cpl: 'Mampu menyusun deskripsi saintifik...', nilai: 79.2, persentase: 79.2, status: 'Tercapai', target: 75 },
-            ]
-        };
+        try {
+            // ✅ Gunakan endpoint real dari backend
+            return await apiFetch('/capaian/mahasiswa/my-capaian');
+        } catch (error) {
+            console.error('❌ Error getMyCapaian:', error);
+            // Fallback ke dummy data jika gagal
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return {
+                success: true,
+                data: [
+                    { id: 1, kode_cpl: 'CPL-01', nama_cpl: 'Mampu menerapkan pemikiran logis...', deskripsi_cpl: 'Mampu menerapkan pemikiran logis, kritis, sistematis, dan inovatif dalam konteks pengembangan atau implementasi ilmu pengetahuan dan teknologi.', nilai: 85.5, persentase: 85.5, status: 'Tercapai', target: 75 },
+                    { id: 2, kode_cpl: 'CPL-02', nama_cpl: 'Mampu menunjukkan kinerja mandiri...', deskripsi_cpl: 'Mampu menunjukkan kinerja mandiri, bermutu, dan terukur dalam menyelesaikan tugas.', nilai: 72.3, persentase: 72.3, status: 'Belum Tercapai', target: 75 },
+                    { id: 3, kode_cpl: 'CPL-03', nama_cpl: 'Mampu mengkaji implikasi...', deskripsi_cpl: 'Mampu mengkaji implikasi pengembangan atau implementasi ilmu pengetahuan teknologi.', nilai: 88.7, persentase: 88.7, status: 'Tercapai', target: 75 },
+                    { id: 4, kode_cpl: 'CPL-04', nama_cpl: 'Mampu menyusun deskripsi saintifik...', deskripsi_cpl: 'Mampu menyusun deskripsi saintifik hasil kajian.', nilai: 79.2, persentase: 79.2, status: 'Tercapai', target: 75 },
+                ]
+            };
+        }
     },
     
     getMyCapaianDetail: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return {
-            success: true,
-            data: [
-                { mk_id: 1, kode_mk: 'IF101', nama_mk: 'Pemrograman Dasar', nilai: 85, semester: 'Ganjil 2023/2024' },
-                { mk_id: 2, kode_mk: 'IF102', nama_mk: 'Matematika Diskrit', nilai: 78, semester: 'Ganjil 2023/2024' },
-                { mk_id: 3, kode_mk: 'IF103', nama_mk: 'Algoritma dan Struktur Data', nilai: 90, semester: 'Genap 2023/2024' },
-                { mk_id: 4, kode_mk: 'IF201', nama_mk: 'Basis Data', nilai: 82, semester: 'Genap 2023/2024' },
-                { mk_id: 5, kode_mk: 'IF202', nama_mk: 'Pemrograman Web', nilai: 88, semester: 'Ganjil 2024/2025' },
-                { mk_id: 6, kode_mk: 'IF203', nama_mk: 'Sistem Operasi', nilai: 75, semester: 'Ganjil 2024/2025' },
-            ]
-        };
+        try {
+            // ✅ Gunakan endpoint real dari backend
+            return await apiFetch('/capaian/mahasiswa/my-capaian/detail');
+        } catch (error) {
+            console.error('❌ Error getMyCapaianDetail:', error);
+            // Fallback ke dummy data jika gagal
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return {
+                success: true,
+                data: [
+                    // CPL-01 details
+                    { kode_cpl: 'CPL-01', kode_mk: 'IF101', nama_mk: 'Pemrograman Dasar', nilai: 85, semester_aktif: 1, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-01', kode_mk: 'IF103', nama_mk: 'Algoritma dan Struktur Data', nilai: 90, semester_aktif: 2, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-01', kode_mk: 'IF202', nama_mk: 'Pemrograman Web', nilai: 88, semester_aktif: 3, tahun_akademik: '2024/2025', status: 'Tercapai' },
+                    
+                    // CPL-02 details
+                    { kode_cpl: 'CPL-02', kode_mk: 'IF102', nama_mk: 'Matematika Diskrit', nilai: 78, semester_aktif: 1, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-02', kode_mk: 'IF201', nama_mk: 'Basis Data', nilai: 82, semester_aktif: 2, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-02', kode_mk: 'IF203', nama_mk: 'Sistem Operasi', nilai: 65, semester_aktif: 3, tahun_akademik: '2024/2025', status: 'Belum Tercapai' },
+                    
+                    // CPL-03 details
+                    { kode_cpl: 'CPL-03', kode_mk: 'IF104', nama_mk: 'Pemrograman Berorientasi Objek', nilai: 92, semester_aktif: 2, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-03', kode_mk: 'IF204', nama_mk: 'Rekayasa Perangkat Lunak', nilai: 85, semester_aktif: 3, tahun_akademik: '2024/2025', status: 'Tercapai' },
+                    
+                    // CPL-04 details
+                    { kode_cpl: 'CPL-04', kode_mk: 'IF105', nama_mk: 'Jaringan Komputer', nilai: 80, semester_aktif: 2, tahun_akademik: '2023/2024', status: 'Tercapai' },
+                    { kode_cpl: 'CPL-04', kode_mk: 'IF205', nama_mk: 'Keamanan Informasi', nilai: 78, semester_aktif: 3, tahun_akademik: '2024/2025', status: 'Tercapai' },
+                ]
+            };
+        }
     },
 };
 

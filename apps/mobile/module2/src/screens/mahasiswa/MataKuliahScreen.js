@@ -8,19 +8,43 @@ import { LoadingState, EmptyState } from '../../components';
 // ✅ THEME MAHASISWA (Orange)
 const THEME = ROLE_THEMES.mahasiswa;
 
-export default function MataKuliahScreen() {
+export default function MataKuliahScreen({ user }) {
     const [kelasList, setKelasList]           = useState([]);
     const [loading, setLoading]               = useState(true);
     const [search, setSearch]                 = useState('');
     const [selectedSemester, setSelectedSemester] = useState('all');
+    const [userProdiId, setUserProdiId]       = useState(null);
 
     useEffect(() => {
-        // Endpoint kelas untuk mahasiswa - gunakan getAllKelas
-        mahasiswaApi.getAllKelas()
-            .then(res => setKelasList(res.data || []))
-            .catch(() => setKelasList([]))
-            .finally(() => setLoading(false));
-    }, []);
+        // Ambil prodi_id mahasiswa dari profil
+        const fetchProdiIdAndKelas = async () => {
+            try {
+                const profileRes = await mahasiswaApi.getMyProfile();
+                const profileData = profileRes.data || profileRes;
+                const prodiId = profileData.prodi_id || user?.prodi_id;
+                setUserProdiId(prodiId);
+
+                // Ambil semua kelas lalu filter berdasarkan prodi mahasiswa
+                const kelasRes = await mahasiswaApi.getAllKelas();
+                const allKelas = kelasRes.data || [];
+                
+                // Filter kelas berdasarkan prodi_id mahasiswa
+                // Kelas memiliki relasi ke mata_kuliah yang memiliki prodi_id
+                const filteredKelas = prodiId 
+                    ? allKelas.filter(k => String(k.prodi_id) === String(prodiId))
+                    : allKelas;
+                
+                setKelasList(filteredKelas);
+            } catch (error) {
+                console.error('Error fetching kelas:', error);
+                setKelasList([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProdiIdAndKelas();
+    }, [user]);
 
     const semesters = [...new Set(kelasList.map(k => k.semester).filter(Boolean))];
 

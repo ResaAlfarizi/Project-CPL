@@ -59,9 +59,9 @@ export default function MahasiswaMainScreen() {
             case 'program_studi':
                 return <ProgramStudiScreen user={user} />;
             case 'mata_kuliah':
-                return <MataKuliahScreen />;
+                return <MataKuliahScreen user={user} />;
             case 'sub_cpmk':
-                return <SubCpmkScreen />;
+                return <SubCpmkScreen user={user} />;
             case 'capaian':
                 return <CapaianScreen user={user} />;
             default:
