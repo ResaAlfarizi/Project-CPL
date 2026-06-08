@@ -36,6 +36,9 @@ interface SubCpmk {
   id: string;
   kode_sub_cpmk: string;
   deskripsi?: string;
+  kode_cpl?: string;
+  nama_cpl?: string;
+  nama_mk?: string;
 }
 
 export default function InputNilaiPage() {
@@ -222,7 +225,11 @@ export default function InputNilaiPage() {
                     >
                       <option value="">-- Pilih --</option>
                       {subCpmks.map(sc => (
-                        <option key={sc.id} value={sc.id}>{sc.kode_sub_cpmk}</option>
+                        <option key={sc.id} value={sc.id}>
+                          {sc.kode_sub_cpmk}
+                          {sc.kode_cpl ? ` → CPL: ${sc.kode_cpl}` : ''}
+                          {sc.deskripsi ? ` - ${sc.deskripsi.substring(0, 50)}${sc.deskripsi.length > 50 ? '...' : ''}` : ''}
+                        </option>
                       ))}
                     </select>
                   </div>

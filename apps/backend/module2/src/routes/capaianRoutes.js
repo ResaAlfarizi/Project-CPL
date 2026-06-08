@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const {
+  getAllCapaianHandler, // ✅ Import handler baru
   getCapaianMahasiswaHandler,
   getCapaianMahasiswaByIdHandler,
   getCapaianProdiHandler,
@@ -25,6 +26,14 @@ const authorize = require("../middlewares/roleMiddleware");
  * - DOSEN: R (Read - data sendiri)
  * - MAHASISWA: R (Read - data sendiri)
  */
+
+// ✅ BARU: GET semua capaian CPL mahasiswa (untuk superadmin monitoring global) - SUPERADMIN only
+router.get(
+  "/",
+  authMiddleware,
+  authorize("Superadmin"),
+  getAllCapaianHandler
+);
 
 // GET capaian CPL mahasiswa (untuk mahasiswa melihat capaiannya) - MAHASISWA (data sendiri)
 router.get(

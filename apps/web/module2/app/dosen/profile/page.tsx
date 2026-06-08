@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Loading from '@/components/Loading';
 import ErrorMessage from '@/components/ErrorMessage';
+import { authStorage } from '@/lib/auth';
 
 interface DosenProfile {
   id: string;
@@ -11,8 +12,6 @@ interface DosenProfile {
   nama: string;
   email: string;
   prodi: string;
-  total_kelas: number;
-  total_mahasiswa: number;
 }
 
 export default function ProfilePage() {
@@ -23,25 +22,60 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
       setError('');
       
+      // Get token and decode to get login email
+      const token = authStorage.getToken();
+      const decodedToken = authStorage.decodeToken(token || '');
+      const entityId = (user as any)?.entity_id || (decodedToken as any)?.entity_id;
+      
+      // Get email from user context or decoded token (this is the login email)
+      const loginEmail = user?.email || (decodedToken as any)?.email;
+      
+      console.log('User context:', user);
+      console.log('Decoded token:', decodedToken);
+      console.log('Login email:', loginEmail);
+      
       // Import API
       const { profileApi } = await import('@/lib/api');
       const response = await profileApi.getMyProfile();
       
+      console.log('Profile API response:', response.data);
+      
+      let nidn = '-';
+      
+      // Fetch NIDN from dosen table using entity_id
+      if (entityId && token) {
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+          const dosenRes = await fetch(`${API_URL}/api/v1/m1/dosen`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          
+          if (dosenRes.ok) {
+            const dosenData = await dosenRes.json();
+            const dosenList = dosenData.data || dosenData;
+            const currentDosen = dosenList.find((d: any) => d.id === entityId);
+            if (currentDosen) {
+              nidn = currentDosen.nidn || '-';
+            }
+          }
+        } catch (e) {
+          console.log('Could not fetch NIDN:', e);
+        }
+      }
+
       setProfile({
         id: response.data.id,
-        nidn: response.data.nidn,
+        nidn: nidn,
         nama: response.data.nama,
-        email: response.data.email,
+        email: loginEmail || response.data.email || '-',
         prodi: response.data.nama_prodi,
-        total_kelas: parseInt(response.data.total_kelas) || 0,
-        total_mahasiswa: parseInt(response.data.total_mahasiswa) || 0,
       });
       setLoading(false);
     } catch (err: any) {
@@ -103,39 +137,12 @@ export default function ProfilePage() {
                 <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>
                   {profile?.nama || 'Nama Dosen'}
                 </h2>
-                <p style={{ fontSize: '15px', color: '#6b7280', marginBottom: '16px' }}>
+                <p style={{ fontSize: '15px', color: '#6b7280', marginBottom: '4px' }}>
+                  NIDN: <span style={{ fontWeight: '600', color: '#111827' }}>{profile?.nidn || '-'}</span>
+                </p>
+                <p style={{ fontSize: '15px', color: '#6b7280' }}>
                   {profile?.prodi || 'Program Studi'}
                 </p>
-
-                <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-                  <div style={{
-                    padding: '12px 20px',
-                    borderRadius: '12px',
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                  }}>
-                    <p style={{ fontSize: '12px', color: '#15803d', fontWeight: '600', marginBottom: '4px' }}>
-                      Total Kelas
-                    </p>
-                    <p style={{ fontSize: '24px', fontWeight: '700', color: '#15803d' }}>
-                      {profile?.total_kelas || 0}
-                    </p>
-                  </div>
-
-                  <div style={{
-                    padding: '12px 20px',
-                    borderRadius: '12px',
-                    background: '#eff6ff',
-                    border: '1px solid #bfdbfe',
-                  }}>
-                    <p style={{ fontSize: '12px', color: '#1e40af', fontWeight: '600', marginBottom: '4px' }}>
-                      Total Mahasiswa
-                    </p>
-                    <p style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af' }}>
-                      {profile?.total_mahasiswa || 0}
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

@@ -4,13 +4,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import LandingScreen from '../screens/LandingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
-
 import DosenMainScreen from '../screens/dosen/DosenMainScreen';
-
 import MahasiswaMainScreen from '../screens/mahasiswa/MahasiswaMainScreen';
-
 import AdminNavigation from '../screens/admin-prodi/admin_navigation';
-
 import SuperAdminNavigation from '../screens/super-admin/superadmin_navigation';
 
 const Stack = createNativeStackNavigator();

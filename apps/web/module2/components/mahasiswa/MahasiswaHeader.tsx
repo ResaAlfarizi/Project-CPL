@@ -4,51 +4,54 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { authStorage } from '@/lib/auth';
+import { mahasiswaApi } from '@/lib/api';
 
-interface DosenHeaderProps {
+interface MahasiswaHeaderProps {
   onToggleSidebar: () => void;
   sidebarCollapsed: boolean;
 }
 
-export default function DosenHeader({ onToggleSidebar, sidebarCollapsed }: DosenHeaderProps) {
+export default function MahasiswaHeader({ onToggleSidebar, sidebarCollapsed }: MahasiswaHeaderProps) {
   const { logout, user } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [displayEmail, setDisplayEmail] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch email from profile API
+  // Fetch nama & email dari profil mahasiswa
   useEffect(() => {
-    const fetchEmail = async () => {
+    const fetchProfile = async () => {
       try {
+        // Coba ambil dari token dulu
         const token = authStorage.getToken();
-        if (!token) return;
-        
-        const decodedToken = authStorage.decodeToken(token);
-        const emailFromToken = (decodedToken as any)?.email;
-        
-        if (emailFromToken) {
-          setUserEmail(emailFromToken);
-        } else {
-          // Fallback: fetch from profile API
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-          const res = await fetch(`${API_URL}/api/v1/m2/profile/me`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          });
-          
-          if (res.ok) {
-            const data = await res.json();
-            setUserEmail(data.data?.email || data.email || '');
+        if (token) {
+          const decoded = authStorage.decodeToken(token);
+          if (decoded) {
+            if (decoded.nama || decoded.name) {
+              setDisplayName(decoded.nama || decoded.name || '');
+            }
+            if (decoded.email) {
+              setDisplayEmail(decoded.email);
+            }
           }
         }
+
+        // Fetch profil lengkap dari API untuk nama yang benar
+        const res = await mahasiswaApi.getMyProfile();
+        const profile = res?.data || res;
+        if (profile?.nama) setDisplayName(profile.nama);
+        if (profile?.email) setDisplayEmail(profile.email);
       } catch (e) {
-        console.log('Could not fetch email for header:', e);
+        // fallback ke data dari user context
+        if (user?.nama || user?.name) setDisplayName(user.nama || user.name || '');
+        if (user?.email) setDisplayEmail(user.email);
       }
     };
-    
-    fetchEmail();
-  }, []);
 
-  const displayEmail = userEmail || user?.email || 'dosen@if.ac.id';
+    fetchProfile();
+  }, [user]);
+
+  const avatarLetter = displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'M';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -142,16 +145,16 @@ export default function DosenHeader({ onToggleSidebar, sidebarCollapsed }: Dosen
             fontSize: '16px',
             flexShrink: 0,
           }}>
-            {user?.nama?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'D'}
+            {avatarLetter}
           </div>
 
           {/* User info */}
           <div style={{ textAlign: 'left', display: 'none' }} className="user-info-desktop">
             <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', lineHeight: 1.2 }}>
-              {user?.nama || user?.role || 'Dosen'}
+              {displayName || 'Mahasiswa'}
             </p>
             <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-              {displayEmail}
+              {displayEmail || user?.email || ''}
             </p>
           </div>
 
@@ -207,14 +210,14 @@ export default function DosenHeader({ onToggleSidebar, sidebarCollapsed }: Dosen
                   fontWeight: '700',
                   fontSize: '20px',
                 }}>
-                  {user?.nama?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'D'}
+                  {avatarLetter}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: '15px', fontWeight: '600', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {user?.nama || user?.role || 'Dosen'}
+                    {displayName || 'Mahasiswa'}
                   </p>
                   <p style={{ fontSize: '13px', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>
-                    {displayEmail}
+                    {displayEmail || user?.email || ''}
                   </p>
                 </div>
               </div>
@@ -223,7 +226,7 @@ export default function DosenHeader({ onToggleSidebar, sidebarCollapsed }: Dosen
             {/* Menu items */}
             <div style={{ padding: '8px' }}>
               <Link
-                href="/dosen/profile"
+                href="/mahasiswa/profil"
                 onClick={() => setDropdownOpen(false)}
                 style={{
                   display: 'flex',

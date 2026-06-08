@@ -6,6 +6,7 @@ const {
   getLoginStatistics,
   getUsersWithMostFailedLogins,
   deleteOldAuthAuditLog,
+  deleteAuthAuditLogByUserId, // ✅ Import fungsi baru
 } = require("../models/authAuditLogModel");
 
 const { successResponse, errorResponse } = require("../utils/response");
@@ -139,6 +140,27 @@ const deleteOldAuthAuditLogHandler = async (req, res) => {
   }
 };
 
+// ✅ BARU: DELETE auth audit log berdasarkan user_id (untuk cascade delete)
+const deleteAuthAuditLogByUserHandler = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    
+    if (!user_id) {
+      return errorResponse(res, "User ID tidak ditemukan", 400);
+    }
+    
+    const result = await deleteAuthAuditLogByUserId(user_id);
+
+    return successResponse(
+      res,
+      result,
+      `Berhasil menghapus ${result.deleted_count || 0} audit log untuk user ID ${user_id}`
+    );
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
 module.exports = {
   getAllAuthAuditLogHandler,
   getAuthAuditLogByIdHandler,
@@ -147,4 +169,5 @@ module.exports = {
   getLoginStatisticsHandler,
   getUsersWithMostFailedLoginsHandler,
   deleteOldAuthAuditLogHandler,
+  deleteAuthAuditLogByUserHandler, // ✅ Export handler baru
 };

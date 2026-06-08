@@ -191,6 +191,18 @@ const deleteOldAuthAuditLog = async (days = 90) => {
   return result.rows[0];
 };
 
+// ✅ BARU: Hapus auth audit log berdasarkan user_id (untuk cascade delete)
+const deleteAuthAuditLogByUserId = async (userId) => {
+  const query = `
+    DELETE FROM auth_audit_log 
+    WHERE user_id = $1
+    RETURNING COUNT(*) as deleted_count
+  `;
+
+  const result = await pool.query(query, [userId]);
+  return result.rows[0];
+};
+
 module.exports = {
   getAllAuthAuditLog,
   getAuthAuditLogById,
@@ -200,4 +212,5 @@ module.exports = {
   getUsersWithMostFailedLogins,
   createAuthAuditLog,
   deleteOldAuthAuditLog,
+  deleteAuthAuditLogByUserId, // ✅ Export fungsi baru
 };

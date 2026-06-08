@@ -48,39 +48,107 @@ export default function AdminProdiDashboard() {
         
         // Get dashboard data if available
         try {
-          const dashRes = await dashboardApi.getDosen();
-          if (dashRes.data && dashRes.data.statistik) {
-            setStats({
-              total_cpl: dashRes.data.statistik.total_cpl || 0,
-              total_cpmk: dashRes.data.statistik.total_cpmk || 0,
-              total_dosen: dashRes.data.statistik.total_dosen || 0,
-              total_mahasiswa: dashRes.data.statistik.total_mahasiswa || 0,
-            });
-          }
-        } catch {
-          // Fallback: Get data from individual APIs
-          const [usersRes, cplRes] = await Promise.all([
+          // Get user's prodi_id
+          const profileRes = await profileApi.getMyProfile();
+          const userProdiId = profileRes.data.prodi_id;
+          
+          console.log('Admin Prodi ID:', userProdiId);
+          
+          // Fetch all data in parallel
+          const [usersRes, cplRes, subCpmkRes, mhsModul1Res] = await Promise.all([
             userApi.getAll().catch(() => ({ data: [] })),
             cplApi.getAll().catch(() => ({ data: [] })),
+            (await import('@/lib/api')).subCpmkApi.getAll().catch(() => ({ data: [] })),
+            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/m1/mahasiswa`, {
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            }).then(r => r.json()).catch(() => ({ data: [] })),
           ]);
           
           const users = usersRes.data || [];
-          const userProdiId = (user as any)?.prodi_id;
-          const dosen = users.filter((u: any) => u.role === 'Dosen' && (!userProdiId || u.prodi_id === userProdiId));
-          const mahasiswa = users.filter((u: any) => u.role === 'Mahasiswa' && (!userProdiId || u.prodi_id === userProdiId));
+          const allCpl = cplRes.data || [];
+          const allSubCpmk = subCpmkRes.data || [];
+          const allMahasiswa = mhsModul1Res.data || [];
+          
+          console.log('Total users:', users.length);
+          console.log('Total CPL:', allCpl.length);
+          console.log('Total Sub-CPMK:', allSubCpmk.length);
+          console.log('Total Mahasiswa:', allMahasiswa.length);
+          
+          // Filter dosen by prodi_id (from users table where role='dosen')
+          const dosenByProdi = userProdiId
+            ? users.filter((u: any) => u.role === 'dosen' && String(u.prodi_id) === String(userProdiId))
+            : users.filter((u: any) => u.role === 'dosen');
+          
+          console.log('Dosen by prodi:', dosenByProdi.length, dosenByProdi);
           
           // Filter CPL by prodi_id
-          const allCpl = cplRes.data || [];
           const cplByProdi = userProdiId 
-            ? allCpl.filter((c: any) => c.prodi_id === userProdiId)
+            ? allCpl.filter((c: any) => String(c.prodi_id) === String(userProdiId))
             : allCpl;
+          
+          console.log('CPL by prodi:', cplByProdi.length, cplByProdi);
+          
+          // Filter mahasiswa by prodi_id
+          const mhsByProdi = userProdiId
+            ? allMahasiswa.filter((m: any) => String(m.prodi_id) === String(userProdiId))
+            : allMahasiswa;
+          
+          console.log('Mahasiswa by prodi:', mhsByProdi.length, mhsByProdi);
+          
+          // Count CPMK (Sub-CPMK) - need to filter by CPL's prodi
+          const cplIds = cplByProdi.map((c: any) => c.id);
+          
+          // Get all MK-CPL and count sub-cpmk
+          let cpmkCount = 0;
+          if (cplIds.length > 0) {
+            const mkCplRes = await (await import('@/lib/api')).mkCplApi.getAll().catch(() => ({ data: [] }));
+            const mkCplFiltered = (mkCplRes.data || []).filter((mc: any) => 
+              cplIds.includes(mc.cpl_id)
+            );
+            const mkCplIds = mkCplFiltered.map((mc: any) => mc.id);
+            cpmkCount = allSubCpmk.filter((sc: any) => mkCplIds.includes(sc.mk_cpl_id)).length;
+            
+            console.log('MK-CPL filtered:', mkCplFiltered.length);
+            console.log('CPMK count:', cpmkCount);
+          }
           
           setStats({
             total_cpl: cplByProdi.length,
-            total_cpmk: 0, // Will be calculated from CPMK API if needed
-            total_dosen: dosen.length,
-            total_mahasiswa: mahasiswa.length,
+            total_cpmk: cpmkCount,
+            total_dosen: dosenByProdi.length,
+            total_mahasiswa: mhsByProdi.length,
           });
+        } catch (error) {
+          console.error('Error in main stats fetch:', error);
+          // Fallback: Get data from individual APIs
+          try {
+            const [usersRes, cplRes] = await Promise.all([
+              userApi.getAll().catch(() => ({ data: [] })),
+              cplApi.getAll().catch(() => ({ data: [] })),
+            ]);
+            
+            const users = usersRes.data || [];
+            const userProdiId = (user as any)?.prodi_id;
+            const dosen = users.filter((u: any) => u.role === 'dosen' && (!userProdiId || String(u.prodi_id) === String(userProdiId)));
+            const mahasiswa = users.filter((u: any) => u.role === 'mahasiswa' && (!userProdiId || String(u.prodi_id) === String(userProdiId)));
+            
+            // Filter CPL by prodi_id
+            const allCpl = cplRes.data || [];
+            const cplByProdi = userProdiId 
+              ? allCpl.filter((c: any) => String(c.prodi_id) === String(userProdiId))
+              : allCpl;
+            
+            console.log('Fallback stats - Dosen:', dosen.length, 'Mahasiswa:', mahasiswa.length, 'CPL:', cplByProdi.length);
+            
+            setStats({
+              total_cpl: cplByProdi.length,
+              total_cpmk: 0, // Will be calculated from CPMK API if needed
+              total_dosen: dosen.length,
+              total_mahasiswa: mahasiswa.length,
+            });
+          } catch (fallbackError) {
+            console.error('Error in fallback stats fetch:', fallbackError);
+          }
         }
       } catch (error) {
         console.error('Error loading stats:', error);

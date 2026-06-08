@@ -9,6 +9,7 @@ const {
   getLoginStatisticsHandler,
   getUsersWithMostFailedLoginsHandler,
   deleteOldAuthAuditLogHandler,
+  deleteAuthAuditLogByUserHandler, // ✅ Import handler baru
 } = require("../controllers/authAuditLogController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -78,6 +79,14 @@ router.delete(
   authMiddleware,
   authorize("Superadmin"),
   deleteOldAuthAuditLogHandler
+);
+
+// ✅ BARU: DELETE auth audit log berdasarkan user_id - SUPERADMIN only (untuk cascade delete)
+router.delete(
+  "/user/:user_id",
+  authMiddleware,
+  authorize("Superadmin"),
+  deleteAuthAuditLogByUserHandler
 );
 
 module.exports = router;
