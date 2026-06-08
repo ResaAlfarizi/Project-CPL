@@ -21,7 +21,20 @@ const { successResponse, errorResponse } = require("../utils/response");
 // GET semua nilai
 const getAllNilaiHandler = async (req, res) => {
   try {
-    const nilai = await getAllNilai();
+    const role = req.user.role;
+    let nilai;
+    
+    // Jika Admin Prodi, filter berdasarkan prodi_id mereka
+    if (role === 'Admin Prodi') {
+      const prodiId = req.user.entity_id; // Admin Prodi entity_id = prodi_id
+      nilai = await getAllNilai();
+      // Filter hanya nilai dari mahasiswa prodi ini
+      nilai = nilai.filter(n => String(n.prodi_id) === String(prodiId));
+    } else {
+      // Superadmin melihat semua
+      nilai = await getAllNilai();
+    }
+    
     return successResponse(res, nilai, "Berhasil mengambil data nilai");
   } catch (error) {
     return errorResponse(res, error.message, 500);

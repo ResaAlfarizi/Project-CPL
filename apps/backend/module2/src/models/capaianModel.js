@@ -67,22 +67,31 @@ const getCapaianByMahasiswaId = async (mahasiswaId) => {
 // Ambil capaian CPL untuk seluruh mahasiswa di prodi
 const getCapaianByProdiId = async (prodiId) => {
   const query = `
+    WITH rata_rata_cpl AS (
+      SELECT 
+        v.cpl_id,
+        c.kode_cpl,
+        c.deskripsi as deskripsi_cpl,
+        ROUND(AVG(v.nilai_cpl_total)::numeric, 2) as rata_rata_nilai,
+        COUNT(DISTINCT v.mahasiswa_id) as jumlah_mahasiswa
+      FROM v_capaian_cpl_mahasiswa v
+      JOIN cpl c ON v.cpl_id = c.id
+      JOIN mahasiswa m ON v.mahasiswa_id = m.id
+      WHERE m.prodi_id = $1
+      GROUP BY v.cpl_id, c.kode_cpl, c.deskripsi
+    )
     SELECT 
-      v.cpl_id,
-      c.kode_cpl,
-      c.deskripsi as deskripsi_cpl,
-      ROUND(AVG(v.nilai_cpl_total)::numeric, 2) as rata_rata_nilai,
-      COUNT(DISTINCT v.mahasiswa_id) as jumlah_mahasiswa,
+      rc.cpl_id,
+      rc.kode_cpl,
+      rc.deskripsi_cpl,
+      rc.rata_rata_nilai,
+      rc.jumlah_mahasiswa,
       ts.nilai_min as nilai_minimum,
       ts.nama_status as status_capaian
-    FROM v_capaian_cpl_mahasiswa v
-    JOIN cpl c ON v.cpl_id = c.id
-    JOIN mahasiswa m ON v.mahasiswa_id = m.id
-    LEFT JOIN threshold_status ts ON m.prodi_id = ts.prodi_id 
-      AND AVG(v.nilai_cpl_total) BETWEEN ts.nilai_min AND ts.nilai_max
-    WHERE m.prodi_id = $1
-    GROUP BY v.cpl_id, c.kode_cpl, c.deskripsi, ts.nilai_min, ts.nama_status
-    ORDER BY c.kode_cpl
+    FROM rata_rata_cpl rc
+    LEFT JOIN threshold_status ts ON ts.prodi_id = $1
+      AND rc.rata_rata_nilai BETWEEN ts.nilai_min AND ts.nilai_max
+    ORDER BY rc.kode_cpl
   `;
 
   const result = await pool.query(query, [prodiId]);

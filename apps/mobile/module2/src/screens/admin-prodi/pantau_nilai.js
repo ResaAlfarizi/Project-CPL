@@ -24,7 +24,8 @@ const PRIMARY_BLUE = BASE.primaryLight;
 export default function PantauNilaiScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [adminProdiId, setAdminProdiId] = useState(null); // ✅ State prodi_id admin
+  const [adminProdiId, setAdminProdiId] = useState(null);
+  const [adminKodeProdi, setAdminKodeProdi] = useState(null); // ✅ Tambah state kode_prodi
 
   // State Filter
   const [filterMk, setFilterMk] = useState('Semua');
@@ -52,29 +53,33 @@ export default function PantauNilaiScreen({ navigation }) {
   const fetchNilaiMahasiswa = async () => {
     setIsLoading(true);
     try {
-      // 1. Ambil profil admin untuk dapat prodi_id
+      // 1. Ambil profil admin untuk dapat prodi_id dan kode_prodi
       let currentProdiId = adminProdiId;
-      if (!currentProdiId) {
+      let currentKodeProdi = adminKodeProdi;
+      
+      if (!currentProdiId || !currentKodeProdi) {
         const profile = await profileApi.getAdmin();
         currentProdiId = profile?.data?.prodi_id || profile?.prodi_id || profile?.data?.entity_id;
+        currentKodeProdi = profile?.data?.kode_prodi || profile?.kode_prodi;
+        
         setAdminProdiId(currentProdiId);
+        setAdminKodeProdi(currentKodeProdi);
+        
+        console.log('Admin Profile:', { currentProdiId, currentKodeProdi });
       }
       
-      // 2. Ambil semua data nilai dari backend
+      // 2. Ambil data nilai dari backend (backend sudah auto-filter by prodi untuk Admin Prodi)
       const result = await nilaiApi.getAll();
       const fetchedData = result && result.data && Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : []);
       
-      // 3. ✅ FILTER: Hanya tampilkan nilai dari mahasiswa prodi admin ini
-      const filteredByProdi = fetchedData.filter(item => {
-        // Cek prodi_id dari mahasiswa atau dari mata kuliah
-        const itemProdiId = item.prodi_id || item.mahasiswa_prodi_id || item.mk_prodi_id;
-        return String(itemProdiId) === String(currentProdiId);
-      });
+      console.log('Fetched Data Sample:', fetchedData[0]); // Debug
       
-      // 4. 🌟 NORMALISASI DATA: Memetakan kolom database agar sesuai radar UI aplikasi
-      const normalizedData = filteredByProdi.map(item => {
-        // Ambil nilai tanggal mentah dari kolom input_at atau created_at database kamu
+      // 3. 🌟 NORMALISASI DATA: Memetakan kolom database agar sesuai radar UI aplikasi
+      const normalizedData = fetchedData.map(item => {
         const tanggalMentah = item.input_at || item.created_at || item.tanggal_input || item.tanggal || '-';
+        
+        // Ambil kode_mk dari data
+        const kodeMk = item.kode_mk || '';
 
         return {
           ...item,
@@ -84,17 +89,28 @@ export default function PantauNilaiScreen({ navigation }) {
           nilai: item.nilai !== undefined ? item.nilai : (item.score || 0),
           
           // Penyelaras database mata kuliah
+          kode_mk: kodeMk,
           mk: item.nama_mk || item.mk || item.mata_kuliah || item.matakuliah || 'Mata Kuliah',
           
           // Penyelaras database sub-cpmk (kode_sub_cpmk)
           subcpmk: item.kode_sub_cpmk || item.subcpmk || item.kode_subcpmk || item.sub_cpmk || item.kode || '-',
           
-          // 🔥 Tanggal mentah dikirim ke fungsi helper agar terformat rapi
+          // Tanggal
           tanggal_input: formatTanggal(tanggalMentah)
         };
       });
 
-      setData(normalizedData);
+      // 4. ✅ FILTER TAMBAHAN: Pastikan hanya mata kuliah dengan kode sesuai prodi
+      // Contoh: Admin IF hanya lihat kode_mk yang dimulai dengan "IF"
+      const filteredByKodeProdi = currentKodeProdi 
+        ? normalizedData.filter(item => {
+            const kodeMk = item.kode_mk || '';
+            return kodeMk.toUpperCase().startsWith(currentKodeProdi.toUpperCase());
+          })
+        : normalizedData;
+
+      console.log('Filtered Data Count:', filteredByKodeProdi.length, 'dari', normalizedData.length);
+      setData(filteredByKodeProdi);
     } catch (error) {
       console.error("Gagal menarik data nilai:", error);
       setData([]);

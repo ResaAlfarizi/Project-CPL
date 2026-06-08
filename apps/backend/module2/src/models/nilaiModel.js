@@ -17,6 +17,7 @@ const getAllNilai = async () => {
       n.input_at,
       m.nim,
       m.nama as nama_mahasiswa,
+      m.prodi_id,
       k.tahun_akademik,
       k.semester_aktif,
       mk.kode_mk,

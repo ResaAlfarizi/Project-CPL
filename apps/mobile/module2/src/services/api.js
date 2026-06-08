@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // PENTING: Ganti dengan IP komputer Anda yang menjalankan backend
-const API_BASE = 'http://20.5.24.71:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
-const API_BASE_M1 = 'http://20.5.24.71:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
+const API_BASE = 'http://20.5.30.158:3000/api/v1/m2'; // GANTI IP INI JIKA BERUBAH!
+const API_BASE_M1 = 'http://20.5.30.158:3000/api/v1/m1'; // Module 1 untuk dosen, mahasiswa, prodi
 
 const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -348,6 +348,7 @@ export const capaianApi = {
     getByKelas:     (kelasId)   => apiFetch(`/capaian/kelas/${kelasId}`),
     getAll:         ()          => apiFetch('/capaian'), 
     getByProdi:     (prodiId)   => apiFetch(`/capaian/prodi/${prodiId}`),
+    getByMahasiswaId: (mahasiswaId) => apiFetch(`/capaian/mahasiswa/${mahasiswaId}`),
     create:         (body)      => apiFetch('/capaian', { method: 'POST', body: JSON.stringify(body) }),
     update: (mahasiswa_id, cpl_id, body) => apiFetch(`/capaian/${mahasiswa_id}/${cpl_id}`, { method: 'PUT', body: JSON.stringify(body) }),
     delete: (mahasiswa_id, cpl_id)           => apiFetch(`/capaian/${mahasiswa_id}/${cpl_id}`, { method: 'DELETE' }),
