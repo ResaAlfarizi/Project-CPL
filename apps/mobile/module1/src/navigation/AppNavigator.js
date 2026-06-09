@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text } from 'react-native';
+import { TouchableOpacity, Text, View, Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Colors } from '../theme';
@@ -12,7 +12,6 @@ import MKDetailScreen from '../screens/MKDetailScreen';
 import MappingScreen from '../screens/MappingScreen';
 import SubCPMKScreen from '../screens/SubCPMKScreen';
 import ThresholdScreen from '../screens/ThresholdScreen';
-import SettingsScreen from '../screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,6 +30,14 @@ const screenOptions = {
     backgroundColor: Colors.screenBg,
   },
   animation: 'slide_from_right',
+  headerRight: () => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingRight: 8 }}>
+      <Text style={{ color: Colors.ghostWhite, fontFamily: 'Urbanist_600SemiBold', fontSize: 14 }}>👤 Admin</Text>
+      <TouchableOpacity onPress={() => Alert.alert('Logout', 'Anda telah keluar')}>
+        <Text style={{ color: '#ef4444', fontFamily: 'Urbanist_700Bold', fontSize: 14 }}>Keluar</Text>
+      </TouchableOpacity>
+    </View>
+  ),
 };
 
 export default function AppNavigator() {
@@ -46,11 +53,6 @@ export default function AppNavigator() {
               fontFamily: 'Urbanist_700Bold',
               fontSize: 18,
             },
-            headerRight: () => (
-              <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ paddingRight: 5 }}>
-                <Text style={{ fontSize: 20 }}>⚙️</Text>
-              </TouchableOpacity>
-            ),
           })}
         />
         <Stack.Screen
@@ -89,11 +91,6 @@ export default function AppNavigator() {
           name="ThresholdList"
           component={ThresholdScreen}
           options={{ title: 'Konfigurasi Threshold' }}
-        />
-        <Stack.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{ title: 'Pengaturan IP' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
