@@ -300,7 +300,8 @@ export default function MappingPage() {
                     <tbody>
                       {mappings.map((map, index) => (
                         <tr key={map.id || index}>
-                          <td style={{ whiteSpace: 'nowrap' }}><span className="badge badge-green" style={{ fontFamily: 'monospace' }}>{getCplCode(map.cpl_id)}</span></td>                          <td style={{ fontSize: 13 }}>{cpl.find(c => c.id === map.cpl_id)?.deskripsi?.slice(0, 80) || '—'}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}><span className="badge badge-green" style={{ fontFamily: 'monospace' }}>{getCplCode(map.cpl_id)}</span></td>
+                          <td style={{ fontSize: 13 }}>{cpl.find(c => c.id === map.cpl_id)?.deskripsi?.slice(0, 80) || '—'}</td>
                           <td><span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{Number(map.bobot).toFixed(4)}</span></td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
