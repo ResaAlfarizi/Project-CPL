@@ -370,7 +370,7 @@ export default function MappingPage() {
                   Belum ada CPL dipetakan ke MK ini
                 </div>
               ) : (
-                <div className="sa-table-wrapper" style={{ margin: '0', borderRadius: '0', border: 'none', borderTop: '1px solid #f3f4f6' }}>
+                <div className="sa-table-wrapper" style={{ margin: '0', borderRadius: '0', borderLeft: 'none', borderRight: 'none', borderBottom: 'none', borderTop: '1px solid #f3f4f6' }}>
                   <table className="sa-table">
                     <thead>
                       <tr>

@@ -39,3 +39,19 @@ exports.saveThreshold = async (req, res) => {
     return res.status(500).json({ status: "Error", message: error.message });
   }
 };
+
+exports.deleteThreshold = async (req, res) => {
+  const { prodi_id } = req.params;
+  if (!prodi_id) {
+    return res.status(400).json({ status: "Error", message: "prodi_id diperlukan!" });
+  }
+  try {
+    const deleted = await Threshold.deleteByProdi(prodi_id);
+    if (!deleted.length) {
+      return res.status(404).json({ status: "Error", message: "Tidak ada threshold untuk prodi ini!" });
+    }
+    return res.status(200).json({ status: "Success", message: "Threshold berhasil dihapus" });
+  } catch (error) {
+    return res.status(500).json({ status: "Error", message: error.message });
+  }
+};

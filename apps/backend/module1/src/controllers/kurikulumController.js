@@ -139,9 +139,9 @@ exports.saveMappingMKCPL = async (req, res) => {
 
     const totalBobot = sanitizedMappings.reduce((sum, item) => sum + item.bobot, 0);
     if (Math.abs(totalBobot - 1.0) > 0.0001) {
-      return res.status(400).json({ 
-        status: "Error", 
-        message: `Total akumulasi bobot adalah ${totalBobot}. Batas akumulasi harus tepat berharga 1.0 (100%)!` 
+      return res.status(400).json({
+        status: "Error",
+        message: `Total akumulasi bobot adalah ${totalBobot}. Batas akumulasi harus tepat berharga 1.0 (100%)!`
       });
     }
 

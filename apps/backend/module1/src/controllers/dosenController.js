@@ -13,11 +13,14 @@ exports.getAllDosen = async (req, res) => {
 
 exports.createDosen = async (req, res) => {
   const { nidn, nama, prodi_id, email } = req.body;
-  
-  if (!nidn || !nama || !email || !prodi_id) {
-    return res.status(400).json({ status: "Error", message: "NIDN, Nama, Prodi ID, dan Email Dosen wajib diisi!" });
+
+  if (!nidn || !nama) {
+    return res.status(400).json({ status: "Error", message: "NIDN dan Nama Dosen wajib diisi!" });
   }
-  
+
+  const finalEmail = email || `${nidn}@dosen.ac.id`;
+  const finalProdiId = prodi_id || null;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -41,14 +44,14 @@ exports.createDosen = async (req, res) => {
       INSERT INTO users (email, password_hash, role_id, prodi_id, entity_type, entity_id)
       VALUES ($1, $2, $3, $4, 'dosen', $5)
     `;
-    await client.query(userQuery, [email, passwordHash, roleId, prodi_id, newDosen.id]);
+    await client.query(userQuery, [finalEmail, passwordHash, roleId, finalProdiId, newDosen.id]);
 
     await client.query('COMMIT');
-    
-    res.status(201).json({ 
-      status: "Success", 
+
+    res.status(201).json({
+      status: "Success",
       message: `Dosen baru terdaftar. Akun login dibuat otomatis dengan password default: ${passwordDefault}`,
-      data: newDosen 
+      data: newDosen
     });
   } catch (error) {
     await client.query('ROLLBACK');

@@ -60,7 +60,7 @@ export const MkCplAPI = {
 
 export const SubCpmkAPI = {
   listAll: () => fetchAPI('/kurikulum/sub-cpmk'),
-  saveBatch: (mk_cpl_id, subCpmks) => fetchAPI('/kurikulum/sub-cpmk', {
+  saveBatch: (mk_cpl_id, subCpmks) => fetchAPI('/kurikulum/sub-cpmk/batch', {
     method: 'POST',
     body: JSON.stringify({ mk_cpl_id, subCpmks })
   })
@@ -71,5 +71,6 @@ export const ThresholdAPI = {
   save: (prodi_id, thresholds) => fetchAPI('/threshold', {
     method: 'POST',
     body: JSON.stringify({ prodi_id, thresholds })
-  })
+  }),
+  delete: (prodi_id) => fetchAPI(`/threshold/${prodi_id}`, { method: 'DELETE' })
 };

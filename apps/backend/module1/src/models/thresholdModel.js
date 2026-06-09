@@ -26,6 +26,14 @@ const Threshold = {
   getAll: async () => {
     const result = await pool.query('SELECT * FROM threshold_status');
     return result.rows;
+  },
+
+  deleteByProdi: async (prodi_id) => {
+    const result = await pool.query(
+      'DELETE FROM threshold_status WHERE prodi_id = $1 RETURNING *',
+      [prodi_id]
+    );
+    return result.rows;
   }
 };
 

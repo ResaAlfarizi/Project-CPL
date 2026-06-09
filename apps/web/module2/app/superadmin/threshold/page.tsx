@@ -101,16 +101,19 @@ export default function ThresholdPage() {
     }
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/m1/threshold/${selectedProdi}`, {
+      const response = await fetch(`http://localhost:3000/api/v1/m1/threshold`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
-        body: JSON.stringify({ thresholds }),
+        body: JSON.stringify({ prodi_id: selectedProdi, thresholds }),
       });
 
-      if (!response.ok) throw new Error('Gagal menyimpan threshold');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Gagal menyimpan threshold');
+      }
 
       showToast('Threshold berhasil disimpan!', 'success');
       loadData();
@@ -118,6 +121,34 @@ export default function ThresholdPage() {
       showToast(error instanceof Error ? error.message : 'Gagal menyimpan threshold', 'error');
     }
     setSaving(false);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedProdi) {
+      showToast('Pilih program studi dulu.', 'warning');
+      return;
+    }
+    const existing = allThresholds.filter(t => t.prodi_id === selectedProdi);
+    if (existing.length === 0) {
+      showToast('Tidak ada threshold yang tersimpan untuk prodi ini.', 'warning');
+      return;
+    }
+    if (!confirm('Hapus semua threshold untuk prodi ini? Aksi ini tidak dapat dibatalkan.')) return;
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`http://localhost:3000/api/v1/m1/threshold/${selectedProdi}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Gagal menghapus threshold');
+      }
+      showToast('Threshold berhasil dihapus!', 'success');
+      loadData();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Gagal menghapus threshold', 'error');
+    }
   };
 
   const getProdiName = (id: string) => prodi.find(p => p.id === id)?.nama_prodi || '';
@@ -149,6 +180,15 @@ export default function ThresholdPage() {
           <button className="sa-btn sa-btn-ghost" onClick={handleReset}>
             <span>🔄</span>
             <span>Reset Default</span>
+          </button>
+          <button
+            className="sa-btn"
+            onClick={handleDelete}
+            disabled={!selectedProdi || !allThresholds.some(t => t.prodi_id === selectedProdi)}
+            style={{ background: '#fdecea', color: '#c0392b', border: '1px solid #f1948a' }}
+          >
+            <span>🗑️</span>
+            <span>Hapus Threshold</span>
           </button>
           <button className="sa-btn sa-btn-primary" onClick={handleSave} disabled={saving || !selectedProdi}>
             <span>{saving ? '⏳' : '💾'}</span>

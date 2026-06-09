@@ -26,9 +26,20 @@ const Prodi = {
   },
 
   delete: async (id) => {
-    const query = 'DELETE FROM program_studi WHERE id = $1 RETURNING *';
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Lepas relasi users yang terhubung ke prodi ini agar FK tidak blocking
+      await client.query('UPDATE users SET prodi_id = NULL WHERE prodi_id = $1', [id]);
+      const result = await client.query('DELETE FROM program_studi WHERE id = $1 RETURNING *', [id]);
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 };
 

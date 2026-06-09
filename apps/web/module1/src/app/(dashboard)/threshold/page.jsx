@@ -72,6 +72,18 @@ export default function ThresholdPage() {
     setSaving(false);
   };
 
+  const handleDelete = async () => {
+    if (!selectedProdi) { toast('Pilih program studi dulu.', 'warning'); return; }
+    const existing = allThresholds.filter(t => t.prodi_id === selectedProdi);
+    if (existing.length === 0) { toast('Tidak ada threshold yang tersimpan untuk prodi ini.', 'warning'); return; }
+    if (!confirm('Hapus semua threshold untuk prodi ini? Aksi ini tidak dapat dibatalkan.')) return;
+    try {
+      await ThresholdAPI.delete(selectedProdi);
+      toast('Threshold berhasil dihapus!', 'success');
+      loadData();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
   const getProdiName = (id) => prodi.find(p => p.id === id)?.nama_prodi || '';
 
   const statusInfo = DEFAULT_THRESHOLDS.find(d => d.nama_status);
@@ -94,6 +106,14 @@ export default function ThresholdPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-ghost" onClick={handleReset}>🔄 Reset Default</button>
+          <button
+            className="btn"
+            onClick={handleDelete}
+            disabled={!selectedProdi || !allThresholds.some(t => t.prodi_id === selectedProdi)}
+            style={{ background: '#fdecea', color: '#c0392b', border: '1px solid #f1948a' }}
+          >
+            🗑️ Hapus Threshold
+          </button>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving || !selectedProdi}>
             {saving ? '⏳ Menyimpan...' : '💾 Simpan Threshold'}
           </button>

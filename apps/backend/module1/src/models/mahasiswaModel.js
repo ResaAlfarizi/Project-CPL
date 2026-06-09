@@ -27,13 +27,13 @@ const Mahasiswa = {
     return result.rows[0];
   },
 
-  update: async (id, { prodi_id, nim, nama, angkatan, is_active }) => {
+  update: async (id, { prodi_id, nim, nama, angkatan }) => {
     const query = `
       UPDATE mahasiswa 
-      SET prodi_id = $1, nim = $2, nama = $3, angkatan = $4, is_active = $5 
-      WHERE id = $6 
+      SET prodi_id = $1, nim = $2, nama = $3, angkatan = $4 
+      WHERE id = $5 
       RETURNING *`;
-    const result = await pool.query(query, [prodi_id, nim, nama, angkatan, is_active ?? true, id]);
+    const result = await pool.query(query, [prodi_id, nim, nama, angkatan, id]);
     return result.rows[0];
   },
 
