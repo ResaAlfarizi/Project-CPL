@@ -4,7 +4,7 @@ Sistem Capaian Pembelajaran Lulusan (CPL) untuk mahasiswa UIN Sunan Ampel Suraba
 
 ## 🚀 Quick Start
 
-**Baca file ini terlebih dahulu:** [`MULAI_DISINI.md`](./MULAI_DISINI.md)
+Ikuti langkah-langkah di bawah untuk memulai menggunakan sistem ini.
 
 ## 📁 Struktur Project
 
@@ -127,13 +127,10 @@ npm run dev
 
 ## 📚 Documentation
 
-| File | Description |
-|------|-------------|
-| [`MULAI_DISINI.md`](./MULAI_DISINI.md) | 👈 **START HERE** - Quick start guide |
-| [`PERBAIKAN_CEPAT.md`](./PERBAIKAN_CEPAT.md) | Troubleshooting common errors |
-| [`CARA_MENJALANKAN.md`](./CARA_MENJALANKAN.md) | Detailed setup guide |
-| [`CHECKLIST_LENGKAP.md`](./CHECKLIST_LENGKAP.md) | Complete feature checklist |
-| [`VERIFIKASI_DATABASE.sql`](./VERIFIKASI_DATABASE.sql) | Database verification queries |
+Dokumentasi lengkap tersedia di:
+- **Backend Module 2**: `apps/backend/module2/README.md`
+- **Web Module 2**: `apps/web/module2/README.md`
+- **Mobile Module 2**: `apps/mobile/module2/README.md`
 
 ## 🧪 Testing
 
@@ -173,7 +170,7 @@ node test-api.js
 
 ### Error: "Unexpected token <!DOCTYPE"
 Backend tidak jalan atau tidak bisa connect ke database.
-➡️ Lihat [`PERBAIKAN_CEPAT.md`](./PERBAIKAN_CEPAT.md)
+➡️ Pastikan backend sudah running di port 3000
 
 ### Error: "Token tidak ada"
 Token tidak tersimpan di localStorage.
